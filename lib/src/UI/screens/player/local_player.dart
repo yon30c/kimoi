@@ -31,7 +31,7 @@ class LocalPlayer extends ConsumerStatefulWidget {
 
 class LocalPlayerState extends ConsumerState<LocalPlayer> {
   // ********************************************************** //
-  // ------------------- VARIABLES ---------------------------- //
+  // *------------------ VARIABLES ---------------------------* //
   // ********************************************************** //
 
   late BetterPlayerController _betterPlayerController;
@@ -39,19 +39,15 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
   List<v.Video> videoList = [];
 
-  bool isInitialize = false;
-  bool showRewind = false;
-
-  Stream<bool> controlsVisibilityStream = Stream.value(false);
-
-  bool showForward = false;
-  bool isVisible = false;
-  bool isSkipOpActive = true;
+  bool flag = false;
   bool isChanging = false;
-  bool isPause = false;
   bool isClose = false;
   bool isCompleted = false;
-  bool flag = false;
+  bool isInitialize = false;
+  bool isPause = false;
+  bool isVisible = false;
+  bool showForward = false;
+  bool showRewind = false;
 
   String chapterInfo = '';
   String title = '';
@@ -65,8 +61,10 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
   // ********************************************************** //
 
+
+
   // ********************************************************** //
-  // ---- INICIALIZAR Y CONTROLAR EL REPRODUCTOR DE VIDEO ----- //
+  // *--- INICIALIZAR Y CONTROLAR EL REPRODUCTOR DE VIDEO ----* //
   // ********************************************************** //
 
   //* inicializar el reproductor del video *//
@@ -164,37 +162,32 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
           (latestValue.position + const Duration(seconds: 85)).inSeconds;
       controller.seekTo(Duration(seconds: min(skip, end)));
     }
-    await Future.delayed(const Duration(milliseconds: 300));
-    isSkipOpActive = false;
     setState(() {});
   }
 
   // Se activa cuando el slider del video esta cambiando
   // para evitar que los controles se oculten mientrase se este cambiando
   onChangeStart() {
-    setState(() {
-    isChanging = true;
-    isVisible = true;
-
-    });
+    if (!isChanging) {
+      setState(() {
+        isChanging = true;
+        isVisible = true;
+      });
+    }
   }
 
   // Cuando el slider deja de cambiar, desactiva los botones despues de el tiempo establecido
   onChangeEnd() async {
     isChanging = false;
     await Future.delayed(const Duration(milliseconds: 300));
-    if (isPause) return;
-    setState(() {
-    isVisible = false;
-
-    });
+    if (!isPause) setState(() => isVisible = false);
   }
 
   // Para ocultar los botones automaticamente
   void autoHide() async {
-      showControls();
-      await Future.delayed(const Duration(seconds: 2));
-      if (!isChanging && !isPause && !isClose) hideControls();
+    showControls();
+    await Future.delayed(const Duration(seconds: 2));
+    if (!isChanging && !isPause && !isClose) hideControls();
   }
 
   // Para mostrar controles
@@ -277,8 +270,10 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
   // ********************************************************** //
 
+
+
   // ********************************************************** //
-  // ------ COMPORTAMIENTO AL REGRESAR MEDIANTE GESTOS -------- //
+  // *----- COMPORTAMIENTO AL REGRESAR MEDIANTE GESTOS -------* //
   // ********************************************************** //
 
   // Administrar el comportamiento al salir de la pantalla
@@ -296,8 +291,10 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
   // ********************************************************** //
 
+
+
   // ********************************************************** //
-  // ------  ESTADO INICIAR Y METODO BUILD  -------- //
+  // *-----------  ESTADO INICIAR Y METODO BUILD  ------------* //
   // ********************************************************** //
 
   @override
@@ -320,9 +317,16 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
   @override
   Widget build(BuildContext context) {
+
     final size = MediaQuery.of(context).size;
     final textStyle = Theme.of(context).textTheme;
+    responsive.setDimensions(size.width, size.height);
 
+
+
+  // ********************************************************** //
+  // *-----  OBTENER EL SIGUIENTE Y EL ANTERIOR VIDEO  -------* //
+  // ********************************************************** //
     String actualChapterUrl = widget.videos.chapterUrl;
 
     int chap = widget.videos.chapterNumber + 1;
@@ -337,7 +341,11 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     AsyncValue<Chapter?> nextChapter =
         ref.watch(nextChapterProvider(nextChapterUrl));
 
-    responsive.setDimensions(size.width, size.height);
+  // ********************************************************** //
+  // ********************************************************** //
+
+
+
 
     return WillPopScope(
       onWillPop: onWillPop,
@@ -347,12 +355,14 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
           onTap: !isVisible ? autoHide : hideControls,
           child: Center(
             child: !isInitialize
+                // Mostrar carga de pantalla si el reproductor no esta inicializado
                 ? Container(
                     color: Colors.black,
                     child: const Center(
                       child: CircularProgressIndicator(),
                     ),
                   )
+                // Reproductor de video
                 : Stack(
                     children: [
                       BetterPlayer(controller: _betterPlayerController),
@@ -442,6 +452,11 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     );
   }
 
+  // ********************************************************** //
+  // *--------------- WIDGETS DEL REPRODUCTOR  --------------- *//
+  // ********************************************************** //
+
+  // Barra de controles inferior 
   Row _videoButtomBarControls(AsyncValue<Chapter?> previusChapter,
       BuildContext context, AsyncValue<Chapter?> nextChapter) {
     return Row(
@@ -554,6 +569,8 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     );
   }
 
+
+  // Barra superior
   CustomOpacityTransition _customVideoTopBar(
       Size size, BuildContext context, TextTheme textStyle) {
     return CustomOpacityTransition(
@@ -603,6 +620,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     );
   }
 
+  // Controles de reproducir y pausar
   Center _playAndPauseButtom() {
     return Center(
       child: isVisible
@@ -628,6 +646,15 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
           : null,
     );
   }
+
+  // ********************************************************** //
+  // ********************************************************** //
+
+
+
+  // ********************************************************* //
+  // * --- FUNCIONES DE LAS BARRA DE CONTROLES SUPERIOR  --- * //
+  // ********************************************************* //
 
   void _showQualitiesSelectionWidget() {
     // HLS / DASH
@@ -663,7 +690,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
       );
     }
 
-    _showModalBottomSheet(children);
+    _showMaterialBottomSheet(children);
   }
 
   Widget _buildTrackRow(BetterPlayerAsmsTrack track, String? preferredName) {
@@ -748,43 +775,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     );
   }
 
-  void _showModalBottomSheet(List<Widget> children) {
-    Platform.isAndroid
-        ? _showMaterialBottomSheet(children)
-        : _showCupertinoModalBottomSheet(children);
-  }
-
-  void _showCupertinoModalBottomSheet(List<Widget> children) {
-    showCupertinoModalPopup<void>(
-      barrierColor: Colors.transparent,
-      context: context,
-      useRootNavigator:
-          _betterPlayerController.betterPlayerConfiguration.useRootNavigator,
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              decoration: BoxDecoration(
-                color: _betterPlayerController
-                    .betterPlayerControlsConfiguration.overflowModalColor,
-                /*shape: RoundedRectangleBorder(side: Bor,borderRadius: 24,)*/
-                borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24.0),
-                    topRight: Radius.circular(24.0)),
-              ),
-              child: Column(
-                children: children,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   void _showMaterialBottomSheet(List<Widget> children) {
     showModalBottomSheet<void>(
       backgroundColor: Colors.transparent,
@@ -815,6 +805,9 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     );
   }
 
+  // ********************************************************** //
+  // ********************************************************** //
+
   @override
   void dispose() {
     WakelockPlus.disable();
@@ -823,6 +816,8 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   }
 }
 
+
+// Slider personalizado
 class CustomSlider extends StatelessWidget {
   const CustomSlider(
       {super.key,
@@ -864,6 +859,8 @@ class CustomSlider extends StatelessWidget {
   }
 }
 
+
+// Para convertir los segundos del reporductor
 String formatDuration(int seconds) {
   Duration duration = Duration(seconds: seconds);
 
