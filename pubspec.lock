@@ -838,7 +838,7 @@ packages:
     source: hosted
     version: "0.3.3"
   wakelock_plus:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: wakelock_plus
       sha256: aac3f3258f01781ec9212df94eecef1eb9ba9350e106728def405baa096ba413

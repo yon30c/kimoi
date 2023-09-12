@@ -6,7 +6,6 @@ import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/player/local_player.dart';
 import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
-import 'package:kimoi/src/domain/entities/chapter.dart';
 
 import '../../items/anime_masonry.dart';
 
@@ -19,79 +18,16 @@ class HomeFavorites extends ConsumerStatefulWidget {
 
 class HomeFavoritesState extends ConsumerState<HomeFavorites>
     with AutomaticKeepAliveClientMixin {
-  bool isLastPage = false;
-  bool isLoading = false;
-
-  bool isWatchinLastPage = false;
-  bool isWatchinLoading = false;
-
   @override
   void initState() {
     super.initState();
-
-    loadNextPage();
-    loadWatchin();
-  }
-
-  void loadNextPage() async {
-    if (isLoading || isLastPage) return;
-    isLoading = true;
-
-    final movies =
-        await ref.read(favoriteAnimesProvider.notifier).loadNextPage();
-    isLoading = false;
-
-    if (movies.isEmpty) {
-      isLastPage = true;
-    }
-  }
-
-  void loadWatchin() async {
-    if (isWatchinLoading || isWatchinLastPage) return;
-    isWatchinLoading = true;
-
-    final animes =
-        await ref.read(watchingHistoryProvider.notifier).loadNextPage();
-    isLoading = false;
-
-    if (animes.isEmpty) {
-      isLastPage = true;
-    }
+    ref.read(favoriteAnimesProvider.notifier).loadNextPage();
+    ref.read(watchingHistoryProvider.notifier).loadNextPage();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final favoriteMovies = ref.watch(favoriteAnimesProvider).values.toList();
-    final history = ref.watch(watchingHistoryProvider);
-
-    if (favoriteMovies.isEmpty) {
-      final colors = Theme.of(context).colorScheme;
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Mis listas'),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(Icons.favorite_outline_sharp,
-                  size: 60, color: colors.primary),
-              Text('Ohhh no!!',
-                  style: TextStyle(fontSize: 30, color: colors.primary)),
-              const Text('No tienes animes favoritos',
-                  style: TextStyle(fontSize: 20)),
-              const SizedBox(height: 20),
-              FilledButton.tonal(
-                  onPressed: () => context.go('/'),
-                  child: const Text('Empieza a buscar'))
-            ],
-          ),
-        ),
-      );
-    }
-
 
     return DefaultTabController(
       length: 3,
@@ -124,11 +60,11 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
                   ))
             ],
           ),
-          body: TabBarView(
+          body: const TabBarView(
             children: [
-              AnimeMasonry(loadNextPage: loadNextPage, animes: favoriteMovies),
-              _HistoryPage(history: history),
-              const Center(
+              _FavoritesView(),
+              _HistoryPage(),
+              Center(
                 child: Text('offline - screen'),
               ),
             ],
@@ -140,17 +76,90 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
   bool get wantKeepAlive => true;
 }
 
-class _HistoryPage extends StatelessWidget {
-  const _HistoryPage({
-    required this.history,
-  });
+class _FavoritesView extends ConsumerStatefulWidget {
+  const _FavoritesView();
 
-  final List<Chapter> history;
+  @override
+  _FavoritesViewState createState() => _FavoritesViewState();
+}
+
+class _FavoritesViewState extends ConsumerState<_FavoritesView> {
+  bool isLastPage = false;
+  bool isLoading = false;
+
+  void loadNextPage() async {
+    if (isLoading || isLastPage) return;
+    isLoading = true;
+
+    final movies =
+        await ref.read(favoriteAnimesProvider.notifier).loadNextPage();
+    isLoading = false;
+
+    if (movies.isEmpty) {
+      isLastPage = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final favoriteMovies = ref.watch(favoriteAnimesProvider).values.toList();
+    final colors = Theme.of(context).colorScheme;
+
+    if (favoriteMovies.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(Icons.favorite_outline_sharp, size: 60, color: colors.primary),
+            Text('Ohhh no!!',
+                style: TextStyle(fontSize: 30, color: colors.primary)),
+            const Text('No tienes animes favoritos',
+                style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 20),
+            FilledButton.tonal(
+                onPressed: () => context.go('/explorar'),
+                child: const Text('Empieza a buscar'))
+          ],
+        ),
+      );
+    }
+
+    return AnimeMasonry(loadNextPage: loadNextPage, animes: favoriteMovies);
+  }
+}
+
+class _HistoryPage extends ConsumerStatefulWidget {
+  const _HistoryPage();
+
+  @override
+  _HistoryPageState createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends ConsumerState<_HistoryPage> {
+  bool isWatchinLastPage = false;
+  bool isWatchinLoading = false;
+
+  void loadWatchin() async {
+    if (isWatchinLoading || isWatchinLastPage) return;
+    isWatchinLoading = true;
+
+    final animes =
+        await ref.read(watchingHistoryProvider.notifier).loadNextPage();
+    isWatchinLoading = false;
+
+    if (animes.isEmpty) {
+      isWatchinLastPage = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final textStyle = Theme.of(context).textTheme;
+
+    final history = ref.watch(watchingHistoryProvider);
+
     final color = Theme.of(context).colorScheme;
     return ListView.builder(
       itemCount: history.length,

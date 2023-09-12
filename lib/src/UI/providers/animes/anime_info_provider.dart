@@ -38,7 +38,15 @@ class AnimeInfoNotifier extends StateNotifier<List<AnimeInfo>> {
   }
 }
 
+final getPreviusVideoData = StateNotifierProvider<ChapterInfoNotifier, List<Chapter>>((ref) {
+  final getChapterInfo = ref.watch(animeRepositoryProvider).getChapterData;
+  return ChapterInfoNotifier(getChapterInfo);
+});
 
+final getNextVideoData = StateNotifierProvider<ChapterInfoNotifier, List<Chapter>>((ref) {
+  final getChapterInfo = ref.watch(animeRepositoryProvider).getChapterData;
+  return ChapterInfoNotifier(getChapterInfo);
+});
 
 // Proveedor de la informacion del video
 final getVideoDataProvider =

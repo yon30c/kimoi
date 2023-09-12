@@ -10,10 +10,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/forward_and_rewind.dart';
 import 'package:kimoi/src/UI/items/transitions.dart';
+import 'package:kimoi/src/UI/providers/animes/next_and_before_anime_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/player/center_play_button.dart';
 import 'package:kimoi/src/infrastructure/models/video.dart' as v;
+import 'package:kimoi/src/utils/extensions/extension.dart';
 import 'package:kimoi/src/utils/helpers/responsive.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../domain/domain.dart';
 
@@ -27,12 +30,20 @@ class LocalPlayer extends ConsumerStatefulWidget {
 }
 
 class LocalPlayerState extends ConsumerState<LocalPlayer> {
+  // ********************************************************** //
+  // ------------------- VARIABLES ---------------------------- //
+  // ********************************************************** //
+
   late BetterPlayerController _betterPlayerController;
   var channel = const MethodChannel("extractors");
+
   List<v.Video> videoList = [];
 
   bool isInitialize = false;
   bool showRewind = false;
+
+  Stream<bool> controlsVisibilityStream = Stream.value(false);
+
   bool showForward = false;
   bool isVisible = false;
   bool isSkipOpActive = true;
@@ -45,21 +56,93 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   String chapterInfo = '';
   String title = '';
 
-  ValueNotifier<String> serverName = ValueNotifier('');
+  int lastPosition = 0;
 
+  ValueNotifier<String> serverName = ValueNotifier('');
+  ValueNotifier<String> chapterName = ValueNotifier('');
+
+  final responsive = Responsive();
+
+  // ********************************************************** //
+
+  // ********************************************************** //
+  // ---- INICIALIZAR Y CONTROLAR EL REPRODUCTOR DE VIDEO ----- //
+  // ********************************************************** //
+
+  //* inicializar el reproductor del video *//
+  void initPlayer(Chapter chapter) async {
+    videoList = await getVideos(chapter);
+
+    BetterPlayerConfiguration betterPlayerConfiguration =
+        BetterPlayerConfiguration(
+            startAt: Duration(seconds: widget.videos.position),
+            allowedScreenSleep: false,
+            aspectRatio: 16 / 9,
+            fit: BoxFit.contain,
+            autoPlay: true,
+            controlsConfiguration: BetterPlayerControlsConfiguration(
+              playerTheme: BetterPlayerTheme.custom,
+              customControlsBuilder: (controller, onPlayerVisibilityChanged) {
+                return const SizedBox();
+              },
+            ));
+
+    Map<String, String> resolutions = {};
+    for (var element in videoList) {
+      resolutions.addAll({element.quality: element.videoUrl!});
+    }
+    serverName.value = videoList.first.quality;
+    chapterName.value = widget.videos.chapter;
+    BetterPlayerDataSource dataSource = BetterPlayerDataSource(
+      BetterPlayerDataSourceType.network,
+      videoList.first.videoUrl!,
+      headers: videoList.first.headers,
+      resolutions: resolutions,
+    );
+    _betterPlayerController = BetterPlayerController(betterPlayerConfiguration);
+    _betterPlayerController.setupDataSource(dataSource);
+    isInitialize = true;
+    setState(() {});
+
+    _betterPlayerController.addEventsListener((p0) {
+      if (isClose) return;
+      if (_betterPlayerController.isPlaying()!) {
+        setState(() {});
+        addOnWatching(
+            _betterPlayerController
+                .videoPlayerController!.value.position.inSeconds,
+            _betterPlayerController
+                .videoPlayerController!.value.duration!.inSeconds);
+
+        // Agregar duracion.
+        if (isInitialize && _betterPlayerController.isPlaying()!) {
+          if (flag) return;
+          flag = true;
+          setState(() {});
+          final chapter = widget.videos;
+          chapter.duration = _betterPlayerController
+              .videoPlayerController!.value.duration!.inSeconds;
+          ref
+              .read(isWatchingAnimeProvider.notifier)
+              .addOnWatching(widget.videos);
+        }
+      }
+    });
+
+    autoHide();
+  }
+
+  // Guardar videos reproducidos en el historial
   void addOnWatching(int position, int duration) async {
     final chapter = widget.videos;
-    if (isClose) return;
     chapter.position = position;
-
-    await ref
-        .read(isWatchingAnimeProvider.notifier)
-        .addOnWatching(widget.videos);
-
-    ref.refresh(watchingHistoryProvider.notifier).loadNextPage();
-
+    lastPosition = position;
+    if (position % 5 == 0) {
+      await ref
+          .read(isWatchingAnimeProvider.notifier)
+          .addOnWatching(widget.videos);
+    }
     if (isCompleted) return;
-
     if (position < 240) return;
 
     if ((position) > (duration - 240)) {
@@ -71,12 +154,11 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     setState(() {});
   }
 
+  // Para adelantar el video 85 segundos ("01:25")
+  // El adecuado para adelantar opening.
   void skipOp(BetterPlayerController controller) async {
-    setState(() {});
     final latestValue = controller.videoPlayerController?.value;
-
     if (latestValue != null) {
-      // cancelAndRestartTimer();
       final end = latestValue.duration!.inSeconds;
       final skip =
           (latestValue.position + const Duration(seconds: 85)).inSeconds;
@@ -87,38 +169,50 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     setState(() {});
   }
 
+  // Se activa cuando el slider del video esta cambiando
+  // para evitar que los controles se oculten mientrase se este cambiando
   onChangeStart() {
+    setState(() {
     isChanging = true;
     isVisible = true;
-    setState(() {});
+
+    });
   }
 
+  // Cuando el slider deja de cambiar, desactiva los botones despues de el tiempo establecido
   onChangeEnd() async {
     isChanging = false;
     await Future.delayed(const Duration(milliseconds: 300));
     if (isPause) return;
+    setState(() {
     isVisible = false;
-    setState(() {});
+
+    });
   }
 
-  showControls() async {
-    isVisible = true;
-    setState(() {});
-    await Future.delayed(const Duration(seconds: 2));
-    if (isChanging) return;
-    if (isPause) return;
-    if (isClose) return;
-    isVisible = false;
-    setState(() {});
+  // Para ocultar los botones automaticamente
+  void autoHide() async {
+      showControls();
+      await Future.delayed(const Duration(seconds: 2));
+      if (!isChanging && !isPause && !isClose) hideControls();
   }
 
+  // Para mostrar controles
+  void showControls() {
+    if (!isVisible) setState(() => isVisible = true);
+  }
+
+  // Para ocultar controles
+  void hideControls() {
+    if (isVisible) setState(() => isVisible = false);
+  }
+
+  // Para regresar 10 segundos
   void onRewind(BetterPlayerController controller) async {
     showRewind = true;
     setState(() {});
     final latestValue = controller.videoPlayerController?.value;
     if (latestValue != null) {
-      // cancelAndRestartTimer();
-
       final beginning = const Duration().inMilliseconds;
       final skip = (latestValue.position -
               Duration(
@@ -132,13 +226,12 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     setState(() {});
   }
 
+  // Para adelantar 10 segundos
   void onForward(BetterPlayerController controller) async {
     showForward = true;
     setState(() {});
     final latestValue = controller.videoPlayerController?.value;
-
     if (latestValue != null) {
-      // cancelAndRestartTimer();
       final end = latestValue.duration!.inMilliseconds;
       final skip = (latestValue.position +
               Duration(
@@ -152,9 +245,10 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     setState(() {});
   }
 
-  Future<List<v.Video>> getVideos() async {
+  // Para obtener los videos
+  Future<List<v.Video>> getVideos(Chapter chapter) async {
     final List<v.Video> vidList = [];
-    for (var serv in widget.videos.servers.reversed) {
+    for (var serv in chapter.servers.reversed) {
       final success =
           await channel.invokeMethod('extractVideoUrl', serv) as Map;
       v.Video video = v.Video();
@@ -175,82 +269,36 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
         }
         // if (video != null) {
         return [video];
-
         // setState(() {});
       }
     }
     return vidList;
   }
 
-  void initPlayer() async {
-    videoList = await getVideos();
+  // ********************************************************** //
 
-    BetterPlayerConfiguration betterPlayerConfiguration =
-        BetterPlayerConfiguration(
-            startAt: Duration(seconds: widget.videos.position),
-            allowedScreenSleep: false,
-            aspectRatio: 16 / 9,
-            fit: BoxFit.contain,
-            autoDetectFullscreenDeviceOrientation: true,
-            autoPlay: true,
-            controlsConfiguration: BetterPlayerControlsConfiguration(
-              playerTheme: BetterPlayerTheme.custom,
-              customControlsBuilder: (controller, onPlayerVisibilityChanged) {
-                return const SizedBox();
-              },
-            ));
+  // ********************************************************** //
+  // ------ COMPORTAMIENTO AL REGRESAR MEDIANTE GESTOS -------- //
+  // ********************************************************** //
 
-    Map<String, String> resolutions = {};
-
-    for (var element in videoList) {
-      resolutions.addAll({element.quality: element.videoUrl!});
-    }
-
-    serverName.value = videoList.first.quality;
-
-    BetterPlayerDataSource dataSource = BetterPlayerDataSource(
-      BetterPlayerDataSourceType.network,
-      videoList.first.videoUrl!,
-      headers: videoList.first.headers,
-      resolutions: resolutions,
-    );
-
-    _betterPlayerController = BetterPlayerController(betterPlayerConfiguration);
-    _betterPlayerController.setupDataSource(dataSource);
-
-    isInitialize = true;
+  // Administrar el comportamiento al salir de la pantalla
+  // usando gestos o botones del hardware
+  Future<bool> onWillPop() async {
+    ref.refresh(watchingHistoryProvider.notifier).loadNextPage();
     setState(() {});
-
-    _betterPlayerController.addEventsListener((p0) {
-      if (isClose) return;
-      if (_betterPlayerController.isPlaying()!) {
-        addOnWatching(
-            _betterPlayerController
-                .videoPlayerController!.value.position.inSeconds,
-            _betterPlayerController
-                .videoPlayerController!.value.duration!.inMinutes);
-
-        setState(() {});
-
-        // Agregar duracion.
-        if (isInitialize && _betterPlayerController.isPlaying()!) {
-          if (flag) return;
-          flag = true;
-          setState(() {});
-          final chapter = widget.videos;
-          chapter.duration = _betterPlayerController
-              .videoPlayerController!.value.duration!.inSeconds;
-          ref
-              .read(isWatchingAnimeProvider.notifier)
-              .addOnWatching(widget.videos);
-        }
-      }
-    });
-
-    showControls();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+    return true;
   }
 
-  final responsive = Responsive();
+  // ********************************************************** //
+
+  // ********************************************************** //
+  // ------  ESTADO INICIAR Y METODO BUILD  -------- //
+  // ********************************************************** //
 
   @override
   void initState() {
@@ -258,13 +306,16 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
     chapterInfo = widget.videos.chapter;
     title = widget.videos.title;
+    // Bloquea la pantalla para que no se apague automaticamente
+    WakelockPlus.enable();
 
+    // Preferencias de pantalla
     SystemChrome.setPreferredOrientations(
         [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
-
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    initPlayer();
+    // Inicializar el reproductor de video
+    initPlayer(widget.videos);
   }
 
   @override
@@ -272,65 +323,234 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     final size = MediaQuery.of(context).size;
     final textStyle = Theme.of(context).textTheme;
 
+    String actualChapterUrl = widget.videos.chapterUrl;
+
+    int chap = widget.videos.chapterNumber + 1;
+    int chap2 = widget.videos.chapterNumber - 1;
+    final url = actualChapterUrl.substringBeforeLast('-');
+
+    String backChapterUrl = '$url-$chap2';
+    String nextChapterUrl = '$url-$chap';
+
+    AsyncValue<Chapter?> previusChapter =
+        ref.watch(previousChapterProvider(backChapterUrl));
+    AsyncValue<Chapter?> nextChapter =
+        ref.watch(nextChapterProvider(nextChapterUrl));
+
     responsive.setDimensions(size.width, size.height);
 
-    return AnimatedSwitcher(
-      duration: const Duration(seconds: 1),
-      child: WillPopScope(
-        onWillPop: () async {
-          SystemChrome.setPreferredOrientations([
-            DeviceOrientation.portraitUp,
-          ]);
-          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-              overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
-
-          return true;
-        },
-        child: Scaffold(
-          backgroundColor: Colors.black,
-          body: GestureDetector(
-            onTap: () {
-              showControls();
-            },
-            child: Center(
-              child: !isInitialize
-                  ? Container(
-                      color: Colors.black,
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  : Stack(
-                      children: [
-                        BetterPlayer(controller: _betterPlayerController),
-                        Center(
-                          child: _betterPlayerController.isBuffering()!
-                              ? const CircularProgressIndicator()
-                              : null,
-                        ),
-                        _playAndPauseButtom(),
-                        VideoCoreForwardAndRewind(
-                          onRightTap: () => onForward(_betterPlayerController),
-                          onLeftTap: () => onRewind(_betterPlayerController),
-                          forwardSeconds: 10,
-                          rewindSeconds: 10,
-                          showForward: showForward,
-                          showRewind: showRewind,
-                          responsive: responsive,
-                        ),
-                        _customVideoTopBar(size, context, textStyle),
-                        if (_betterPlayerController
-                            .videoPlayerController!.value.initialized)
-                          Positioned(
-                            bottom: 0,
-                            child: _bottomVideoBar(size, textStyle),
-                          )
-                      ],
+    return WillPopScope(
+      onWillPop: onWillPop,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: GestureDetector(
+          onTap: !isVisible ? autoHide : hideControls,
+          child: Center(
+            child: !isInitialize
+                ? Container(
+                    color: Colors.black,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
                     ),
-            ),
+                  )
+                : Stack(
+                    children: [
+                      BetterPlayer(controller: _betterPlayerController),
+                      Center(
+                        child: _betterPlayerController.isBuffering()!
+                            ? const CircularProgressIndicator()
+                            : null,
+                      ),
+                      _playAndPauseButtom(),
+                      VideoCoreForwardAndRewind(
+                        onRightTap: () => onForward(_betterPlayerController),
+                        onLeftTap: () => onRewind(_betterPlayerController),
+                        forwardSeconds: 10,
+                        rewindSeconds: 10,
+                        showForward: showForward,
+                        showRewind: showRewind,
+                        responsive: responsive,
+                      ),
+                      _customVideoTopBar(size, context, textStyle),
+                      if (_betterPlayerController
+                          .videoPlayerController!.value.initialized)
+                        Positioned(
+                            bottom: 0,
+                            child: CustomOpacityTransition(
+                              visible: isVisible,
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 10),
+                                width: size.width,
+                                height: 90,
+                                color: Colors.black45,
+                                child: !isVisible
+                                    ? null
+                                    : Column(
+                                        children: [
+                                          _videoButtomBarControls(
+                                              previusChapter,
+                                              context,
+                                              nextChapter),
+                                          _videoSliderBar(textStyle),
+                                        ],
+                                      ),
+                              ),
+                            ))
+                    ],
+                  ),
           ),
         ),
       ),
+    );
+  }
+
+  Row _videoSliderBar(TextTheme textStyle) {
+    return Row(
+      children: [
+        Expanded(
+          child: CustomSlider(
+            secondaryTrackValue: _betterPlayerController
+                .videoPlayerController!.value.buffered.last.end.inSeconds
+                .toDouble(),
+            value: _betterPlayerController
+                .videoPlayerController!.value.position.inSeconds
+                .toDouble(),
+            max: _betterPlayerController
+                .videoPlayerController!.value.duration!.inSeconds
+                .toDouble(),
+            onChanged: (value) {
+              setState(() {
+                _betterPlayerController
+                    .seekTo(Duration(seconds: value.toInt()));
+              });
+            },
+            onChangeEnd: (value) => onChangeEnd(),
+            onChangeStart: (value) => onChangeStart(),
+            duration:
+                _betterPlayerController.videoPlayerController!.value.position,
+          ),
+        ),
+        CustomOpacityTransition(
+          visible: isVisible,
+          child: Text(
+            '${formatDuration(_betterPlayerController.videoPlayerController!.value.position.inSeconds)} - ${formatDuration(_betterPlayerController.videoPlayerController!.value.duration!.inSeconds)}',
+            style: textStyle.labelMedium?.copyWith(color: Colors.white),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Row _videoButtomBarControls(AsyncValue<Chapter?> previusChapter,
+      BuildContext context, AsyncValue<Chapter?> nextChapter) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+            onPressed: () {
+              final fit = _betterPlayerController.getFit();
+              switch (fit) {
+                case BoxFit.contain:
+                  _betterPlayerController.setOverriddenFit(BoxFit.fill);
+                  setState(() {});
+                  break;
+                case BoxFit.fill:
+                  _betterPlayerController.setOverriddenFit(BoxFit.contain);
+                  setState(() {});
+                  break;
+
+                default:
+              }
+            },
+            icon: _betterPlayerController.getFit() == BoxFit.fill
+                ? const Icon(
+                    Icons.fit_screen_rounded,
+                    color: Colors.white,
+                  )
+                : const Icon(
+                    Icons.fit_screen_outlined,
+                    color: Colors.white,
+                  )),
+        IconButton(
+            onPressed: previusChapter.when(
+              data: (data) {
+                if (data == null) return null;
+                return () {
+                  isClose = true;
+                  _betterPlayerController.dispose();
+                  data.imageUrl = widget.videos.imageUrl;
+                  data.animeUrl = widget.videos.animeUrl;
+                  data.isWatching = true;
+                  context.pushReplacement('/local-player', extra: data);
+                  data.chapter;
+                };
+              },
+              error: (error, stackTrace) {
+                return null;
+              },
+              loading: () => null,
+            ),
+            icon: previusChapter.when(
+              data: (data) {
+                if (data == null) {
+                  return const Icon(
+                    Icons.skip_previous_rounded,
+                    color: Colors.grey,
+                    size: 30,
+                  );
+                }
+                return const Icon(
+                  Icons.skip_previous_rounded,
+                  color: Colors.white,
+                  size: 30,
+                );
+              },
+              error: (error, stackTrace) => const Icon(Icons.error),
+              loading: () => const SizedBox(
+                  height: 30, width: 30, child: CircularProgressIndicator()),
+            )),
+        IconButton(
+            onPressed: nextChapter.when(
+              data: (data) {
+                if (data == null) return null;
+                return () {
+                  isClose = true;
+                  _betterPlayerController.dispose();
+                  data.imageUrl = widget.videos.imageUrl;
+                  data.animeUrl = widget.videos.animeUrl;
+                  data.isWatching = true;
+                  context.pushReplacement('/local-player', extra: data);
+                };
+              },
+              error: (error, stackTrace) {
+                return null;
+              },
+              loading: () => null,
+            ),
+            icon: nextChapter.when(
+              data: (data) {
+                if (data == null) {
+                  return const Icon(Icons.skip_next_rounded,
+                      color: Colors.grey, size: 30);
+                }
+                return const Icon(
+                  Icons.skip_next_rounded,
+                  color: Colors.white,
+                  size: 30,
+                );
+              },
+              error: (error, stackTrace) => const Icon(Icons.error),
+              loading: () => const SizedBox(
+                  height: 30, width: 30, child: CircularProgressIndicator()),
+            )),
+        TextButton(
+            onPressed: () => skipOp(_betterPlayerController),
+            child: const Text(
+              '+85',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            )),
+      ],
     );
   }
 
@@ -348,11 +568,13 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
               style: const TextStyle(color: Colors.white),
             ),
             subtitle: Text(
-              chapterInfo,
+              chapterName.value,
               style: const TextStyle(color: Colors.white),
             ),
             leading: IconButton(
                 onPressed: () {
+                  ref.refresh(watchingHistoryProvider.notifier).loadNextPage();
+                  setState(() {});
                   SystemChrome.setPreferredOrientations([
                     DeviceOrientation.portraitUp,
                   ]);
@@ -399,100 +621,11 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                   : () {
                       _betterPlayerController.play();
                       isPause = false;
-                      showControls();
+                      autoHide();
                       setState(() {});
                     },
             )
           : null,
-    );
-  }
-
-  CustomOpacityTransition _bottomVideoBar(Size size, TextTheme textStyle) {
-    return CustomOpacityTransition(
-      visible: isVisible,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        width: size.width,
-        height: 90,
-        color: Colors.black45,
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                    onPressed: () {
-                      // TODO: Set video fit
-                    },
-                    icon: const Icon(
-                      Icons.fit_screen,
-                      color: Colors.white,
-                      size: 30,
-                    )),
-                IconButton(
-                    onPressed: () => skipOp(_betterPlayerController),
-                    icon: const Icon(
-                      Icons.skip_previous,
-                      color: Colors.white,
-                      size: 30,
-                    )),
-                IconButton(
-                    onPressed: () => skipOp(_betterPlayerController),
-                    icon: const Icon(
-                      Icons.skip_next,
-                      color: Colors.white,
-                      size: 30,
-                    )),
-                TextButton(
-                    onPressed: () => skipOp(_betterPlayerController),
-                    child: const Text(
-                      '+85',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    )),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: CustomSlider(
-                    secondaryTrackValue: _betterPlayerController
-                        .videoPlayerController!
-                        .value
-                        .buffered
-                        .last
-                        .end
-                        .inSeconds
-                        .toDouble(),
-                    value: _betterPlayerController
-                        .videoPlayerController!.value.position.inSeconds
-                        .toDouble(),
-                    max: _betterPlayerController
-                        .videoPlayerController!.value.duration!.inSeconds
-                        .toDouble(),
-                    onChanged: (value) {
-                      setState(() {
-                        _betterPlayerController
-                            .seekTo(Duration(seconds: value.toInt()));
-                      });
-                    },
-                    onChangeEnd: (value) => onChangeEnd(),
-                    onChangeStart: (value) => onChangeStart(),
-                    duration: _betterPlayerController
-                        .videoPlayerController!.value.position,
-                  ),
-                ),
-                CustomOpacityTransition(
-                  visible: isVisible,
-                  child: Text(
-                    '${formatDuration(_betterPlayerController.videoPlayerController!.value.position.inSeconds)} - ${formatDuration(_betterPlayerController.videoPlayerController!.value.duration!.inSeconds)}',
-                    style: textStyle.labelMedium?.copyWith(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -684,6 +817,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
   @override
   void dispose() {
+    WakelockPlus.disable();
     _betterPlayerController.dispose();
     super.dispose();
   }

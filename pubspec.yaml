@@ -27,6 +27,7 @@ dependencies:
   meta: ^1.9.1
   path_provider: ^2.1.1
   shared_preferences: ^2.2.1
+  wakelock_plus: ^1.1.1
 
 dev_dependencies:
   build_runner: ^2.4.6

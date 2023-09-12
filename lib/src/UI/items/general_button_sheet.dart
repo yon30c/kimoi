@@ -81,10 +81,8 @@ class GeneralBottomSheetState extends ConsumerState<GeneralBottomSheet> {
         title: const Text('Reproducir'),
         onTap: () async {
           final number = widget.anime.chapterUrl!.split('-').last;
-
           final id =
               '${widget.anime.animeTitle}/$number/${widget.anime.chapterUrl}';
-
           final chapter = await ref
               .read(isWatchingAnimeProvider.notifier)
               .loadWatchingChapter(id);
@@ -112,8 +110,6 @@ class GeneralBottomSheetState extends ConsumerState<GeneralBottomSheet> {
               context.push('/local-player', extra: chapter);
             });
           }
-
-          // Navigator.maybePop(context);
         },
       ),
       ListTile(
