@@ -10,8 +10,6 @@ final GlobalKey<NavigatorState> _rootNavigatorKey =
 final GlobalKey<NavigatorState> _sectionANavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'sectionANav');
 
-final GlobalKey<NavigatorState> _localPlayerRoute =
-    GlobalKey<NavigatorState>(debugLabel: 'localPlayer');
 
 final router =
     GoRouter(navigatorKey: _rootNavigatorKey, initialLocation: '/', routes: [

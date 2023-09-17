@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/items/anime_card.dart';
+import 'package:kimoi/src/UI/items/filter_dialog.dart';
 import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
-import 'package:kimoi/src/domain/entities/anime.dart';
 
 import '../../items/items.dart';
 import '../../providers/providers.dart';
@@ -18,103 +18,19 @@ class HomeDirectory extends ConsumerStatefulWidget {
 
 class HomeDirectoryState extends ConsumerState<HomeDirectory>
     with SingleTickerProviderStateMixin {
-  int? estreno;
-  int? estado;
-  int? tipo;
-  int? genero;
-  int? idioma;
-
-  bool isLoading = false;
-  bool activeFloatingButtom = false;
-
-  late final ScrollController scrollController;
   late final TabController tabController;
 
   @override
   void initState() {
     super.initState();
-    scrollController = ScrollController();
     tabController = TabController(length: 2, vsync: this);
     tabController.addListener(() {
       setState(() {});
     });
-    ref.read(animeDirectoryProvider.notifier).getAnimes(
-        estado: estado,
-        estreno: estreno,
-        tipo: tipo,
-        genero: genero,
-        idioma: idioma);
-
-    scrollController.addListener(() {
-      // if (widget.loadNextPage == null) return;
-
-      if ((scrollController.position.pixels + 300) >=
-              scrollController.position.maxScrollExtent &&
-          tabController.index == 0) {
-        // add5();
-        fetchData();
-      }
-
-      if (scrollController.position.pixels > 500) activateFloatingB();
-      if (scrollController.position.pixels ==
-          scrollController.position.minScrollExtent) desactivateFloatingB();
-    });
-  }
-
-  void activateFloatingB() {
-    if (activeFloatingButtom) return;
-    activeFloatingButtom = true;
-    setState(() {});
-  }
-
-  void desactivateFloatingB() {
-    if (!activeFloatingButtom) return;
-    activeFloatingButtom = false;
-    setState(() {});
-  }
-
-  Future fetchData() async {
-    if (isLoading) return;
-
-    isLoading = true;
-    setState(() {});
-
-    ref.read(animeDirectoryProvider.notifier).getAnimes(
-        estado: ref.read(estadoProvider),
-        estreno: ref.read(estrenoProvider),
-        tipo: ref.read(tipoProvider),
-        genero: ref.read(generoProvider),
-        idioma: ref.read(idiomaProvider));
-    await Future.delayed(const Duration(seconds: 3));
-
-    isLoading = false;
-    setState(() {});
-
-    if (scrollController.position.pixels + 100 <=
-        scrollController.position.maxScrollExtent) return;
-
-    scrollController.animateTo(scrollController.position.pixels + 300,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.fastOutSlowIn);
-  }
-
-  bool activeFilter = false;
-
-  double height = 64;
-
-  void clearAllFilter() {
-    ref.read(estadoProvider.notifier).update((state) => 0);
-    ref.read(estrenoProvider.notifier).update((state) => 0);
-    ref.read(generoProvider.notifier).update((state) => 0);
-    ref.read(tipoProvider.notifier).update((state) => 0);
-    ref.read(idiomaProvider.notifier).update((state) => 0);
-
-    ref.refresh(animeDirectoryProvider.notifier).getAnimes();
   }
 
   @override
   Widget build(BuildContext context) {
-    final animes = ref.watch(animeDirectoryProvider);
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -169,41 +85,128 @@ class HomeDirectoryState extends ConsumerState<HomeDirectory>
             ),
           ),
         ),
-        body: TabBarView(controller: tabController, children: [
-          _AllAnimesPage(
-              scrollController: scrollController,
-              animes: animes,
-              isLoading: isLoading),
-          const _GenrePage()
-        ]));
+        body: TabBarView(
+            controller: tabController,
+            children: const [_AllAnimesPage(), _GenrePage()]));
   }
 
   @override
   void dispose() {
-    tabController.removeListener(() {});
-    scrollController.dispose();
     tabController.dispose();
     super.dispose();
   }
 }
 
-class _AllAnimesPage extends StatefulWidget {
-  const _AllAnimesPage({
-    required this.scrollController,
-    required this.animes,
-    required this.isLoading,
-  });
-
-  final ScrollController scrollController;
-  final List<Anime> animes;
-  final bool isLoading;
+class _AllAnimesPage extends ConsumerStatefulWidget {
+  const _AllAnimesPage();
 
   @override
-  State<_AllAnimesPage> createState() => _AllAnimesPageState();
+  _AllAnimesPageState createState() => _AllAnimesPageState();
 }
 
-class _AllAnimesPageState extends State<_AllAnimesPage>
-    with AutomaticKeepAliveClientMixin {
+class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+  int? estreno;
+  int? estado;
+  String? tipo;
+  String? genero;
+  int? idioma;
+
+  bool isLoading = false;
+
+  late final ScrollController scrollController;
+  late final TabController tabController;
+
+  void clearAllFilter() {
+    ref.read(estadoProvider.notifier).update((state) => 0);
+    ref.read(estrenoProvider.notifier).update((state) => 0);
+    ref.read(generoProvider.notifier).update((state) => '0');
+    ref.read(tipoProvider.notifier).update((state) => '0');
+    ref.read(idiomaProvider.notifier).update((state) => 0);
+
+    ref.refresh(animeDirectoryProvider.notifier).getAnimes();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    scrollController = ScrollController();
+    tabController = TabController(length: 2, vsync: this);
+    tabController.addListener(() {
+      setState(() {});
+    });
+    ref.read(animeDirectoryProvider.notifier).getAnimes(
+        estado: estado,
+        estreno: estreno,
+        tipo: tipo,
+        genero: genero,
+        idioma: idioma);
+
+    scrollController.addListener(() {
+      // if (widget.loadNextPage == null) return;
+
+      if ((scrollController.position.pixels + 300) >=
+              scrollController.position.maxScrollExtent &&
+          tabController.index == 0) {
+        // add5();
+        fetchData();
+      }
+
+      listen();
+
+    });
+  }
+
+  Future fetchData() async {
+    if (isLoading) return;
+
+    isLoading = true;
+    setState(() {});
+
+    ref.read(animeDirectoryProvider.notifier).getAnimes(
+        estado: ref.read(estadoProvider),
+        estreno: ref.read(estrenoProvider),
+        tipo: ref.read(tipoProvider),
+        genero: ref.read(generoProvider),
+        idioma: ref.read(idiomaProvider));
+    await Future.delayed(const Duration(seconds: 2));
+
+    isLoading = false;
+    setState(() {});
+
+    // if (scrollController.position.pixels + 100 <=
+    //     scrollController.position.maxScrollExtent) return;
+    if (scrollController.position.pixels + 100 <=
+        scrollController.position.maxScrollExtent) return;
+
+    scrollController.animateTo(scrollController.position.pixels + 100,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.fastLinearToSlowEaseIn);
+  }
+
+  bool isFabActive = false;
+
+  void listen() {
+    final direction = scrollController.position.userScrollDirection;
+    if (direction == ScrollDirection.forward) {
+      show();
+    } else if (direction == ScrollDirection.reverse) {
+      hide();
+    }
+    if (scrollController.position.pixels ==
+        scrollController.position.minScrollExtent) {
+      hide();
+    }
+  }
+
+  void show() {
+    if (!isFabActive) setState(() => isFabActive = true);
+  }
+
+  void hide() {
+    if (isFabActive) setState(() => isFabActive = false);
+  }
+
   SliverPersistentHeader makeHeader(Widget child) {
     return SliverPersistentHeader(
       // pinned: true,
@@ -216,71 +219,88 @@ class _AllAnimesPageState extends State<_AllAnimesPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    final animes = ref.watch(animeDirectoryProvider);
+
     final textStyle = Theme.of(context).textTheme;
     final color = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size;
-    return Stack(
-      children: [
-        CustomScrollView(
-          controller: widget.scrollController,
-          slivers: [
-            makeHeader(DecoratedBox(
-              decoration: BoxDecoration(color: color.background),
-              child: Row(
-                children: [
-                  const SizedBox(width: 8),
-                  Text(
-                    'Popular',
-                    style: textStyle.titleMedium,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                      onPressed: () {
-                        //Todo:
-                      },
-                      icon: const Icon(Icons.sort)),
-                  IconButton(
-                      onPressed: () {
-                        //Todo:
-                      },
-                      icon: const Icon(Icons.filter_alt)),
-                ],
-              ),
-            )),
-            SliverGrid.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, mainAxisExtent: size.height * 0.40),
-              itemCount: widget.animes.length,
-              itemBuilder: (BuildContext context, int index) {
-                final size = MediaQuery.of(context).size;
-                final anime = widget.animes[index];
-                if (widget.animes.isEmpty) {
-                  return const CircularProgressIndicator();
-                }
-                return AnimeCard(
-                  height: size.height * 0.27,
-                  width: (size.width / 2) - 5,
-                  anime: anime,
-                  borderRadius: 5,
-                  // onTap: () => showButtonSheet(context, ref: ref, anime: anime),
-                );
+    return Scaffold(
+      floatingActionButton: isFabActive
+          ? FloatingActionButton(
+              key: const Key('all-ani-fab'),
+              heroTag: 'all-ani-fab',
+              onPressed: () {
+                scrollController.animateTo(
+                    scrollController.position.minScrollExtent,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.bounceIn);
               },
-            ),
-          ],
-        ),
-        if (widget.isLoading)
-          Positioned(
-              right: (size.width / 2) - 25,
-              bottom: 20,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                    color: Colors.white, shape: BoxShape.circle),
-                height: 50,
-                width: 50,
-                child: const CircularProgressIndicator(),
+              child: const Icon(Icons.keyboard_arrow_up),
+            )
+          : null,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            controller: scrollController,
+            slivers: [
+              makeHeader(DecoratedBox(
+                decoration: BoxDecoration(color: color.background),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    Text(
+                      'Recientes',
+                      style: textStyle.titleMedium,
+                    ),
+                    const Spacer(),
+                    IconButton(
+                        onPressed: () {
+                          showGeneralDialog(
+                              context: context,
+                              pageBuilder: (_, __, ___) {
+                                return const FilterDialog();
+                              });
+                        },
+                        icon: const Icon(Icons.filter_alt)),
+                  ],
+                ),
               )),
-      ],
+              SliverGrid.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, mainAxisExtent: size.height * 0.40),
+                itemCount: animes.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final size = MediaQuery.of(context).size;
+                  final anime = animes[index];
+                  if (animes.isEmpty) {
+                    return const CircularProgressIndicator();
+                  }
+                  return AnimeCard(
+                    height: size.height * 0.27,
+                    width: (size.width / 2) - 5,
+                    anime: anime,
+                    borderRadius: 5,
+                    // onTap: () => showButtonSheet(context, ref: ref, anime: anime),
+                  );
+                },
+              ),
+            ],
+          ),
+          if (isLoading)
+            Positioned(
+                right: (size.width / 2) - 25,
+                bottom: 20,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                      color: color.background, shape: BoxShape.circle),
+                  height: 50,
+                  width: 50,
+                  child: const CircularProgressIndicator(),
+                )),
+        ],
+      ),
     );
   }
 
@@ -354,7 +374,7 @@ class _GenrePage extends ConsumerWidget {
 }
 
 class GenresTab {
-  final int id;
+  final String id;
   final String title;
   final String imagePath;
   final IconData? icon;
@@ -374,7 +394,7 @@ List<GenresTab> genresTab = [
   GenresTab(
     iconPath: null,
     name: 'Acción',
-    id: 1,
+    id: 'accion',
     title: 'ACCIÓN',
     imagePath: 'assets/images/acc-ani.jpeg',
     icon: FontAwesomeIcons.fire,
@@ -382,35 +402,35 @@ List<GenresTab> genresTab = [
   GenresTab(
       iconPath: null,
       name: 'Aventura',
-      id: 23,
+      id: 'aventura',
       title: 'AVENTURA',
       imagePath: 'assets/images/av-ani.jpeg',
       icon: Icons.map_rounded),
   GenresTab(
       iconPath: 'assets/icons/laughing.png',
       name: 'Comedia',
-      id: 5,
+      id: 'comedia',
       title: 'COMEDIA',
       imagePath: 'assets/images/com-ani.jpeg',
       icon: null),
   GenresTab(
       iconPath: null,
       name: 'Drama',
-      id: 6,
+      id: 'drama',
       title: 'DRAMA',
       imagePath: 'assets/images/dra-ani.jpeg',
       icon: FontAwesomeIcons.heartCrack),
   GenresTab(
       iconPath: null,
       name: 'Ecchi',
-      id: 11,
+      id: 'ecchi',
       title: 'ECCHI',
       imagePath: 'assets/images/ecchi-ani.jpeg',
       icon: FontAwesomeIcons.fireFlameCurved),
   GenresTab(
     iconPath: null,
     name: 'Fantasia',
-    id: 13,
+    id: 'fantasia',
     title: 'FANTASIA',
     imagePath: 'assets/images/fan-ani.jpeg',
     icon: FontAwesomeIcons.fantasyFlightGames,
@@ -418,21 +438,21 @@ List<GenresTab> genresTab = [
   GenresTab(
       iconPath: null,
       name: 'Musical',
-      id: 36,
+      id: 'musica',
       title: 'MUSICAL',
       imagePath: 'assets/images/mus-ani.jpeg',
       icon: FontAwesomeIcons.music),
   GenresTab(
       iconPath: null,
       name: 'Romance',
-      id: 3,
+      id: 'romance',
       title: 'ROMANCE',
       imagePath: 'assets/images/rom-ani.jpeg',
       icon: FontAwesomeIcons.heartPulse),
   GenresTab(
     iconPath: null,
     name: 'Ciencia Ficción',
-    id: 20,
+    id: 'ciencia-ficcion',
     title: 'CIENCIA FICCIÓN',
     imagePath: 'assets/images/cie-ani.jpeg',
     icon: Icons.science,
@@ -440,7 +460,7 @@ List<GenresTab> genresTab = [
   GenresTab(
     iconPath: null,
     name: 'Seinen',
-    id: 7,
+    id: 'seinen',
     title: 'SEINEN',
     imagePath: 'assets/images/sei-ani2.jpeg',
     icon: Icons.interests,
@@ -448,42 +468,42 @@ List<GenresTab> genresTab = [
   GenresTab(
       iconPath: 'assets/icons/watch-movie.png',
       name: 'Shoujo',
-      id: 4,
+      id: 'shojo',
       title: 'SHOUJO',
       imagePath: 'assets/images/shou-ani2.jpeg',
       icon: null),
   GenresTab(
       iconPath: null,
       name: 'Shounen',
-      id: 9,
+      id: 'shonen',
       title: 'SHOUNEN',
       imagePath: 'assets/images/shoune-ani2.jpeg',
       icon: FontAwesomeIcons.gamepad),
   GenresTab(
       iconPath: null,
       name: 'Recuentos de la vida',
-      id: 10,
+      id: 'recuerdos-de-la-vida',
       title: 'RECUENTOS DE LA VIDA',
       imagePath: 'assets/images/rec-ani.jpeg',
       icon: FontAwesomeIcons.calendarDay),
   GenresTab(
       iconPath: null,
       name: 'Deportes',
-      id: 8,
+      id: 'deportes',
       title: 'DEPORTES',
       imagePath: 'assets/images/dep-ani.jpeg',
       icon: FontAwesomeIcons.basketball),
   GenresTab(
       iconPath: null,
       name: 'Sobrenatural',
-      id: 12,
+      id: 'sobrenatural',
       title: 'SOBRENATURAL',
       imagePath: 'assets/images/sob-ani2.jpeg',
       icon: FontAwesomeIcons.ghost),
   GenresTab(
       iconPath: 'assets/icons/knif.png',
       name: 'Triller',
-      id: 27,
+      id: 'horror',
       title: 'TRILLER',
       imagePath: 'assets/images/tri-ani.jpeg',
       icon: null)

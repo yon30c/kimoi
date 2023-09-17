@@ -1,20 +1,23 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:kimoi/src/UI/items/servers_dialog.dart';
+import 'package:kimoi/src/utils/extensions/extension.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
+import 'package:kimoi/src/UI/providers/animes/next_and_before_anime_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/local_storage_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
+import 'package:kimoi/src/UI/screens/player/youtube_player.dart';
 import 'package:kimoi/src/infrastructure/datasources/anime_mac_datasource.dart';
 import 'package:kimoi/src/infrastructure/models/extra_data.dart';
+import 'package:kimoi/src/utils/download/check_permission.dart';
 
 import '../../../domain/domain.dart';
-import '../../items/expandable_text.dart';
 import '../../items/items.dart';
-import '../../items/scroll_to_hide_widget.dart';
 
 final isFavoriteProvider =
     FutureProvider.family.autoDispose((ref, String animeTitle) {
@@ -53,8 +56,20 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
   List<List<Chapter>> subList = [];
   List<Chapter> sortedEpisodes = [];
   late TabController tabController;
+  bool isPermission = false;
   late ScrollController scrollController;
   final tabs = [const Tab(text: 'Episodios'), const Tab(text: 'Relacionados')];
+
+  var checkAllPermissions = CheckPermission();
+
+  checkPermission() async {
+    var permission = await checkAllPermissions.isStoragePermission();
+    if (permission) {
+      setState(() {
+        isPermission = true;
+      });
+    }
+  }
 
   String get sortLabel {
     if (isSorted) return "Ascendente";
@@ -74,6 +89,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
     tabController = TabController(length: 2, vsync: this);
     getXData(anime!);
     getAniInfo(anime.animeUrl);
+    checkPermission();
     // scrollController.addListener(listen);
   }
 
@@ -98,30 +114,6 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
     );
   }
 
-  void onTap(String url, String id, Anime anime) async {
-    final chapter = await ref
-        .read(isWatchingAnimeProvider.notifier)
-        .loadWatchingChapter(id);
-
-    if (chapter != null) {
-      Future.delayed(const Duration(milliseconds: 100)).then((value) {
-        context.push('/local-player', extra: chapter);
-      });
-    } else {
-      await ref
-          .read(getVideoDataProvider.notifier)
-          .getVideos(url)
-          .then((value) async {
-        final chapter = ref.read(getVideoDataProvider).first;
-
-        chapter.isWatching = true;
-        chapter.imageUrl = anime.imageUrl;
-        chapter.animeUrl = anime.animeUrl;
-        context.push('/local-player', extra: chapter);
-      });
-    }
-  }
-
   SliverAppBar _customAppbar(
       Anime anime,
       AnimeInfo animeInfo,
@@ -139,27 +131,19 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
             Icons.arrow_back,
           )),
       actions: [
-        IconButton(
-          onPressed: () async {
-            await ref
-                .read(favoriteAnimesProvider.notifier)
-                .toggleFavorite(anime);
-            ref.invalidate(isFavoriteProvider(anime.animeTitle));
-            setState(() {});
-          },
-          icon: isFavoriteFuture.when(
-            loading: () => const SizedBox(
-                height: 25,
-                width: 25,
-                child: CircularProgressIndicator(strokeWidth: 2)),
-            data: (isFavorite) => isFavorite
-                ? const Icon(Icons.favorite_rounded, color: Colors.red)
-                : const Icon(
-                    Icons.favorite_border,
-                    color: Colors.white,
-                  ),
-            error: (_, __) => throw UnimplementedError(),
-          ),
+        if (xData.trailer != null)
+          FilledButton(
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+              onPressed: () {
+                final route = MaterialPageRoute(
+                    builder: (context) => YoutubePlayerScreen(
+                          id: xData.trailer!,
+                        ));
+                Navigator.of(context).push(route);
+              },
+              child: const Text('ver trailer')),
+        const SizedBox(
+          width: 8,
         )
       ],
       expandedHeight: size.height * 0.6,
@@ -215,6 +199,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
 
     final size = MediaQuery.of(context).size;
     final color = Theme.of(context).colorScheme;
+    final textStyle = Theme.of(context).textTheme;
 
     return Scaffold(
       body: CustomScrollView(
@@ -229,7 +214,11 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
             ),
             _CustomTitleBar(anime: anime, animeInfo: animeInfo),
             _RatingBar(xData: xData),
-            _ExtraDataBar(animeInfo: animeInfo, xData: xData),
+            _ExtraDataBar(
+              animeInfo: animeInfo,
+              xData: xData,
+              anime: anime,
+            ),
             _GenresBar(
               animeInfo: animeInfo,
             ),
@@ -239,85 +228,73 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
               text: animeInfo.description ?? xData.synopsis ?? '',
             )
           ])),
-          makeHeader(TabBar.secondary(
-            isScrollable: true,
-
-            // dividerColor: Colors.transparent,
-            controller: tabController,
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            tabs: tabs,
-            onTap: (value) {
-              index = value;
-              setState(() {});
-            },
-          )),
-          const SliverToBoxAdapter(
-            child: Divider(
-              height: 1,
-              indent: 8.0,
-              endIndent: 8.0,
-            ),
-          ),
-          if (index == 0 && subList.length > 1)
-            SliverToBoxAdapter(
-                child: DropdownMenu(
-                    hintText:
-                        '${subList.first.first.chapterNumber} - ${subList.first.last.chapterNumber}',
-                    inputDecorationTheme: const InputDecorationTheme(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.only(left: 15),
-                    ),
-                    initialSelection: <List<Chapter>>[subList.first],
-                    dropdownMenuEntries: subList
-                        .map((e) => DropdownMenuEntry(
-                            value: e,
-                            label:
-                                '${e.first.chapterNumber} - ${e.last.chapterNumber}'))
-                        .toList(),
-                    onSelected: (value) {
-                      sortedEpisodes = value! as List<Chapter>;
-                      setState(() {});
-                    })),
-          if (index == 0)
-            SliverToBoxAdapter(
-              child: Row(
-                children: [
-                  TextButton.icon(
-                      label: Text(sortLabel),
-                      onPressed: () {
-                        isSorted = !isSorted;
-                        sortedEpisodes = sortedEpisodes.reversed.toList();
-                        setState(() {});
-                      },
-                      icon: const Icon(Icons.sort)),
-                  const Spacer(),
-                  const Text('Decargar todo'),
-                  const IconButton(onPressed: null, icon: Icon(Icons.download))
-                ],
+          SliverToBoxAdapter(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.all(Radius.circular(5)),
+                color: color.secondaryContainer,
+              ),
+              margin: const EdgeInsets.all(8),
+              alignment: Alignment.center,
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Text(
+                "Episodios",
+                style: textStyle.titleMedium
+                    ?.copyWith(color: color.onPrimaryContainer),
               ),
             ),
-          if (index == 0)
-            SliverList.builder(
-              itemCount: sortedEpisodes.length,
-              itemBuilder: (context, index) {
-                final eps = sortedEpisodes[index];
+          ),
+          SliverToBoxAdapter(
+            child: Row(
+              children: [
+                TextButton.icon(
+                    label: Text(sortLabel),
+                    onPressed: () {
+                      isSorted = !isSorted;
+                      sortedEpisodes = sortedEpisodes.reversed.toList();
+                      setState(() {});
+                    },
+                    icon: const Icon(Icons.sort)),
+                const Spacer(),
+                if (subList.length > 1)
+                  DropdownMenu(
+                      hintText:
+                          '${subList.first.first.chapterNumber} - ${subList.first.last.chapterNumber}',
+                      inputDecorationTheme: const InputDecorationTheme(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.only(left: 15),
+                      ),
+                      initialSelection: <List<Chapter>>[subList.first],
+                      dropdownMenuEntries: subList
+                          .map((e) => DropdownMenuEntry(
+                              value: e,
+                              label:
+                                  '${e.first.chapterNumber} - ${e.last.chapterNumber}'))
+                          .toList(),
+                      onSelected: (value) {
+                        setState(() {
+                          final val = value as List<Chapter>;
+                          isSorted
+                              ? sortedEpisodes = val
+                              : sortedEpisodes = val.reversed.toList();
+                        });
+                      }),
+              ],
+            ),
+          ),
+          SliverList.builder(
+            itemCount: sortedEpisodes.length,
+            itemBuilder: (context, index) {
+              final eps = sortedEpisodes[index];
 
-                return GestureDetector(
-                  onTap: () => onTap(eps.chapterUrl, eps.id, anime),
-                  child: _EpisodesTile(anime: anime, eps: eps),
-                );
-              },
-            ),
-          if (index == 1)
-            SliverList.builder(
-              itemCount: animeInfo.related.length,
-              itemBuilder: (context, index) {
-                final eps = animeInfo.related[index];
-                return CsTile(
-                  anime: eps,
-                );
-              },
-            ),
+              return _EpisodesTile(
+                anime: anime,
+                eps: eps,
+                xData: xData,
+              );
+            },
+          ),
           const SliverPadding(padding: EdgeInsets.all(20))
         ],
       ),
@@ -343,10 +320,23 @@ class _ExtraDataBar extends StatelessWidget {
   const _ExtraDataBar({
     required this.animeInfo,
     required this.xData,
+    required this.anime,
   });
 
   final AnimeInfo animeInfo;
   final XData xData;
+  final Anime anime;
+
+  String get year {
+    if (anime.release != null && anime.release != '') {
+      return anime.release!;
+    }
+    if (xData.year != null) {
+      return '${xData.year}';
+    }
+
+    return animeInfo.estreno.substringAfterLast(' ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -355,11 +345,12 @@ class _ExtraDataBar extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: Row(children: [
         Text(
-          '${animeInfo.tipo} • ${xData.season} ${animeInfo.estreno}',
+          '${animeInfo.tipo} • ${xData.season} $year',
           style: textStyle.labelMedium,
         ),
         const Spacer(),
-        Text('Estudio: ${xData.studios}', style: textStyle.labelMedium),
+        if (xData.studios != '')
+          Text('Estudio: ${xData.studios}', style: textStyle.labelMedium),
       ]),
     );
   }
@@ -404,12 +395,14 @@ class _CustomTitleBar extends StatelessWidget {
 
 class _EpisodesTile extends ConsumerStatefulWidget {
   const _EpisodesTile({
+    required this.xData,
     required this.anime,
     required this.eps,
   });
 
   final Anime anime;
   final Chapter eps;
+  final XData xData;
 
   @override
   _EpisodesTileState createState() => _EpisodesTileState();
@@ -421,64 +414,70 @@ class _EpisodesTileState extends ConsumerState<_EpisodesTile> {
     super.initState();
   }
 
+  void onTap(Chapter eps, Anime anime) async {
+    final ani = anime;
+    ani.chapterUrl = eps.chapterUrl;
+    showDialog(context: context, builder: (context) => ServerDialog(ani));
+  }
+
   @override
   Widget build(BuildContext context) {
     final textStyle = Theme.of(context).textTheme;
-
+    final color = Theme.of(context).colorScheme;
     final chapter = ref.watch(checkWatchingChapter(widget.eps.id));
 
-    return Card(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
-              child: FadeInImage.assetNetwork(
-                placeholder: 'assets/jar-loading.gif',
-                image: widget.anime.imageUrl,
-                height: 100,
+    return GestureDetector(
+      onTap: () {
+        onTap(widget.eps, widget.anime);
+      },
+      child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(10)),
+                child: FadeInImage.assetNetwork(
+                  placeholder: 'assets/jar-loading.gif',
+                  image: widget.xData.imageUrl,
+                  height: 100,
+                  width: 70,
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.eps.chapter,
-                    style: textStyle.titleMedium,
-                  ),
-                  Text(
-                    widget.eps.chapterInfo,
-                    style: textStyle.labelMedium,
-                  ),
-                ],
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  widget.eps.chapter,
+                  style: textStyle.titleMedium,
+                ),
               ),
-            ),
-            const Spacer(),
-            IconButton(
-                onPressed: () {},
-                icon: chapter.when(
-                  data: (data) {
-                    if (data == null) {
-                      return const Icon(Icons.remove_red_eye_outlined);
-                    }
-                    return data.isCompleted
-                        ? const Icon(Icons.remove_red_eye)
-                        : const Icon(Icons.remove_red_eye_outlined);
-                  },
-                  error: (error, stackTrace) => Text('Error: $error'),
-                  loading: () => const CircularProgressIndicator(),
-                )),
-            const IconButton(onPressed: null, icon: Icon(Icons.download)),
-          ],
-        ));
-
-
+              const Spacer(),
+              IconButton(
+                  onPressed: () {},
+                  icon: chapter.when(
+                    data: (data) {
+                      if (data == null) {
+                        return const Icon(Icons.remove_red_eye_outlined);
+                      }
+                      return data.isCompleted
+                          ? Icon(
+                              Icons.remove_red_eye,
+                              color: color.primary,
+                            )
+                          : const Icon(Icons.remove_red_eye_outlined);
+                    },
+                    error: (error, stackTrace) => Text('Error: $error'),
+                    loading: () => const CircularProgressIndicator(),
+                  )),
+              IconButton(
+                  onPressed: () => onTap(widget.eps, widget.anime),
+                  icon: const Icon(Icons.play_arrow_rounded)),
+            ],
+          )),
+    );
   }
 }
 
-class _BottomAppBar extends ConsumerWidget {
+class _BottomAppBar extends ConsumerStatefulWidget {
   const _BottomAppBar({
     required this.anime,
     required this.isSorted,
@@ -490,11 +489,20 @@ class _BottomAppBar extends ConsumerWidget {
   final List<Chapter> sortedEpisodes;
 
   @override
-  Widget build(BuildContext context, ref) {
-    // final number = anime.chapterUrl!.split('-').last;
+  _BottomAppBarState createState() => _BottomAppBarState();
+}
 
-    // final id = '${anime.animeTitle}/$number/${anime.chapterUrl}';
-    final lastChapter = ref.watch(lastChapterProvider2(anime.animeTitle));
+class _BottomAppBarState extends ConsumerState<_BottomAppBar> {
+  bool isFavorite = false;
+  @override
+  Widget build(BuildContext context) {
+    final isFavoriteFuture =
+        ref.watch(isFavoriteProvider(widget.anime.animeTitle));
+
+    final lastChapter =
+        ref.watch(lastChapterProvider2(widget.anime.animeTitle));
+
+    isFavoriteFuture.whenData((value) => isFavorite = value);
 
     return BottomAppBar(
       padding: const EdgeInsets.only(bottom: 10, left: 15, right: 15),
@@ -503,6 +511,31 @@ class _BottomAppBar extends ConsumerWidget {
           Expanded(
               child: lastChapter.when(
                   data: (data) {
+                    if (data == null) {
+                      return FilledButton.icon(
+                        style: const ButtonStyle(
+                            shape: MaterialStatePropertyAll(
+                                RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(5))))),
+                        onPressed: () async {
+                          final ani = widget.anime;
+                          String url = widget.isSorted
+                              ? widget.sortedEpisodes.first.chapterUrl
+                              : widget.sortedEpisodes.last.chapterUrl;
+                          ani.chapterUrl = url;
+                          showDialog(
+                              context: context,
+                              builder: (context) => ServerDialog(ani));
+                        },
+                        label: const Text('Comenzar a ver Ep. 1'),
+                        icon: const Icon(Icons.play_arrow_rounded),
+                      );
+                    }
+
+                    final eps = widget.sortedEpisodes.indexWhere((element) =>
+                        element.chapterNumber == (data.chapterNumber + 1));
+
                     return FilledButton.icon(
                       style: const ButtonStyle(
                           shape: MaterialStatePropertyAll(
@@ -510,46 +543,63 @@ class _BottomAppBar extends ConsumerWidget {
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(5))))),
                       onPressed: () async {
-                        final ani = anime;
-                        String url = isSorted
-                            ? sortedEpisodes.first.chapterUrl
-                            : sortedEpisodes.last.chapterUrl;
-                        ani.chapterUrl = url;
+                        if (data.isCompleted && eps != -1) {
+                          final ani = widget.anime;
+                          String url = widget.sortedEpisodes[eps].chapterUrl;
 
-                        final chapter = ref.watch(lastChapterWProvider);
-                        if (chapter != null) {
-                          context.push('/local-player', extra: chapter);
+                          ani.chapterUrl = url;
+
+                          showDialog(
+                              context: context,
+                              builder: (context) => ServerDialog(ani));
                         } else {
-                          await ref
-                              .read(getVideoDataProvider.notifier)
-                              .getVideos(url)
-                              .then((value) async {
-                            // context.pop();
-                            final value = ref.read(getVideoDataProvider).first;
+                          final ani = widget.anime;
+                          ani.chapterUrl = data.chapterUrl;
 
-                            value.isWatching = true;
-                            value.imageUrl = ani.imageUrl;
-
-                            context.push('/local-player', extra: value);
-                          });
+                          showDialog(
+                              context: context,
+                              builder: (context) => ServerDialog(ani));
                         }
                       },
-                      label: data != null
-                          ? Text('Continuar Ep. ${data.chapterNumber}')
-                          : const Text('Comenzar a ver Ep. 1'),
+                      label: data.isCompleted && eps != -1
+                          ? Text('Comenzar a ver Ep. ${data.chapterNumber + 1}')
+                          : Text('Continuar Ep. ${data.chapterNumber}'),
                       icon: const Icon(Icons.play_arrow_rounded),
                     );
                   },
                   error: (error, stackTrace) => Text('Error: $error'),
                   loading: () => const FilledButton(
-                      onPressed: null, child: CircularProgressIndicator()))),
+                      onPressed: null,
+                      child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator())))),
           const SizedBox(width: 5),
-          IconButton.filled(
-              style: const ButtonStyle(
-                  shape: MaterialStatePropertyAll(RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(5))))),
-              onPressed: () {},
-              icon: const Icon(Icons.bookmark_add_outlined))
+          IconButton.filledTonal(
+            style: const ButtonStyle(
+                shape: MaterialStatePropertyAll(RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(5))))),
+            onPressed: () async {
+              await ref
+                  .read(favoriteAnimesProvider.notifier)
+                  .toggleFavorite(widget.anime);
+              ref.invalidate(isFavoriteProvider(widget.anime.animeTitle));
+              setState(() {});
+            },
+            icon: isFavoriteFuture.when(
+              loading: () => const SizedBox(
+                  height: 25,
+                  width: 25,
+                  child: CircularProgressIndicator(strokeWidth: 2)),
+              data: (isFavorite) => isFavorite
+                  ? const Icon(Icons.bookmark_added)
+                  : const Icon(
+                      Icons.bookmark_add_outlined,
+                      // color: Colors.white,
+                    ),
+              error: (_, __) => throw UnimplementedError(),
+            ),
+          )
         ],
       ),
     );
@@ -583,7 +633,7 @@ class _RatingBar extends StatelessWidget {
         ),
         const Spacer(),
         Text(
-          '${xData.rating}',
+          xData.rating != null ? xData.rating! : '',
           style: textStyle.labelMedium?.copyWith(color: color.error),
         ),
         const SizedBox(

@@ -1,7 +1,9 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kimoi/src/UI/screens/home/home.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
 
@@ -29,18 +31,35 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
     ref.read(recentAnimesProvider.notifier).getAnimes();
     getShounenAnime();
     getAccionAnime();
+    // MonoschinosDatasource().getRecentAnime();
+    // MonoschinosDatasource().getAnimeInfo('');
   }
 
-  getShounenAnime() async {
-    shounenAnime =
-        await ref.read(animeRepositoryProvider).getDirectory(genero: 9);
+  void getShounenAnime() async {
+    shounenAnime = await ref
+        .read(animeRepositoryProvider)
+        .getDirectory(genero: 'shonen', estreno: 2023);
     setState(() {});
   }
 
-  getAccionAnime() async {
-    accionAnime =
-        await ref.read(animeRepositoryProvider).getDirectory(genero: 1);
+  void getAccionAnime() async {
+    accionAnime = await ref
+        .read(animeRepositoryProvider)
+        .getDirectory(genero: 'accion', estreno: 2023);
     setState(() {});
+  }
+
+  void onPressed() async {
+    await showSearch(
+            context: context,
+            delegate: SearchAnimeDelegate(
+                searchAnimes:
+                    ref.watch(searchedMoviesProvider.notifier).searchAnimes))
+        .then((value) {
+      if (value == null) return;
+      ref.read(animeProvider.notifier).update((state) => value);
+      context.push('/anime-screen');
+    });
   }
 
   @override
@@ -73,22 +92,7 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                   title: const Text('Animes'),
                   actions: [
                     IconButton(
-                        onPressed: () async {
-                          await showSearch(
-                                  context: context,
-                                  delegate: SearchAnimeDelegate(
-                                      searchAnimes: ref
-                                          .watch(
-                                              searchedMoviesProvider.notifier)
-                                          .searchAnimes))
-                              .then((value) {
-                            if (value == null) return;
-                            ref
-                                .read(animeProvider.notifier)
-                                .update((state) => value);
-                            context.push('/anime-screen');
-                          });
-                        },
+                        onPressed: onPressed,
                         icon: const Icon(Icons.search, size: 30))
                   ],
                 ),
@@ -111,10 +115,17 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                           animes: lastAnimes,
                           title: 'Últimos animes',
                           subtitle: '2023',
-                          loadNextPage: ref
-                              .read(lastAnimesAddedProvider.notifier)
-                              .getAnimes),
+                      ),
                       AnimesListview(
+                          genre: GenresTab(
+                            iconPath: null,
+                            name: 'Acción',
+                            id: 'accion',
+                            title: 'ACCIÓN',
+                            imagePath: 'assets/images/acc-ani.jpeg',
+                            icon: FontAwesomeIcons.fire,
+                          ),
+                          subtitle: 'Ver más',
                           height: 180,
                           width: 130,
                           animes: accionAnime,
@@ -123,6 +134,14 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                               .read(lastAnimesAddedProvider.notifier)
                               .getAnimes),
                       AnimesListview(
+                          genre: GenresTab(
+                              iconPath: null,
+                              name: 'Shounen',
+                              id: 'shonen',
+                              title: 'SHOUNEN',
+                              imagePath: 'assets/images/shoune-ani2.jpeg',
+                              icon: FontAwesomeIcons.gamepad),
+                          subtitle: 'Ver más',
                           height: 180,
                           width: 130,
                           animes: shounenAnime,

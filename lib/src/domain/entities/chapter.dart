@@ -18,10 +18,12 @@ class Chapter {
   bool isWatching;
   int position;
   int duration;
+  DateTime? date;
 
   Chapter(
       {required this.title,
       required this.id,
+      this.date,
       this.duration = 0,
       this.animeUrl,
       this.isarId,

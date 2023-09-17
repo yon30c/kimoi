@@ -1,7 +1,8 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:kimoi/src/infrastructure/models/article_info.dart';
 
-import '../../infrastructure/infrastructure.dart';
 import '../services/webview/webview.dart';
 
 class Article extends StatefulWidget {
@@ -15,6 +16,7 @@ class Article extends StatefulWidget {
 }
 
 class _ArticleState extends State<Article> {
+
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
@@ -81,7 +83,9 @@ class _ArticleState extends State<Article> {
                           icon: const Icon(Icons.remove_red_eye),
                           label: const Text('Ver más')),
                       TextButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            
+                          },
                           icon: const Icon(Icons.share_outlined),
                           label: const Text('Compartir')),
                     ],
@@ -91,4 +95,6 @@ class _ArticleState extends State<Article> {
       ),
     );
   }
+
+
 }

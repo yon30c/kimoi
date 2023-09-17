@@ -8,4 +8,6 @@ abstract class LocalStorageDatasource {
   Future<Chapter?> loadWatchingAnime(String id);
   Future<Chapter?> loadLastWatchedChapterAnime(String title);
   Future<List<Chapter>> loadWatchedHistory({int limit = 10, offset = 0});
+  Future<void> clearHistory();
+
 }

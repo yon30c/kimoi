@@ -23,10 +23,6 @@ class MainApp extends StatelessWidget {
         themeMode: themeController.themeMode,
         routerConfig: router,
         debugShowCheckedModeBanner: false,
-
-        // TODO: modificar comportamiento del backbutton
-        // backButtonDispatcher: RootBackButtonDispatcher().createChildBackButtonDispatcher(),
-        
       ),
     );
   }

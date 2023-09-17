@@ -10,12 +10,6 @@ import 'src/config/theme/theme.dart';
 
 final themeController = ThemeController(ThemeService());
 
-void changeStatusBarColor(Color color) {
-  // Establecemos el color de la barra de navegación del sistema en azul.
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(statusBarBrightness: Brightness.dark),
-  );
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

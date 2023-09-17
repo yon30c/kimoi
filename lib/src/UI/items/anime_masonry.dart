@@ -14,7 +14,7 @@ class AnimeMasonry extends StatefulWidget {
   State<AnimeMasonry> createState() => _AnimeMasonryState();
 }
 
-class _AnimeMasonryState extends State<AnimeMasonry> {
+class _AnimeMasonryState extends State<AnimeMasonry> with AutomaticKeepAliveClientMixin {
   final scrollController = ScrollController();
 
   @override
@@ -40,6 +40,7 @@ class _AnimeMasonryState extends State<AnimeMasonry> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: MasonryGridView.count(
@@ -64,4 +65,7 @@ class _AnimeMasonryState extends State<AnimeMasonry> {
       ),
     );
   }
+  
+  @override
+  bool get wantKeepAlive => true;
 }

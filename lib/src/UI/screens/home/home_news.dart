@@ -66,6 +66,11 @@ class HomeNewsState extends ConsumerState<HomeNews>
     } else if (direction == ScrollDirection.reverse) {
       desactivateFloatingB();
     }
+
+    if (scrollController.position.pixels ==
+        scrollController.position.minScrollExtent) {
+      desactivateFloatingB();
+    }
   }
 
   void activateFloatingB() {
@@ -183,7 +188,7 @@ class HomeNewsState extends ConsumerState<HomeNews>
       return SliverPersistentHeader(
         // pinned: true,
         delegate: SliverAppBarDelegate(
-            minHeight: 70.0, maxHeight: 70.0, child: child),
+            minHeight: kToolbarHeight , maxHeight:kToolbarHeight, child: child),
       );
     }
 
@@ -199,7 +204,7 @@ class HomeNewsState extends ConsumerState<HomeNews>
                   activeFloatingButtom = false;
                   setState(() {});
                 },
-                child: const Icon(Icons.arrow_upward_rounded),
+                child: const Icon(Icons.keyboard_arrow_up),
               )
             : null,
         body: CustomScrollView(controller: scrollController, slivers: [
@@ -215,16 +220,12 @@ class HomeNewsState extends ConsumerState<HomeNews>
                     child: const Center(child: CircularProgressIndicator()))
                 : NewsSlideshow(articles: popularNews),
           ),
-          makeHeader(AppBar(
-            titleSpacing: 0,
-            toolbarHeight: 15,
-            title: TabBar(
-              dividerColor: Colors.transparent,
+          makeHeader( TabBar(
               tabs: tabs,
               controller: controller,
               onTap: onTap,
             ),
-          )),
+          ),
           SliverList.builder(
             itemCount: articles.length,
             itemBuilder: (context, index) {

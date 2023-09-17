@@ -42,43 +42,48 @@ const ChapterSchema = CollectionSchema(
       name: r'chapterUrl',
       type: IsarType.string,
     ),
-    r'duration': PropertySchema(
+    r'date': PropertySchema(
       id: 5,
+      name: r'date',
+      type: IsarType.dateTime,
+    ),
+    r'duration': PropertySchema(
+      id: 6,
       name: r'duration',
       type: IsarType.long,
     ),
     r'id': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'id',
       type: IsarType.string,
     ),
     r'imageUrl': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'imageUrl',
       type: IsarType.string,
     ),
     r'isCompleted': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'isCompleted',
       type: IsarType.bool,
     ),
     r'isWatching': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'isWatching',
       type: IsarType.bool,
     ),
     r'position': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'position',
       type: IsarType.long,
     ),
     r'servers': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'servers',
       type: IsarType.stringList,
     ),
     r'title': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'title',
       type: IsarType.string,
     )
@@ -141,14 +146,15 @@ void _chapterSerialize(
   writer.writeString(offsets[2], object.chapterInfo);
   writer.writeLong(offsets[3], object.chapterNumber);
   writer.writeString(offsets[4], object.chapterUrl);
-  writer.writeLong(offsets[5], object.duration);
-  writer.writeString(offsets[6], object.id);
-  writer.writeString(offsets[7], object.imageUrl);
-  writer.writeBool(offsets[8], object.isCompleted);
-  writer.writeBool(offsets[9], object.isWatching);
-  writer.writeLong(offsets[10], object.position);
-  writer.writeStringList(offsets[11], object.servers);
-  writer.writeString(offsets[12], object.title);
+  writer.writeDateTime(offsets[5], object.date);
+  writer.writeLong(offsets[6], object.duration);
+  writer.writeString(offsets[7], object.id);
+  writer.writeString(offsets[8], object.imageUrl);
+  writer.writeBool(offsets[9], object.isCompleted);
+  writer.writeBool(offsets[10], object.isWatching);
+  writer.writeLong(offsets[11], object.position);
+  writer.writeStringList(offsets[12], object.servers);
+  writer.writeString(offsets[13], object.title);
 }
 
 Chapter _chapterDeserialize(
@@ -163,15 +169,16 @@ Chapter _chapterDeserialize(
     chapterInfo: reader.readString(offsets[2]),
     chapterNumber: reader.readLong(offsets[3]),
     chapterUrl: reader.readString(offsets[4]),
-    duration: reader.readLongOrNull(offsets[5]) ?? 0,
-    id: reader.readString(offsets[6]),
-    imageUrl: reader.readStringOrNull(offsets[7]),
-    isCompleted: reader.readBoolOrNull(offsets[8]) ?? false,
-    isWatching: reader.readBoolOrNull(offsets[9]) ?? false,
+    date: reader.readDateTimeOrNull(offsets[5]),
+    duration: reader.readLongOrNull(offsets[6]) ?? 0,
+    id: reader.readString(offsets[7]),
+    imageUrl: reader.readStringOrNull(offsets[8]),
+    isCompleted: reader.readBoolOrNull(offsets[9]) ?? false,
+    isWatching: reader.readBoolOrNull(offsets[10]) ?? false,
     isarId: id,
-    position: reader.readLongOrNull(offsets[10]) ?? 0,
-    servers: reader.readStringList(offsets[11]) ?? [],
-    title: reader.readString(offsets[12]),
+    position: reader.readLongOrNull(offsets[11]) ?? 0,
+    servers: reader.readStringList(offsets[12]) ?? [],
+    title: reader.readString(offsets[13]),
   );
   return object;
 }
@@ -194,20 +201,22 @@ P _chapterDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 9:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 10:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 11:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 12:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 13:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -891,6 +900,75 @@ extension ChapterQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'chapterUrl',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Chapter, Chapter, QAfterFilterCondition> dateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'date',
+      ));
+    });
+  }
+
+  QueryBuilder<Chapter, Chapter, QAfterFilterCondition> dateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'date',
+      ));
+    });
+  }
+
+  QueryBuilder<Chapter, Chapter, QAfterFilterCondition> dateEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'date',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Chapter, Chapter, QAfterFilterCondition> dateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'date',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Chapter, Chapter, QAfterFilterCondition> dateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'date',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Chapter, Chapter, QAfterFilterCondition> dateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'date',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -1782,6 +1860,18 @@ extension ChapterQuerySortBy on QueryBuilder<Chapter, Chapter, QSortBy> {
     });
   }
 
+  QueryBuilder<Chapter, Chapter, QAfterSortBy> sortByDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Chapter, Chapter, QAfterSortBy> sortByDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.desc);
+    });
+  }
+
   QueryBuilder<Chapter, Chapter, QAfterSortBy> sortByDuration() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'duration', Sort.asc);
@@ -1929,6 +2019,18 @@ extension ChapterQuerySortThenBy
     });
   }
 
+  QueryBuilder<Chapter, Chapter, QAfterSortBy> thenByDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Chapter, Chapter, QAfterSortBy> thenByDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.desc);
+    });
+  }
+
   QueryBuilder<Chapter, Chapter, QAfterSortBy> thenByDuration() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'duration', Sort.asc);
@@ -2062,6 +2164,12 @@ extension ChapterQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Chapter, Chapter, QDistinct> distinctByDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'date');
+    });
+  }
+
   QueryBuilder<Chapter, Chapter, QDistinct> distinctByDuration() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'duration');
@@ -2149,6 +2257,12 @@ extension ChapterQueryProperty
   QueryBuilder<Chapter, String, QQueryOperations> chapterUrlProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'chapterUrl');
+    });
+  }
+
+  QueryBuilder<Chapter, DateTime?, QQueryOperations> dateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'date');
     });
   }
 

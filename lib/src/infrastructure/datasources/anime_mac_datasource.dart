@@ -162,7 +162,7 @@ class AnimeMacDatasource extends AnimeDatasource {
           release: release));
     }
 
-  List<List<Chapter>> subList = [];
+    List<List<Chapter>> subList = [];
 
     if (episodes.length < 500) {
       final mod = episodes.length % 50;
@@ -175,7 +175,7 @@ class AnimeMacDatasource extends AnimeDatasource {
         j = j + 50;
       }
       subList.add(episodes.reversed.toList().sublist(h, (h + mod)));
-    } else if(episodes.length >= 500) {
+    } else if (episodes.length >= 500) {
       final mod = episodes.length % 100;
       int h = 0;
       int j = 100;
@@ -213,12 +213,16 @@ class AnimeMacDatasource extends AnimeDatasource {
       final jikRes = await Dio().get(lastUrl);
       final jikan = JikanResponse.fromJson(jikRes.data);
 
+      String? studios;
+
       final rating = jikan.data.first.rating;
       final popularity = jikan.data.first.popularity;
       final rank = jikan.data.first.rank;
       String? season = jikan.data.first.season;
-      final studios = jikan.data.first.studios.first.name;
-      final trailer = jikan.data.first.trailer?.url;
+      if (jikan.data.first.studios.isNotEmpty) {
+        studios = jikan.data.first.studios.first.name;
+      }
+      final trailer = jikan.data.first.trailer?.youtubeId;
       final score = jikan.data.first.score;
       final largeImageUrl = jikan.data.first.images.values.first.largeImageUrl;
       final smallImageUrl = jikan.data.first.images.values.first.smallImageUrl;
@@ -272,7 +276,7 @@ class AnimeMacDatasource extends AnimeDatasource {
           synopsis: synopsis,
           season: season,
           year: jikan.data.first.year,
-          studios: studios,
+          studios: studios ?? '',
           genres: genres);
     } on Exception catch (e) {
       throw Exception(e);
@@ -352,8 +356,8 @@ class AnimeMacDatasource extends AnimeDatasource {
   Future<List<Anime>> getDirectory(
       {int? estado,
       int? p,
-      int? tipo,
-      int? genero,
+      String? tipo,
+      String? genero,
       int? estreno,
       int? idioma,
       String? q}) async {
@@ -450,12 +454,12 @@ extension ListExceptLast<T> on List<T> {
 Map<String, dynamic> queryParameter(
     {int? estado,
     int? p,
-    int? tipo,
-    int? genero,
+    String? tipo,
+    String? genero,
     int? estreno,
     int? idioma,
     String? q}) {
-  Map<String, int> parametros = {};
+  Map<String, dynamic> parametros = {};
 
   if (estado != null && estado != 0) {
     final estadoEntries = <String, int>{'estado': estado};
@@ -465,16 +469,16 @@ Map<String, dynamic> queryParameter(
     final pEntries = <String, int>{'p': p};
     parametros.addEntries(pEntries.entries);
   }
-  if (tipo != null && tipo != 0) {
-    final tipoEntries = <String, int>{'tipo': tipo};
+  if (tipo != null && tipo != '0') {
+    final tipoEntries = <String, String>{'tipo': tipo};
     parametros.addEntries(tipoEntries.entries);
   }
   if (estreno != null && estreno != 0) {
     final estrenoEntries = <String, int>{'estreno': estreno};
     parametros.addEntries(estrenoEntries.entries);
   }
-  if (genero != null && genero != 0) {
-    final generoEntries = <String, int>{'genero': genero};
+  if (genero != null && genero != '0') {
+    final generoEntries = <String, String>{'genero': genero};
     parametros.addEntries(generoEntries.entries);
   }
   if (idioma != null && idioma != 0) {

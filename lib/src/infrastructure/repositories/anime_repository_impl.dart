@@ -31,8 +31,8 @@ class AnimeRepositoryImpl extends AnimeRepository {
   Future<List<Anime>> getDirectory(
       {int? estado,
       int? p,
-      int? tipo,
-      int? genero,
+      String? tipo,
+      String? genero,
       int? estreno,
       int? idioma,
       String? q}) async {

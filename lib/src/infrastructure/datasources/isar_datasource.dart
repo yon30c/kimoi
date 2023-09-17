@@ -109,6 +109,23 @@ class IsarDatasource extends LocalStorageDatasource {
   @override
   Future<List<Chapter>> loadWatchedHistory({int limit = 10, offset = 0}) async {
     final isar = await db;
-    return isar.chapters.where().offset(offset).limit(limit).findAll();
+
+    final chapt = isar.chapters
+        .where()
+        .sortByDateDesc()
+        .offset(offset)
+        .limit(limit)
+        .findAll();
+
+    return chapt;
+    // isar.chapters.where(sort: Sort.desc).findAll();
+  }
+
+  @override
+  Future<void> clearHistory() async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.chapters.clear();
+    });
   }
 }

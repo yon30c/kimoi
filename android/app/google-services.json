@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "980783454126",
+    "project_id": "kimoi-543c8",
+    "storage_bucket": "kimoi-543c8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:980783454126:android:0263e8a8b016aec1999a3f",
+        "android_client_info": {
+          "package_name": "com.example.kimoi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxi2NKzrBO5XAoeRTc4hIrkuZtdEB4ACc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

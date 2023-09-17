@@ -24,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
       label: "Noticias",
     ),
     NavigationDestination(
+        selectedIcon: Icon(Icons.video_collection_rounded) ,
         icon: Icon(Icons.video_collection_rounded), label: "Animes"),
     NavigationDestination(
       icon: Icon(Icons.bookmarks_rounded),

@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/domain.dart';
-import '../../../domain/repositories/local_storage_repository.dart';
 import 'local_storage_provider.dart';
 
 final lastChapterWProvider = StateProvider<Chapter?>((ref) => null);
@@ -47,23 +46,30 @@ class HistoryNotifier extends StateNotifier<List<Chapter>> {
 }
 
 final watchingHistoryProvider =
-    StateNotifierProvider<WatchingNotifier, List<Chapter>>((ref) {
+    StateNotifierProvider<WatchingNotifier, Map<String, Chapter>>((ref) {
   final localStorageRepository = ref.watch(localStorageRepositoryProvider);
   return WatchingNotifier(localStorageRepository: localStorageRepository);
 });
 
-class WatchingNotifier extends StateNotifier<List<Chapter>> {
+class WatchingNotifier extends StateNotifier<Map<String, Chapter>> {
   int page = 0;
   final LocalStorageRepository localStorageRepository;
 
-  WatchingNotifier({required this.localStorageRepository}) : super([]);
+  WatchingNotifier({required this.localStorageRepository}) : super({});
 
   Future<List<Chapter>> loadNextPage() async {
     final animes = await localStorageRepository.loadWatchedHistory(
         offset: page * 10, limit: 20);
     page++;
+    final tempAnimesMap = <String, Chapter>{};
+    for (final anime in animes) {
+      tempAnimesMap[anime.id] = anime;
+    }
+    state = {...state, ...tempAnimesMap};
+    return animes;
+  }
 
-    state = [...state, ...animes];
-    return state;
+  Future<void> clearHistory() async {
+    await localStorageRepository.clearHistory();
   }
 }

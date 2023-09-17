@@ -3,7 +3,7 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
+import 'package:kimoi/src/UI/items/servers_dialog.dart';
 import 'package:kimoi/src/domain/entities/anime.dart';
 
 import '../providers/providers.dart';
@@ -128,36 +128,9 @@ class RandomSlideState extends ConsumerState<RandomSlide> {
                       FilledButton.icon(
                           icon: const Icon(Icons.play_arrow_rounded),
                           onPressed: () async {
-                            final number =
-                                widget.anime.chapterUrl!.split('-').last;
-
-                            final id =
-                                '${widget.anime.animeTitle}/$number/${widget.anime.chapterUrl}';
-
-                            final chapter = await ref
-                                .read(isWatchingAnimeProvider.notifier)
-                                .loadWatchingChapter(id);
-
-                            if (chapter != null) {
-                              Future.delayed(const Duration(milliseconds: 100))
-                                  .then((value) {
-                                context.push('/local-player', extra: chapter);
-                              });
-                            } else {
-                              await ref
-                                  .read(getVideoDataProvider.notifier)
-                                  .getVideos(widget.anime.chapterUrl!)
-                                  .then((value) async {
-                                // context.pop();
-                                final chapter =
-                                    ref.read(getVideoDataProvider).first;
-
-                                chapter.isWatching = true;
-                                chapter.imageUrl = widget.anime.imageUrl;
-                                chapter.animeUrl = widget.anime.animeUrl;
-                                context.push('/local-player', extra: chapter);
-                              });
-                            }
+                           showDialog(
+                            context: context,
+                            builder: (context) => ServerDialog(widget.anime));
                           },
                           label: const Text('Ver ahora'),
                           style: const ButtonStyle(

@@ -42,4 +42,9 @@ class LocalStorageRepositoryImpl extends LocalStorageRepository {
   Future<List<Chapter>> loadWatchedHistory({int limit = 10, offset = 0}) {
     return datasource.loadWatchedHistory(limit: limit, offset: offset);
   }
+
+  @override
+  Future<void> clearHistory() {
+    return datasource.clearHistory();
+  }
 }

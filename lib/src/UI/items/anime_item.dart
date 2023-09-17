@@ -6,9 +6,9 @@ import '../../domain/entities/anime.dart';
 
 class AnimeItem extends StatelessWidget {
   final Anime anime;
-  final void Function()? onAnimeSelected;
+  // final void Function()? onAnimeSelected;
 
-  const AnimeItem({super.key, required this.anime, required this.onAnimeSelected});
+  const AnimeItem({super.key, required this.anime,/*  required this.onAnimeSelected */});
 
   @override
   Widget build(BuildContext context) {
@@ -17,39 +17,56 @@ class AnimeItem extends StatelessWidget {
     final color = Theme.of(context).colorScheme;
 
     return GestureDetector(
-      onTap:onAnimeSelected,
+      // onTap:onAnimeSelected,
       child: FadeIn(
         child:Card(
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5))),
-          child: Padding(
+          child: Container(
+            height: size.height * 0.196,
             padding: const EdgeInsets.all(2.0),
-            child: Row(
+            child: Column(
               children: [
                 // Image
-                SizedBox(
-                  width: size.width * 0.15,
-                  child: ClipRRect(
-                      borderRadius: BorderRadius.circular(5),
-                      child: FadeInImage(
-                        height: size.height * 0.11,
-                        fit: BoxFit.cover,
-                        image: NetworkImage(anime.imageUrl),
-                        placeholder: const AssetImage('assets/jar-loading.gif'),
-                      )),
+                Stack(
+                  children: [
+                    SizedBox(
+                      width: size.width * 0.42,
+                      child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: FadeInImage(
+                            height: size.height * 0.11,
+                            fit: BoxFit.cover,
+                            image: NetworkImage(anime.imageUrl),
+                            placeholder: const AssetImage('assets/jar-loading.gif'),
+                          )),
+                      
+                    ),
+                      Positioned(
+                        bottom: 5,
+                        right: 5,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.all(Radius.circular(5)),
+
+                          color: color.primaryContainer,
+                          ),
+                          padding: const EdgeInsets.all(3),
+                          child: Text(anime.type!, style: textStyles.labelMedium?.copyWith(color: color.onPrimaryContainer)))),
+                  ],
                 ),
                   
-                const SizedBox(width: 10),
+                const SizedBox(height: 5),
                   
                 // Description
                 SizedBox(
-                  width: size.width * 0.32,
+                  height: size.height * 0.07,
+                  width: size.width * 0.4,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Text(anime.animeTitle, style: textStyles.titleSmall, maxLines: 3, overflow: TextOverflow.ellipsis,),
+                      Text(anime.animeTitle, style: textStyles.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis,),                     
                       Text(anime.chapterInfo!, style: textStyles.labelMedium?.copyWith(color: color.primary)),
-                      const SizedBox(height: 5),
-                     
                     ],
                   ),
                 ),

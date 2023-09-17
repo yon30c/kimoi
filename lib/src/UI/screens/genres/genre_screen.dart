@@ -8,7 +8,6 @@ import 'package:kimoi/src/UI/screens/home/home.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/domain/domain.dart';
 
-import '../../items/anime_card.dart';
 
 class GenreScreen extends ConsumerStatefulWidget {
   const GenreScreen({

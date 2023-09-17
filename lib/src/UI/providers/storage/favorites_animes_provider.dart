@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/domain.dart';
-import '../../../domain/repositories/local_storage_repository.dart';
 import 'local_storage_provider.dart';
 
 

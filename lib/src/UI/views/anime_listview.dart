@@ -1,7 +1,10 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/anime_card.dart';
+import 'package:kimoi/src/UI/providers/animes/anime_filter_provider.dart';
+import 'package:kimoi/src/UI/screens/home/home.dart';
 
 import '../../domain/entities/anime.dart';
 
@@ -10,6 +13,7 @@ class AnimesListview extends ConsumerStatefulWidget {
   final String? title;
   final List<Anime> animes;
   final VoidCallback? loadNextPage;
+  final GenresTab? genre;
 
   final double? height;
   final double? width;
@@ -17,6 +21,7 @@ class AnimesListview extends ConsumerStatefulWidget {
   const AnimesListview(
       {super.key,
       this.title,
+      this.genre,
       required this.animes,
       this.subtitle,
       this.height,
@@ -61,6 +66,7 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
         children: [
           if (widget.title != null || widget.subtitle != null)
             _Title(
+              genre: widget.genre,
               title: widget.title,
               subtitle: widget.subtitle,
             ),
@@ -90,20 +96,20 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
   }
 
   @override
-  // TODO: implement wantKeepAlive
   bool get wantKeepAlive => true;
 }
 
-class _Title extends StatelessWidget {
+class _Title extends ConsumerWidget {
   final String? title;
   final String? subtitle;
-  const _Title({this.title, this.subtitle});
+  final GenresTab? genre;
+  const _Title({this.title, this.subtitle, this.genre});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     final textStyle = Theme.of(context).textTheme;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10),
+      margin: const EdgeInsets.only(left: 10, right: 8),
       padding: const EdgeInsets.only(top: 10),
       child: Row(
         children: [
@@ -116,7 +122,15 @@ class _Title extends StatelessWidget {
           if (subtitle != null)
             FilledButton.tonal(
                 style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                onPressed: () {},
+                onPressed: () {
+                  if (genre != null) {
+                    ref.read(genreProvider.notifier).update((state) => genre);
+                    ref
+                        .read(generoProvider.notifier)
+                        .update((state) => genre!.id);
+                    context.push('/explorar/genre-screen/${genre!.title}');
+                  }
+                },
                 child: Text(subtitle!))
         ],
       ),

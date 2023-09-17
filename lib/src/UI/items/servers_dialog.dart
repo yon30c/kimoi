@@ -1,263 +1,293 @@
-import 'dart:async';
+
+
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
+import 'package:kimoi/src/domain/domain.dart';
+import 'package:kimoi/src/infrastructure/infrastructure.dart';
+import 'package:kimoi/src/utils/extractors/extractors.dart';
+import 'package:kimoi/src/utils/extractors/voe_extractor.dart';
 
-import '../../domain/domain.dart';
-
-class ServersDialog extends ConsumerStatefulWidget {
-  const ServersDialog(this.anime, {super.key});
+class ServerDialog extends ConsumerStatefulWidget {
+  const ServerDialog(this.anime, {super.key});
 
   final Anime anime;
 
   @override
-  ServersDialogState createState() => ServersDialogState();
+  ServerDialogState createState() => ServerDialogState();
 }
 
-class ServersDialogState extends ConsumerState<ServersDialog> {
- 
-  ValueNotifier<int> currentIndex = ValueNotifier(0);
-  // DataSource? _dataSource;
-  StreamSubscription? _subscription;
-  // final ValueNotifier<Video?> _quality = ValueNotifier(null);
-  // StreamSubscription? _currentPositionSubs;
-
-  Duration currentPosition = Duration.zero;
-
+class ServerDialogState extends ConsumerState<ServerDialog> {
   @override
   void initState() {
     super.initState();
-
-    // _subscription = _meeduPlayerController.onFullscreenChanged.listen(
-    //   (bool isFullscreen) {
-    //     if (!isFullscreen) {
-    //       // if the fullscreen page was closed
-    //       _dataSource = null;
-    //     }
-    //   },
-    // );
-
-    // _currentPositionSubs = _meeduPlayerController.onPositionChanged.listen(
-    //   (Duration position) {
-    //     currentPosition = position;
-    //   },
-    // );
-    // clearAndGet();
+    init();
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    // _meeduPlayerController.dispose();
-    super.dispose();
+  init() async {
+    ref.read(getVideoDataProvider).clear();
+    await ref
+        .read(getVideoDataProvider.notifier)
+        .getVideos(widget.anime.chapterUrl!);
   }
-
-  // clearAndGet() async {
-  //   if (ref.read(getChapterInfoProvider).isNotEmpty) {
-  //     ref.read(getChapterInfoProvider).clear();
-  //   }
-
-  //   await Future.delayed(const Duration(seconds: 1));
-  //   await ref
-  //       .read(getChapterInfoProvider.notifier)
-  //       .getAnimes(widget.anime.chapterUrl!)
-  //       .then((value) async {
-  //     final servers =
-  //         ref.read(getChapterInfoProvider).first.servers.reversed.toList();
-
-  //     for (var i = 0; i < servers.length; i++) {
-  //       if (servers[i].serverUrl.contains("yourupload") ||
-  //           servers[i].serverUrl.contains("mp4upload")) {
-  //         i++;
-  //       }
-  //       final video = await getVideo(servers[i].serverUrl);
-  //       if (video.isNotEmpty) {
-          
-  //         final datasource = DataSource(
-  //             type: DataSourceType.network,
-  //             source: video.first.videoUrl,
-  //             httpHeaders: {
-  //               "User-Agent":
-  //                   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
-  //             });
-
-  //         await Future.delayed(const Duration(milliseconds: 100));
-
-  //         _quality.value = video.first;
-  //         _set(datasource);
-  //         return;
-  //       }
-  //     }
-  //   });
-  // }
-
-  // var channel = const MethodChannel("extractors");
-  // Map test = {};
-  // List<Video> videoList = [];
-
-  // Future<List<Video>> getVideo(String url) async {
-  //   final success = await channel.invokeMethod('extractVideoUrl', url) as Map;
-  //   test.addAll(success);
-  //   Video video = Video();
-  //   for (var element in test.values) {
-  //     video = Video.fromRawJson(element);
-  //     videoList.add(video);
-  //     setState(() {});
-  //   }
-  //   return videoList;
-  // }
-
-  // Widget get header {
-  //   return Container(
-  //     padding: const EdgeInsets.all(5),
-  //     child: Row(
-  //       children: [
-  //         CupertinoButton(
-  //           child: const Icon(
-  //             Icons.arrow_back,
-  //             color: Colors.white,
-  //           ),
-  //           onPressed: () async {
-  //             // close the fullscreen
-  //             context.pop();
-  //           },
-  //         ),
-  //         const Spacer(),
-  //         CupertinoButton(
-  //           padding: const EdgeInsets.all(5),
-  //           minSize: 25,
-  //           onPressed: _onChangeVideoQuality,
-  //           child: ValueListenableBuilder<Video?>(
-  //             valueListenable: _quality,
-  //             builder: (context, Video? quality, child) {
-  //               return Text(
-  //                 quality!.quality,
-  //                 style: const TextStyle(
-  //                   fontSize: 18,
-  //                   color: Colors.white,
-  //                 ),
-  //               );
-  //             },
-  //           ),
-  //         )
-  //       ],
-  //     ),
-  //   );
-  // }
-  // BuildContext, MeeduPlayerController, Responsive
-
-  // Widget get bottomRight {
-  //   return CupertinoButton(
-  //     padding: const EdgeInsets.all(5),
-  //     minSize: 25,
-  //     onPressed: _skipOpenning,
-  //     child: ValueListenableBuilder<Video?>(
-  //       valueListenable: _quality,
-  //       builder: (context, Video? quality, child) {
-  //         return const Text(
-  //           "Skip Op",
-  //           style: TextStyle(
-  //             fontSize: 18,
-  //             color: Colors.white,
-  //           ),
-  //         );
-  //       },
-  //     ),
-  //   );
-  // }
-
-  // void _onChangeVideoQuality() {
-  //   showCupertinoModalPopup(
-  //     context: context,
-  //     builder: (_) => CupertinoActionSheet(
-  //       actions: List.generate(
-  //         videoList.length,
-  //         (index) {
-  //           final quality = videoList[index];
-  //           return CupertinoActionSheetAction(
-  //             child: Text(quality.quality),
-  //             onPressed: () {
-  //               _quality.value = quality; // change the video quality
-  //               final datasource =
-  //                   _dataSource!.copyWith(source: _quality.value!.videoUrl);
-  //               _set(datasource); // update the datasource
-  //               Navigator.maybePop(_);
-  //             },
-  //           );
-  //         },
-  //       ),
-  //       cancelButton: CupertinoActionSheetAction(
-  //         onPressed: () => Navigator.maybePop(_),
-  //         isDestructiveAction: true,
-  //         child: const Text("Cancel"),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // void _skipOpenning() {
-  //   final position = _meeduPlayerController.position.value;
-  //   _meeduPlayerController.seekTo(Duration(seconds: position.inSeconds + 85));
-  // }
-
-  // Future<void> _set(DataSource dataSource) async {
-  //   if (_dataSource == null) {
-  //     _dataSource = dataSource;
-  //     // launch the player in fullscreen mode
-  //     await _meeduPlayerController.launchAsFullscreen(context,
-  //         dataSource: _dataSource!,
-  //         autoplay: true,
-  //         header: header,
-  //         bottomRight: bottomRight);
-  //   } else {
-  //     // update the player with new datasource and it doesn't re-launch the player
-  //     await _meeduPlayerController.setDataSource(dataSource,
-  //         seekTo: currentPosition);
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
-//
-    // if (chapter.isEmpty) {
-    return const SizedBox(
-        height: 150, child: Center(child: CircularProgressIndicator()));
-    // }
+    final chapter = ref.watch(getVideoDataProvider);
 
-    // final servers = chapter.first.servers;
+    if (chapter.isEmpty) {
+      return const AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10))),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 20.0),
+              child: CircularProgressIndicator(),
+            )
+          ],
+        ),
+      );
+    }
+    final servers = ref.watch(getVideoDataProvider).first.servers;
 
-    // return Column(
-    //   mainAxisSize: MainAxisSize.min,
-    //   children: servers
-    //       .map((e) => CupertinoListTile(
-    //             title: Text(e.serverName,
-    //                 style: TextStyle(color: color.onBackground)),
-    //             onTap: () async {
-    //               await getVideo(e.serverUrl).then((value) {
-    //                 if (value.isEmpty) {
-    //                   const snackBar = SnackBar(
-    //                     content: Text("Error"),
-    //                     duration: Duration(seconds: 1),
-    //                   );
-    //                   ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    //                   return;
-    //                 }
+    List<FixedServer> fixedServers = [];
 
-    //                 final datasource = DataSource(
-    //                     type: DataSourceType.network,
-    //                     source: value.first.videoUrl,
-    //                     httpHeaders: {
-    //                       "User-Agent":
-    //                           "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
-    //                     });
+    int youruploadIndex =
+        servers.indexWhere((element) => element.contains('yourupload'));
+    int mp4uploadIndex =
+        servers.indexWhere((element) => element.contains('mp4upload'));
+    int okruIndex = servers.indexWhere((element) => element.contains('ok.ru'));
+    int voeIndex = servers.indexWhere((element) => element.contains('voe'));
+    int mixdroIndex =
+        servers.indexWhere((element) => element.contains('mixdro'));
 
-    //                 _quality.value = value.first;
-    //                 // context.push("/video-player", extra: value);
-    //                 _set(datasource);
-    //               });
-    //             },
-    //           ))
-    //       .toList(),
-    // );
+    for (var url in servers) {
+      if (url.contains('yourupload')) {
+        fixedServers.add(FixedServer(
+            name: 'YourUpload',
+            url: url,
+            optional: okruIndex != -1
+                ? servers[okruIndex]
+                : voeIndex != -1
+                    ? servers[voeIndex]
+                    : mixdroIndex != -1
+                        ? servers[mixdroIndex]
+                        : mp4uploadIndex != -1
+                            ? servers[mp4uploadIndex]
+                            : null));
+      } else if (url.contains('mp4upload')) {
+        fixedServers.add(FixedServer(
+            name: 'Mp4Upload',
+            url: url,
+            optional: voeIndex != -1
+                ? servers[voeIndex]
+                : mixdroIndex != -1
+                    ? servers[mixdroIndex]
+                    : okruIndex != -1
+                        ? servers[okruIndex]
+                        : youruploadIndex != -1
+                            ? servers[youruploadIndex]
+                            : null));
+      } else if (url.contains('ok.ru')) {
+        fixedServers.add(FixedServer(
+            name: 'Okru',
+            url: url,
+            optional: youruploadIndex != -1
+                ? servers[youruploadIndex]
+                : mixdroIndex != -1
+                    ? servers[mixdroIndex]
+                    : voeIndex != -1
+                        ? servers[voeIndex]
+                        : mp4uploadIndex != -1
+                            ? servers[mp4uploadIndex]
+                            : null));
+      } else if (url.contains('solid')) {
+        fixedServers.add(FixedServer(
+            name: 'SolidFiles',
+            url: url,
+            optional: okruIndex != -1
+                ? servers[okruIndex]
+                : voeIndex != -1
+                    ? servers[voeIndex]
+                    : mixdroIndex != -1
+                        ? servers[mixdroIndex]
+                        : mp4uploadIndex != -1
+                            ? servers[mp4uploadIndex]
+                            : null));
+      } else if (url.contains('mixdro')) {
+        fixedServers.add(FixedServer(
+            name: 'MixDrop',
+            url: url,
+            optional: okruIndex != -1
+                ? servers[okruIndex]
+                : voeIndex != -1
+                    ? servers[voeIndex]
+                    : youruploadIndex != -1
+                        ? servers[youruploadIndex]
+                        : mp4uploadIndex != -1
+                            ? servers[mp4uploadIndex]
+                            : null));
+      } else if (url.contains('voe')) {
+        fixedServers.add(FixedServer(
+            name: 'VoeCDN',
+            url: url,
+            optional: okruIndex != -1
+                ? servers[okruIndex]
+                : youruploadIndex != -1
+                    ? servers[youruploadIndex]
+                    : mixdroIndex != -1
+                        ? servers[voeIndex]
+                        : mp4uploadIndex != -1
+                            ? servers[mp4uploadIndex]
+                            : null));
+      } else if (url.contains("upload")) {
+        if (!url.contains('yourupload') || !url.contains("mp4upload")) {
+          fixedServers.add(FixedServer(
+              name: 'Upload',
+              url: url,
+              optional: okruIndex != -1
+                  ? servers[okruIndex]
+                  : youruploadIndex != -1
+                      ? servers[youruploadIndex]
+                      : mixdroIndex != -1
+                          ? servers[voeIndex]
+                          : mp4uploadIndex != -1
+                              ? servers[mp4uploadIndex]
+                              : null));
+        }
+      }
+    }
+
+    return SimpleDialog(
+        title: const Text('Servidores'),
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10))),
+        children: [
+          const Divider(
+            height: 2,
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: fixedServers
+                .map((e) => ListTile(
+                    leading: const Icon(Icons.play_circle),
+                    title: Text(e.name),
+                    onTap: () {
+                      final chapt = chapter.first;
+                      chapt.isWatching = true;
+                      chapt.imageUrl = widget.anime.imageUrl;
+                      chapt.animeUrl = widget.anime.animeUrl;
+                      ref
+                          .read(fixedServerProvider.notifier)
+                          .update((state) => e);
+                      context.pop();
+                      context.push('/local-player', extra: chapt);
+                    }))
+                .toList(),
+          )
+        ]);
   }
+}
+
+final fixedServerProvider = StateProvider<FixedServer?>((ref) => null);
+
+final videoServers = StateProvider((ref) async {
+  final servers = ref.watch(fixedServerProvider);
+  List<Video> videos = [];
+  final url = servers!.url;
+
+  if (url.contains('yourupload')) {
+    final video = await YourUploadExtractor().videoFromUrl(url);
+    if (video != null) {
+      videos.add(video);
+    } else {
+      videos.addAll(await extract(servers.optional!));
+    }
+  } else if (url.contains('mp4upload')) {
+    final video = await Mp4UploadExtractor().videosFromUrl(url);
+    if (video.isNotEmpty) {
+      videos.addAll(video);
+    } else {
+      videos.addAll(await extract(servers.optional!));
+    }
+  } else if (url.contains('ok.ru')) {
+    final vid = await OkruExtractor().videosFromUrl(url);
+    if (vid.isEmpty) {
+      videos.addAll(await extract(servers.optional!));
+    } else {
+      videos.addAll(vid);
+    }
+  } else if (url.contains('solid')) {
+    final videos = await SolidFilesExtractor().videoFromUrl(url);
+    if (videos.isNotEmpty) {
+      videos.addAll(videos);
+    } else {
+      videos.addAll(await extract(servers.optional!));
+    }
+  } else if (url.contains('mixdro')) {
+    final video = await MixDropExtractor().videoFromUrl(url);
+    if (video.isNotEmpty) {
+      videos.addAll(video);
+    } else {
+      videos.addAll(await extract(servers.optional!));
+    }
+  } else if (url.contains('voe')) {
+    final video = await VoeExtractor().videoFromUrl(url);
+    if (video.isNotEmpty) {
+      videos.addAll(video);
+    } else {
+      videos.addAll(await extract(servers.optional!));
+    }
+  } else if (url.contains("upload")) {
+    if (!url.contains('yourupload') || !url.contains("mp4upload")) {
+      final video = await UploadExtractor().videoFromUrl(url);
+      if (video != null) {
+        videos.add(video);
+      } else {
+        videos.addAll(await extract(servers.optional!));
+      }
+    }
+  }
+  return videos;
+});
+
+class FixedServer {
+  final String name;
+  final String url;
+  final String? optional;
+
+  FixedServer({required this.name, required this.url, this.optional});
+}
+
+Future<List<Video>> extract(String url) async {
+  List<Video> videos = [];
+  if (url.contains('yourupload')) {
+    final video = await YourUploadExtractor().videoFromUrl(url);
+    if (video != null) videos.add(video);
+  } else if (url.contains('mp4upload')) {
+    final video = await Mp4UploadExtractor().videosFromUrl(url);
+    if (video.isNotEmpty) videos.addAll(video);
+  } else if (url.contains('ok.ru')) {
+    videos.addAll(await OkruExtractor().videosFromUrl(url));
+  } else if (url.contains('solid')) {
+    final videos = await SolidFilesExtractor().videoFromUrl(url);
+    if (videos.isNotEmpty) videos.addAll(videos);
+  } else if (url.contains('mixdro')) {
+    final video = await MixDropExtractor().videoFromUrl(url);
+    if (video.isNotEmpty) videos.addAll(video);
+  } else if (url.contains('voe')) {
+    final video = await MixDropExtractor().videoFromUrl(url);
+    if (video.isNotEmpty) videos.addAll(video);
+  } else if (url.contains("upload")) {
+    if (!url.contains('yourupload') || !url.contains("mp4upload")) {
+      final video = await UploadExtractor().videoFromUrl(url);
+      if (video != null) videos.add(video);
+    }
+  }
+
+  return videos;
 }

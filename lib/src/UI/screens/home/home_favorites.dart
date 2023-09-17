@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kimoi/src/UI/items/servers_dialog.dart';
+import 'package:kimoi/src/UI/providers/animes/next_and_before_anime_provider.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
 import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/player/local_player.dart';
 import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
+import 'package:kimoi/src/domain/domain.dart';
+import 'package:kimoi/src/domain/entities/chapter.dart';
+import 'package:kimoi/src/infrastructure/models/chapter_to_anime.dart';
 
 import '../../items/anime_masonry.dart';
 
@@ -22,23 +27,39 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
   void initState() {
     super.initState();
     ref.read(favoriteAnimesProvider.notifier).loadNextPage();
-    ref.read(watchingHistoryProvider.notifier).loadNextPage();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
+    final size = MediaQuery.of(context).size;
+
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
           appBar: AppBar(
             title: const Text('Mis listas'),
-            bottom: const TabBar(tabs: [
-              Tab(text: 'Favoritos'),
-              Tab(text: 'Historial'),
-              Tab(text: 'Offline'),
-            ]),
+            bottom: PreferredSize(
+              preferredSize: Size(size.width, 45),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  TabBar.secondary(
+                      dividerColor: Colors.transparent,
+                      tabAlignment: TabAlignment.start,
+                      isScrollable: true,
+                      tabs: [
+                        Tab(
+                          text: 'FAVORITOS',
+                        ),
+                        Tab(
+                          text: 'HISTORIAL',
+                        ),
+                      ]),
+                ],
+              ),
+            ),
             actions: [
               IconButton(
                   onPressed: () async {
@@ -64,9 +85,6 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
             children: [
               _FavoritesView(),
               _HistoryPage(),
-              Center(
-                child: Text('offline - screen'),
-              ),
             ],
           )),
     );
@@ -75,6 +93,10 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
   @override
   bool get wantKeepAlive => true;
 }
+
+// ********************************************************** //
+// * ----------------- FAVORITE VIEW  --------------------- * //
+// ********************************************************** //
 
 class _FavoritesView extends ConsumerStatefulWidget {
   const _FavoritesView();
@@ -111,10 +133,10 @@ class _FavoritesViewState extends ConsumerState<_FavoritesView> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.favorite_outline_sharp, size: 60, color: colors.primary),
+            Icon(Icons.save, size: 60, color: colors.primary),
             Text('Ohhh no!!',
                 style: TextStyle(fontSize: 30, color: colors.primary)),
-            const Text('No tienes animes favoritos',
+            const Text('No tienes animes guardados',
                 style: TextStyle(fontSize: 20)),
             const SizedBox(height: 20),
             FilledButton.tonal(
@@ -129,6 +151,10 @@ class _FavoritesViewState extends ConsumerState<_FavoritesView> {
   }
 }
 
+// ********************************************************** //
+// * -----------------  HISTORY PAGE  --------------------- * //
+// ********************************************************** //
+
 class _HistoryPage extends ConsumerStatefulWidget {
   const _HistoryPage();
 
@@ -139,6 +165,7 @@ class _HistoryPage extends ConsumerStatefulWidget {
 class _HistoryPageState extends ConsumerState<_HistoryPage> {
   bool isWatchinLastPage = false;
   bool isWatchinLoading = false;
+  late final ScrollController controller;
 
   void loadWatchin() async {
     if (isWatchinLoading || isWatchinLastPage) return;
@@ -154,104 +181,231 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final textStyle = Theme.of(context).textTheme;
+  void initState() {
+    super.initState();
+    controller = ScrollController();
+    ref.read(watchingHistoryProvider.notifier).loadNextPage();
 
+    controller.addListener(listen);
+  }
+
+  void listen() {
+    final position = controller.position.pixels;
+    final maxScrollExtend = controller.position.maxScrollExtent;
+    if (position > (maxScrollExtend - 200)) {
+      loadWatchin();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final history = ref.watch(watchingHistoryProvider);
 
-    final color = Theme.of(context).colorScheme;
-    return ListView.builder(
-      itemCount: history.length,
-      itemBuilder: (BuildContext context, int index) {
-        final chapter = history.reversed.toList()[index];
+    final colors = Theme.of(context).colorScheme;
 
-        final res = chapter.duration - chapter.position;
-        return GestureDetector(
-          onTap: () {
-            context.push('/local-player', extra: chapter);
+    if (history.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(Icons.history, size: 60, color: colors.primary),
+            // Text('Ohhh no!!',
+            //     style: TextStyle(fontSize: 30, color: colors.primary)),
+            const SizedBox(height: 20),
+
+            const Text('Historial vacio', style: TextStyle(fontSize: 20)),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: ListView.builder(
+        controller: controller,
+        itemCount: history.length,
+        itemBuilder: (BuildContext context, int index) {
+          final chapter = history.values.toList()[index];
+
+          final Anime anime = Anime(
+            animeUrl: chapter.animeUrl!,
+            imageUrl: chapter.imageUrl!,
+            animeTitle: chapter.title,
+            chapterInfo: chapter.chapterInfo,
+            chapterUrl: chapter.chapterUrl,
+          );
+          return GestureDetector(
+            onTap: () async {
+              showDialog(
+                  context: context, builder: (context) => ServerDialog(anime));
+            },
+            child: _HistoryTile(
+              chapter: chapter,
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+          key: const Key('History-fab'),
+          onPressed: () async {
+            await ref
+                .read(watchingHistoryProvider.notifier)
+                .clearHistory()
+                .then((value) => ref.refresh(watchingHistoryProvider));
+
+            setState(() {});
           },
-          child: Card(
-            margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8),
-            child: Row(
+          child: const Icon(Icons.delete_forever)),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+}
+
+class _HistoryTile extends ConsumerWidget {
+  const _HistoryTile({
+    required this.chapter,
+  });
+
+  final Chapter chapter;
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final res = chapter.duration - chapter.position;
+    final size = MediaQuery.of(context).size;
+    final color = Theme.of(context).colorScheme;
+    final textStyle = Theme.of(context).textTheme;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.all(Radius.circular(10)),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Image.network(
-                        chapter.imageUrl!,
-                        height: 90,
-                        width: 65,
-                      ),
-                      Container(
-                        height: 90,
-                        width: 65,
-                        color: Colors.black45,
-                      ),
-                      const Icon(
-                        Icons.play_arrow_rounded,
-                        size: 30,
-                      )
-                    ],
-                  ),
+                Image.network(
+                  chapter.imageUrl!,
+                  height: 90,
+                  width: 65,
                 ),
-                const SizedBox(
-                  width: 5,
+                Container(
+                  height: 90,
+                  width: 65,
+                  color: Colors.black45,
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                        width: size.width * 0.45,
-                        child: Text(
-                          chapter.title,
-                          style: textStyle.titleSmall
-                              ?.copyWith(color: color.surfaceTint),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        )),
-                    const SizedBox(height: 3),
-                    Text(
-                      chapter.chapter,
-                      style: textStyle.labelMedium
-                          ?.copyWith(color: color.onBackground, fontSize: 14),
-                    ),
-                    const SizedBox(height: 3),
-                    if (chapter.isCompleted)
-                      Text('Completado',
-                          style: textStyle.labelMedium
-                              ?.copyWith(color: color.outline)),
-                    if (chapter.isWatching)
-                      Text(
-                        'Restante ${formatDuration(res)}',
-                        style: textStyle.labelMedium
-                            ?.copyWith(color: color.outline),
-                      ),
-                  ],
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                        onPressed: () {},
-                        icon: chapter.isCompleted
-                            ? Icon(
-                                Icons.remove_red_eye,
-                                color: color.primary,
-                              )
-                            : const Icon(Icons.remove_red_eye_outlined)),
-                    IconButton(
-                        onPressed: () {}, icon: const Icon(Icons.more_vert)),
-                  ],
+                const Icon(
+                  Icons.play_arrow_rounded,
+                  size: 30,
                 )
               ],
             ),
           ),
-        );
-      },
+          const SizedBox(
+            width: 5,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                  width: size.width * 0.45,
+                  child: Text(
+                    chapter.title,
+                    style: textStyle.titleSmall
+                        ?.copyWith(color: color.surfaceTint),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  )),
+              const SizedBox(height: 3),
+              Text(
+                chapter.chapter,
+                style: textStyle.labelMedium
+                    ?.copyWith(color: color.onBackground, fontSize: 14),
+              ),
+              const SizedBox(height: 3),
+              if (chapter.isCompleted)
+                Text('Completado',
+                    style:
+                        textStyle.labelMedium?.copyWith(color: color.outline)),
+              if (chapter.isWatching)
+                Text(
+                  'Restante ${formatDuration(res)}',
+                  style: textStyle.labelMedium?.copyWith(color: color.outline),
+                ),
+            ],
+          ),
+          const Spacer(),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                  onPressed: () {},
+                  icon: chapter.isCompleted
+                      ? Icon(
+                          Icons.remove_red_eye,
+                          color: color.primary,
+                        )
+                      : const Icon(Icons.remove_red_eye_outlined)),
+
+              PopupMenuButton(
+                position: PopupMenuPosition.under,
+                itemBuilder: (context) {
+                  return [
+                    PopupMenuItem(
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.info),
+                          SizedBox(
+                            width: 5,
+                          ),
+                          Text('Informacion'),
+                        ],
+                      ),
+                      onTap: () async {
+                        final anime = chapterToAnime(chapter);
+
+                        ref
+                            .read(animeProvider.notifier)
+                            .update((state) => anime);
+
+                        await ref
+                            .read(isWatchingAnimeProvider.notifier)
+                            .loadLastWatchingChapter(chapter.title)
+                            .then((value) {
+                          ref
+                              .read(lastChapterWProvider.notifier)
+                              .update((state) => value);
+                          GoRouter.of(context).push('/anime-screen');
+                        });
+                      },
+                    ),
+                    const PopupMenuItem(
+                        child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.delete_forever),
+                        SizedBox(
+                          width: 5,
+                        ),
+                        Text('Eliminar'),
+                      ],
+                    )),
+                    // const PopupMenuItem(child: Text('Ver detalles')),
+                  ];
+                },
+              )
+              // IconButton(
+              //     onPressed: () {}, icon: const Icon(Icons.more_vert)),
+            ],
+          )
+        ],
+      ),
     );
   }
 }

@@ -12,11 +12,11 @@ final animeDirectoryProvider =
 typedef GetDirectoryCallback = Future<List<Anime>> Function(
     {int? estado,
     int? estreno,
-    int? genero,
+   String? genero,
     int? idioma,
     int? p,
     String? q,
-    int? tipo});
+    String? tipo});
 
 class AnimeDirectoryNotifier extends StateNotifier<List<Anime>> {
   AnimeDirectoryNotifier(this.getDirectory) : super([]);
@@ -29,11 +29,11 @@ class AnimeDirectoryNotifier extends StateNotifier<List<Anime>> {
   Future<void> getAnimes(
       {int? estado,
       int? estreno,
-      int? genero,
+      String? genero,
       int? idioma,
       int? p,
       String? q,
-      int? tipo}) async {
+      String? tipo}) async {
     if (isLoading) return;
 
     isLoading = true;

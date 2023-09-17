@@ -16,5 +16,6 @@ abstract class LocalStorageRepository {
   Future<Chapter?> loadLastWatchedChapterAnime(String title);
   Future<List<Chapter>> loadWatchedHistory({int limit = 10, offset = 0});
 
+  Future<void> clearHistory();
   
 }

@@ -10,13 +10,15 @@ abstract class AnimeDatasource {
   Future<XData> getExtraData(Anime anime);
 
   Future<List<Anime>> getDirectory(
-      {int? estado,
+      {
+      int? estado,
       int? p,
-      int? tipo,
-      int? genero,
+      String? tipo,
+      String? genero,
       int? estreno,
       int? idioma,
       String? q});
 
   Future<List<Anime>> searchAnime(String query);
+
 }
