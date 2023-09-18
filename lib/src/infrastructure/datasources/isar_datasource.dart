@@ -128,4 +128,11 @@ class IsarDatasource extends LocalStorageDatasource {
       await isar.chapters.clear();
     });
   }
+
+  @override
+  Future<void> removeWatchetChapter(Chapter chapter) async {
+    final isar = await db;
+    await isar
+        .writeTxn(() async => await isar.chapters.delete(chapter.isarId!));
+  }
 }

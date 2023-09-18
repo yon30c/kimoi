@@ -7,7 +7,8 @@ final generoProvider = StateProvider((ref) => '0');
 
 final estrenoProvider = StateProvider((ref) => 0);
 
-final tipoProvider = StateProvider((ref) => '0');
+final tipoProvider = StateProvider((ref) => '');
+final labelProvider = StateProvider((ref) => '');
 
 final idiomaProvider = StateProvider((ref) => 0);
 

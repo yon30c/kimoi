@@ -25,6 +25,12 @@ extension StringExtension on String {
         ? missingDelimiterValue
         : substring(index + delimiter.length);
   }
+
+  String extractLink(String attr) {
+    return substringAfter("$attr\\\":\\\"")
+        .substringBefore("\\\"")
+        .replaceAll("\\\\u0026", "&");
+  }
 }
 
 extension IterableExtension<E> on Iterable<E> {

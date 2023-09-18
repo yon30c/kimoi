@@ -333,7 +333,10 @@ class MonoschinosDatasource extends AnimeDatasource {
     final res = await Dio().get('https://monoschinos2.com/');
     final doc = parse(res.data);
     List<Anime> animes = [];
-    final animeData = doc.querySelector('.heroarea1')?.querySelectorAll('a');
+    final animeData = doc
+        .querySelector('.heroarea1')
+        ?.querySelector('.row')
+        ?.querySelectorAll('a');
     if (animeData == null) return [];
 
     for (var element in animeData) {
@@ -415,7 +418,7 @@ Map<String, dynamic> parameter(
     parametros.addEntries(pEntries.entries);
   }
   if (tipo != null) {
-    final tipoEntries = <String, String>{'tipo': tipo};
+    final tipoEntries = <String, String>{'categoria': tipo};
     parametros.addEntries(tipoEntries.entries);
   }
   if (estreno != null && estreno != 0) {

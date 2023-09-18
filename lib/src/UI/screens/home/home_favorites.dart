@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
-import 'package:kimoi/src/UI/providers/animes/next_and_before_anime_provider.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
 import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/player/local_player.dart';
 import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
 import 'package:kimoi/src/domain/domain.dart';
-import 'package:kimoi/src/domain/entities/chapter.dart';
 import 'package:kimoi/src/infrastructure/models/chapter_to_anime.dart';
 
 import '../../items/anime_masonry.dart';
@@ -22,10 +20,17 @@ class HomeFavorites extends ConsumerStatefulWidget {
 }
 
 class HomeFavoritesState extends ConsumerState<HomeFavorites>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+  late TabController tabController;
+  int index = 0;
+
   @override
   void initState() {
     super.initState();
+    tabController = TabController(length: 2, vsync: this)
+      ..addListener(() {
+        setState(() => index = tabController.index);
+      });
     ref.read(favoriteAnimesProvider.notifier).loadNextPage();
   }
 
@@ -35,59 +40,72 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
 
     final size = MediaQuery.of(context).size;
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Mis listas'),
-            bottom: PreferredSize(
-              preferredSize: Size(size.width, 45),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  TabBar.secondary(
-                      dividerColor: Colors.transparent,
-                      tabAlignment: TabAlignment.start,
-                      isScrollable: true,
-                      tabs: [
-                        Tab(
-                          text: 'FAVORITOS',
-                        ),
-                        Tab(
-                          text: 'HISTORIAL',
-                        ),
-                      ]),
-                ],
-              ),
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Mis listas'),
+          bottom: PreferredSize(
+            preferredSize: Size(size.width, 45),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                TabBar.secondary(
+                    controller: tabController,
+                    dividerColor: Colors.transparent,
+                    tabAlignment: TabAlignment.start,
+                    isScrollable: true,
+                    tabs: const [
+                      Tab(
+                        text: 'FAVORITOS',
+                      ),
+                      Tab(
+                        text: 'HISTORIAL',
+                      ),
+                    ]),
+              ],
             ),
-            actions: [
+          ),
+          actions: [
+            if (index == 1)
               IconButton(
                   onPressed: () async {
-                    await showSearch(
-                            context: context,
-                            delegate: SearchAnimeDelegate(
-                                searchAnimes: ref
-                                    .watch(searchedMoviesProvider.notifier)
-                                    .searchAnimes))
-                        .then((value) {
-                      if (value == null) return;
-                      ref.read(animeProvider.notifier).update((state) => value);
-                      context.push('/anime-screen');
-                    });
+                    await ref
+                        .read(watchingHistoryProvider.notifier)
+                        .clearHistory()
+                        .then((value) => ref.refresh(watchingHistoryProvider));
+
+                    setState(() {});
                   },
                   icon: const Icon(
-                    Icons.search,
-                    size: 30,
-                  ))
-            ],
-          ),
-          body: const TabBarView(
-            children: [
-              _FavoritesView(),
-              _HistoryPage(),
-            ],
-          )),
-    );
+                    Icons.delete_forever,
+                    color: Colors.red,
+                  )),
+            IconButton(
+                onPressed: () async {
+                  await showSearch(
+                          context: context,
+                          delegate: SearchAnimeDelegate(
+                              searchAnimes: ref
+                                  .watch(searchedMoviesProvider.notifier)
+                                  .searchAnimes))
+                      .then((value) {
+                    if (value == null) return;
+                    ref.read(animeProvider.notifier).update((state) => value);
+                    context.push('/anime-screen');
+                  });
+                },
+                icon: const Icon(
+                  Icons.search,
+                  size: 30,
+                ))
+          ],
+        ),
+        body: TabBarView(
+          controller: tabController,
+          children: const [
+            _FavoritesView(),
+            _HistoryPage(),
+          ],
+        ));
   }
 
   @override
@@ -134,8 +152,6 @@ class _FavoritesViewState extends ConsumerState<_FavoritesView> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(Icons.save, size: 60, color: colors.primary),
-            Text('Ohhh no!!',
-                style: TextStyle(fontSize: 30, color: colors.primary)),
             const Text('No tienes animes guardados',
                 style: TextStyle(fontSize: 20)),
             const SizedBox(height: 20),
@@ -170,13 +186,17 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   void loadWatchin() async {
     if (isWatchinLoading || isWatchinLastPage) return;
     isWatchinLoading = true;
-
+    setState(() {});
     final animes =
         await ref.read(watchingHistoryProvider.notifier).loadNextPage();
-    isWatchinLoading = false;
 
+    await Future.delayed(const Duration(seconds: 2));
+
+    isWatchinLoading = false;
+    setState(() {});
     if (animes.isEmpty) {
       isWatchinLastPage = true;
+      setState(() {});
     }
   }
 
@@ -190,9 +210,8 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   }
 
   void listen() {
-    final position = controller.position.pixels;
-    final maxScrollExtend = controller.position.maxScrollExtent;
-    if (position > (maxScrollExtend - 200)) {
+    if (controller.position.pixels >
+        (controller.position.maxScrollExtent - 200)) {
       loadWatchin();
     }
   }
@@ -201,7 +220,8 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   Widget build(BuildContext context) {
     final history = ref.watch(watchingHistoryProvider);
 
-    final colors = Theme.of(context).colorScheme;
+    final color = Theme.of(context).colorScheme;
+    final size = MediaQuery.of(context).size;
 
     if (history.isEmpty) {
       return Center(
@@ -209,7 +229,7 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.history, size: 60, color: colors.primary),
+            Icon(Icons.history, size: 60, color: color.primary),
             // Text('Ohhh no!!',
             //     style: TextStyle(fontSize: 30, color: colors.primary)),
             const SizedBox(height: 20),
@@ -221,41 +241,58 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     }
 
     return Scaffold(
-      body: ListView.builder(
-        controller: controller,
-        itemCount: history.length,
-        itemBuilder: (BuildContext context, int index) {
-          final chapter = history.values.toList()[index];
+      body: Stack(
+        children: [
+          ListView.builder(
+            controller: controller,
+            itemCount: history.length,
+            itemBuilder: (BuildContext context, int index) {
+              final chapter = history.values.toList()[index];
 
-          final Anime anime = Anime(
-            animeUrl: chapter.animeUrl!,
-            imageUrl: chapter.imageUrl!,
-            animeTitle: chapter.title,
-            chapterInfo: chapter.chapterInfo,
-            chapterUrl: chapter.chapterUrl,
-          );
-          return GestureDetector(
-            onTap: () async {
-              showDialog(
-                  context: context, builder: (context) => ServerDialog(anime));
+              final Anime anime = Anime(
+                animeUrl: chapter.animeUrl!,
+                imageUrl: chapter.imageUrl!,
+                animeTitle: chapter.title,
+                chapterInfo: chapter.chapterInfo,
+                chapterUrl: chapter.chapterUrl,
+              );
+              return GestureDetector(
+                onTap: () async {
+                  showDialog(
+                      context: context,
+                      builder: (context) => ServerDialog(anime));
+                },
+                child: _HistoryTile(
+                  chapter: chapter,
+                ),
+              );
             },
-            child: _HistoryTile(
-              chapter: chapter,
-            ),
-          );
-        },
+          ),
+          if (isWatchinLoading)
+            Positioned(
+                right: (size.width / 2) - 25,
+                bottom: 20,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                      color: color.background, shape: BoxShape.circle),
+                  height: 50,
+                  width: 50,
+                  child: const CircularProgressIndicator(),
+                )),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-          key: const Key('History-fab'),
-          onPressed: () async {
-            await ref
-                .read(watchingHistoryProvider.notifier)
-                .clearHistory()
-                .then((value) => ref.refresh(watchingHistoryProvider));
+      // floatingActionButton: FloatingActionButton(
+      //     key: const Key('History-fab'),
+      //     onPressed: () async {
+      //       await ref
+      //           .read(watchingHistoryProvider.notifier)
+      //           .clearHistory()
+      //           .then((value) => ref.refresh(watchingHistoryProvider));
 
-            setState(() {});
-          },
-          child: const Icon(Icons.delete_forever)),
+      //       setState(() {});
+      //     },
+      //     child: const Icon(Icons.delete_forever)),
     );
   }
 
@@ -385,17 +422,26 @@ class _HistoryTile extends ConsumerWidget {
                         });
                       },
                     ),
-                    const PopupMenuItem(
-                        child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.delete_forever),
-                        SizedBox(
-                          width: 5,
-                        ),
-                        Text('Eliminar'),
-                      ],
-                    )),
+                    PopupMenuItem(
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.delete_forever),
+                          SizedBox(
+                            width: 5,
+                          ),
+                          Text('Eliminar'),
+                        ],
+                      ),
+                      onTap: () async {
+                        await ref
+                            .read(isWatchingAnimeProvider.notifier)
+                            .removeChapter(chapter)
+                            .then((value) => ref
+                                .refresh(watchingHistoryProvider.notifier)
+                                .loadNextPage());
+                      },
+                    ),
                     // const PopupMenuItem(child: Text('Ver detalles')),
                   ];
                 },

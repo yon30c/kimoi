@@ -43,6 +43,10 @@ class HistoryNotifier extends StateNotifier<List<Chapter>> {
       state = [...state, chapter];
     }
   }
+
+  Future<void> removeChapter(Chapter chapter) async {
+    await localStorageRepository.removeWatchetChapter(chapter);
+  }
 }
 
 final watchingHistoryProvider =

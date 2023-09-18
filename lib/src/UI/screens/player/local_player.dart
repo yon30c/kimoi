@@ -68,8 +68,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     final url = ref.read(fixedServerProvider)!.optional!;
     final optional = await extract(url);
 
-    print(videoList.first.headers);
-
     isClose = false;
     BetterPlayerConfiguration betterPlayerConfiguration =
         BetterPlayerConfiguration(
@@ -116,31 +114,34 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
           _betterPlayerController.setupDataSource(BetterPlayerDataSource(
               BetterPlayerDataSourceType.network, optional.first.videoUrl!,
               headers: optional.first.headers, resolutions: resolutions));
+
+          _betterPlayerController.addEventsListener((BetterPlayerEvent event) {
+            setState(() {});
+          });
+        }
+
+        if (isClose) return;
+        if (_betterPlayerController.isPlaying()!) {
+          addOnWatching(
+              _betterPlayerController
+                  .videoPlayerController!.value.position.inSeconds,
+              _betterPlayerController
+                  .videoPlayerController!.value.duration!.inSeconds);
+
+          //* Agregar duracion.
+          if (isInitialize && _betterPlayerController.isPlaying()!) {
+            if (flag) return;
+            flag = true;
+            final chapter = widget.videos;
+            chapter.date = DateTime.now();
+            chapter.duration = _betterPlayerController
+                .videoPlayerController!.value.duration!.inSeconds;
+            ref
+                .read(isWatchingAnimeProvider.notifier)
+                .addOnWatching(widget.videos);
+          }
         }
       });
-
-      if (isClose) return;
-      if (_betterPlayerController.isPlaying()!) {
-        addOnWatching(
-            _betterPlayerController
-                .videoPlayerController!.value.position.inSeconds,
-            _betterPlayerController
-                .videoPlayerController!.value.duration!.inSeconds);
-
-        //* Agregar duracion.
-        if (isInitialize && _betterPlayerController.isPlaying()!) {
-          if (flag) return;
-          flag = true;
-          setState(() {});
-          final chapter = widget.videos;
-          chapter.date = DateTime.now();
-          chapter.duration = _betterPlayerController
-              .videoPlayerController!.value.duration!.inSeconds;
-          ref
-              .read(isWatchingAnimeProvider.notifier)
-              .addOnWatching(widget.videos);
-        }
-      }
     });
 
     WakelockPlus.enable();
@@ -326,7 +327,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     final size = MediaQuery.of(context).size;
     final textStyle = Theme.of(context).textTheme;
     responsive.setDimensions(size.width, size.height);
-
 
     // ********************************************************** //
     // *-----  OBTENER EL SIGUIENTE Y EL ANTERIOR VIDEO  -------* //

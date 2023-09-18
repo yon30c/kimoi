@@ -11,7 +11,7 @@ class SolidFilesExtractor {
   };
 
   Future<List<Video>> videoFromUrl(String url) async {
-    final response = await client.get(Uri.parse(url), headers: headers);
+    final response = await client.get(Uri.parse(url));
 
     List<Video> videos = [];
     if (response.body.isNotEmpty && response.statusCode == 200) {

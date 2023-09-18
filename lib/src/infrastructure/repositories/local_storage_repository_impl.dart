@@ -47,4 +47,9 @@ class LocalStorageRepositoryImpl extends LocalStorageRepository {
   Future<void> clearHistory() {
     return datasource.clearHistory();
   }
+
+  @override
+  Future<void> removeWatchetChapter(Chapter chapter) {
+    return datasource.removeWatchetChapter(chapter);
+  }
 }

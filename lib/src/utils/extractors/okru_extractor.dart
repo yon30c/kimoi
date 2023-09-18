@@ -1,4 +1,5 @@
-import 'package:html_character_entities/html_character_entities.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:kimoi/src/infrastructure/infrastructure.dart';
 import 'package:kimoi/src/utils/extensions/extension.dart';
@@ -28,45 +29,64 @@ class OkruExtractor {
   }
 
   Future<List<Video>> videosFromUrl(String url) async {
-    final response = await client.get(Uri.parse(url), headers: headers);
+    String? html;
 
-    List<Video> videos = [];
+    bool isLoading = true;
 
-    if (response.body.isNotEmpty && response.statusCode == 200) {
-      final htmlDecoded = HtmlCharacterEntities.decode(response.body)
-          .replaceAll(' ', '')
-          .replaceAll(r'\\\', '')
-          .replaceAll(r'\\u0026amp;', '&')
-          .replaceAll(r'\\u0026', '&');
+    try {
+      final headless = HeadlessInAppWebView(
+        initialUrlRequest: URLRequest(url: Uri.parse(url), headers: headers),
+        onLoadStop: (controller, url) async {
+          html = await controller.getHtml();
+          isLoading = false;
+        },
+      )
+        ..run()
+        ..dispose();
 
-      final data = htmlDecoded
-          .substringAfter('data-options')
-          .substringAfter("\\\"videos\\\":[{\\\"name\\\":\\\"")
-          .substringBefore(']');
-
-      final dataSplitted = data.split("{\\\"name\\\":\\\"").reversed.toList();
-
-      for (var it in dataSplitted) {
-        
-        final videoUrl =
-            it.substringAfter("url\\\":\\\"").substringBefore("\\\"");
-
-        final quality = fixQuality(it.substringBefore("\\\""));
-
-        final videoQuality = ("Okru:$quality");
-
-        if (videoUrl.startsWith("https://")) {
-          final video =
-              Video(url: videoUrl, quality: videoQuality, videoUrl: videoUrl, headers: headers);
-          videos.add(video);
-        } else {
-          null;
-        }
+      while (isLoading) {
+        print(isLoading);
+        await Future.delayed(const Duration(seconds: 1));
       }
-      
-      return videos;
-    }
 
-    return [];
+      var doc = parse(html);
+
+      final data =
+          doc.querySelector('div[data-options]')?.attributes['data-options'];
+
+      if (data == null) return [];
+
+      final videos = videosFromJson(data);
+      return videos;
+    } on Exception catch (e) {
+      return [];
+    }
+  }
+
+  List<Video> videosFromJson(String videoString,
+      {String prefix = "", bool fixQualities = true}) {
+    final arrayData = videoString
+        .substringAfter("\\\"videos\\\":[{\\\"name\\\":\\\"")
+        .substringBefore("]");
+
+    final data = arrayData.split("{\\\"name\\\":\\\"").reversed.map((it) {
+      final videoUrl = it.extractLink("url");
+      final resolution = it.substringBefore("\\\"");
+      final quality = fixQuality(resolution);
+
+      final videoQuality = "Okru:$quality";
+
+      // if (videoUrl.startsWith("https://")) {
+      return Video(
+          url: videoUrl,
+          quality: videoQuality,
+          videoUrl: videoUrl,
+          headers: headers);
+      // } else {
+      //   null;
+      // }
+    }).toList();
+
+    return data;
   }
 }

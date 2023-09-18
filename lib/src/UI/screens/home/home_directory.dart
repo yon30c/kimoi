@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -112,7 +113,14 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
   String? genero;
   int? idioma;
 
+  int initialLength = 0;
+  int finalLength = 0;
+
+  bool isLastPage = false;
   bool isLoading = false;
+
+  ValueNotifier label = ValueNotifier<String>('Año');
+  ValueNotifier filterLabel = ValueNotifier<String>('');
 
   late final ScrollController scrollController;
   late final TabController tabController;
@@ -153,13 +161,14 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
       }
 
       listen();
-
     });
   }
 
   Future fetchData() async {
     if (isLoading) return;
+    if (isLastPage) return;
 
+    initialLength = ref.read(animeDirectoryProvider).length;
     isLoading = true;
     setState(() {});
 
@@ -174,14 +183,20 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
     isLoading = false;
     setState(() {});
 
+    finalLength = ref.read(animeDirectoryProvider).length;
+
     // if (scrollController.position.pixels + 100 <=
     //     scrollController.position.maxScrollExtent) return;
-    if (scrollController.position.pixels + 100 <=
-        scrollController.position.maxScrollExtent) return;
+    // if (scrollController.position.pixels + 200 <=
+    //     scrollController.position.maxScrollExtent) return;
 
     scrollController.animateTo(scrollController.position.pixels + 100,
         duration: const Duration(milliseconds: 300),
         curve: Curves.fastLinearToSlowEaseIn);
+
+    if (initialLength == finalLength) {
+      isLastPage = true;
+    }
   }
 
   bool isFabActive = false;
@@ -221,6 +236,7 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
     super.build(context);
 
     final animes = ref.watch(animeDirectoryProvider);
+    filterLabel.value = ref.watch(labelProvider);
 
     final textStyle = Theme.of(context).textTheme;
     final color = Theme.of(context).colorScheme;
@@ -249,23 +265,100 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
                 child: Row(
                   children: [
                     const SizedBox(width: 8),
-                    Text(
-                      'Recientes',
-                      style: textStyle.titleMedium,
-                    ),
+                    PopupMenuButton(
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: color.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              label.value,
+                              style: TextStyle(color: color.primary),
+                            ),
+                          ],
+                        ),
+                        itemBuilder: (context) => years
+                            .map((e) => PopupMenuItem(
+                                  child: Text(
+                                    e,
+                                    style: textStyle.titleSmall,
+                                  ),
+                                  onTap: () {
+                                    label.value = e;
+                                    if (e != 'Año') {
+                                      isLastPage = false;
+                                      setState(() {});
+                                      ref
+                                          .read(estrenoProvider.notifier)
+                                          .update((state) => int.parse(e));
+                                      ref
+                                          .refresh(
+                                              animeDirectoryProvider.notifier)
+                                          .getAnimes(
+                                              estreno:
+                                                  ref.read(estrenoProvider),
+                                              tipo: ref.read(tipoProvider));
+                                    } else {
+                                      ref
+                                          .read(estrenoProvider.notifier)
+                                          .update((state) => 0);
+                                      ref
+                                          .refresh(
+                                              animeDirectoryProvider.notifier)
+                                          .getAnimes(
+                                              tipo: ref.read(tipoProvider));
+                                    }
+                                  },
+                                ))
+                            .toList()),
                     const Spacer(),
+                    if (filterLabel.value != '')
+                      TextButton.icon(
+                          onPressed: () {
+                            isLastPage = false;
+                            setState(() {});
+                            ref
+                                .read(labelProvider.notifier)
+                                .update((state) => '');
+                            ref
+                                .read(tipoProvider.notifier)
+                                .update((state) => '');
+                            ref
+                                .read(typeValueProvider.notifier)
+                                .update((state) => Type.Todo);
+                            ref
+                                .refresh(animeDirectoryProvider.notifier)
+                                .getAnimes(
+                                  estreno: ref.read(estrenoProvider),
+                                );
+                          },
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                          label: Text(filterLabel.value)),
                     IconButton(
                         onPressed: () {
+                          isLastPage = false;
+                          setState(() {});
                           showGeneralDialog(
                               context: context,
                               pageBuilder: (_, __, ___) {
                                 return const FilterDialog();
                               });
                         },
-                        icon: const Icon(Icons.filter_alt)),
+                        icon: const Icon(Icons.tune_rounded)),
                   ],
                 ),
               )),
+              if (animes.isEmpty)
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                      height: size.height * 0.5,
+                      width: size.width,
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      )),
+                ),
               SliverGrid.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2, mainAxisExtent: size.height * 0.40),
@@ -307,6 +400,43 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
   @override
   bool get wantKeepAlive => true;
 }
+
+List<String> years = [
+  'Año',
+  '2023',
+  '2022',
+  '2021',
+  '2020',
+  '2019',
+  '2018',
+  '2017',
+  '2016',
+  '2015',
+  '2014',
+  '2013',
+  '2012',
+  '2011',
+  '2010',
+  '2009',
+  '2008',
+  '2007',
+  '2006',
+  '2005',
+  '2004',
+  '2003',
+  '2002',
+  '2001 ',
+  '2000',
+  '1999',
+  '1998',
+  '1997',
+  '1996',
+  '1995',
+  '1994',
+  '1993',
+  '1992',
+  '1991'
+];
 
 class _GenrePage extends ConsumerWidget {
   const _GenrePage();

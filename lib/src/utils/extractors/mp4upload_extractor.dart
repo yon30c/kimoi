@@ -1,3 +1,4 @@
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:kimoi/src/infrastructure/infrastructure.dart';
@@ -15,18 +16,29 @@ class Mp4UploadExtractor {
   RegExp qualityRegex = RegExp(r"""\WHEIGHT=(\d+)""");
 
   Future<List<Video>> videosFromUrl(String url) async {
-    final respose = await client.get(Uri.parse(url), headers: headers);
+    String? html;
 
-    if (respose.body.isNotEmpty && respose.statusCode == 200) {
-      final doc = parse(respose.body);
+    bool isLoading = true;
 
-      final script = doc
-          .querySelectorAll('script')
-          .firstWhere((element) => element.text.contains('player.src'))
-          .text;
+    try {
+      HeadlessInAppWebView(
+        initialUrlRequest: URLRequest(url: Uri.parse(url), headers: headers),
+        onLoadStop: (controller, url) async {
+          html = await controller.getHtml();
+          isLoading = false;
+        },
+      )
+        ..run()
+        ..dispose();
+
+      while (isLoading) {
+        print(isLoading);
+        await Future.delayed(const Duration(seconds: 1));
+      }
+
+      final script = html!.substringAfter('player.src(');
 
       final videoUrl = script
-          .substringAfter(".src(")
           .substringBefore(")")
           .substringAfter("src:")
           .substringAfter('"')
@@ -34,7 +46,7 @@ class Mp4UploadExtractor {
 
       final resolution = qualityRegex.firstMatch(script)?.group(1);
 
-      final quality = 'Mp4Upload - $resolution';
+      final quality = 'Mp4Upload - ${resolution}p';
 
       return [
         Video(
@@ -43,8 +55,8 @@ class Mp4UploadExtractor {
             videoUrl: videoUrl,
             headers: headers)
       ];
+    } on Exception catch (e) {
+      return [];
     }
-
-    return [];
   }
 }

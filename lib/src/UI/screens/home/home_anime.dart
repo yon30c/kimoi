@@ -1,9 +1,7 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/screens/home/home.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
 
@@ -29,24 +27,6 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
     super.initState();
     ref.read(lastAnimesAddedProvider.notifier).getAnimes();
     ref.read(recentAnimesProvider.notifier).getAnimes();
-    getShounenAnime();
-    getAccionAnime();
-    // MonoschinosDatasource().getRecentAnime();
-    // MonoschinosDatasource().getAnimeInfo('');
-  }
-
-  void getShounenAnime() async {
-    shounenAnime = await ref
-        .read(animeRepositoryProvider)
-        .getDirectory(genero: 'shonen', estreno: 2023);
-    setState(() {});
-  }
-
-  void getAccionAnime() async {
-    accionAnime = await ref
-        .read(animeRepositoryProvider)
-        .getDirectory(genero: 'accion', estreno: 2023);
-    setState(() {});
   }
 
   void onPressed() async {
@@ -116,39 +96,39 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                           title: 'Últimos animes',
                           subtitle: '2023',
                       ),
-                      AnimesListview(
-                          genre: GenresTab(
-                            iconPath: null,
-                            name: 'Acción',
-                            id: 'accion',
-                            title: 'ACCIÓN',
-                            imagePath: 'assets/images/acc-ani.jpeg',
-                            icon: FontAwesomeIcons.fire,
-                          ),
-                          subtitle: 'Ver más',
-                          height: 180,
-                          width: 130,
-                          animes: accionAnime,
-                          title: 'Accion',
-                          loadNextPage: ref
-                              .read(lastAnimesAddedProvider.notifier)
-                              .getAnimes),
-                      AnimesListview(
-                          genre: GenresTab(
-                              iconPath: null,
-                              name: 'Shounen',
-                              id: 'shonen',
-                              title: 'SHOUNEN',
-                              imagePath: 'assets/images/shoune-ani2.jpeg',
-                              icon: FontAwesomeIcons.gamepad),
-                          subtitle: 'Ver más',
-                          height: 180,
-                          width: 130,
-                          animes: shounenAnime,
-                          title: 'Shounen',
-                          loadNextPage: ref
-                              .read(lastAnimesAddedProvider.notifier)
-                              .getAnimes),
+                      // AnimesListview(
+                      //     genre: GenresTab(
+                      //       iconPath: null,
+                      //       name: 'Acción',
+                      //       id: 'accion',
+                      //       title: 'ACCIÓN',
+                      //       imagePath: 'assets/images/acc-ani.jpeg',
+                      //       icon: FontAwesomeIcons.fire,
+                      //     ),
+                      //     subtitle: 'Ver más',
+                      //     height: 180,
+                      //     width: 130,
+                      //     animes: accionAnime,
+                      //     title: 'Accion',
+                      //     loadNextPage: ref
+                      //         .read(lastAnimesAddedProvider.notifier)
+                      //         .getAnimes),
+                      // AnimesListview(
+                      //     genre: GenresTab(
+                      //         iconPath: null,
+                      //         name: 'Shounen',
+                      //         id: 'shonen',
+                      //         title: 'SHOUNEN',
+                      //         imagePath: 'assets/images/shoune-ani2.jpeg',
+                      //         icon: FontAwesomeIcons.gamepad),
+                      //     subtitle: 'Ver más',
+                      //     height: 180,
+                      //     width: 130,
+                      //     animes: shounenAnime,
+                      //     title: 'Shounen',
+                      //     loadNextPage: ref
+                      //         .read(lastAnimesAddedProvider.notifier)
+                      //         .getAnimes),
                       const SizedBox(
                         height: 15,
                       )
