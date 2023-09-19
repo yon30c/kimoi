@@ -152,9 +152,10 @@ class _FavoritesViewState extends ConsumerState<_FavoritesView> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(Icons.save, size: 60, color: colors.primary),
-            const Text('No tienes animes guardados',
-                style: TextStyle(fontSize: 20)),
             const SizedBox(height: 20),
+            const Text('No tienes animes guardados',
+                style: TextStyle(fontSize: 18)),
+            const SizedBox(height: 10),
             FilledButton.tonal(
                 onPressed: () => context.go('/explorar'),
                 child: const Text('Empieza a buscar'))

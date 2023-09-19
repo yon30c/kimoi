@@ -3,8 +3,10 @@ import 'package:permission_handler/permission_handler.dart';
 class CheckPermission {
   isStoragePermission() async {
     var isStorage = await Permission.storage.status;
-    if (!isStorage.isDenied || !isStorage.isGranted) {
+
+    if (!isStorage.isGranted) {
       await Permission.storage.request();
+      print(isStorage);
       if (!isStorage.isGranted) {
         return false;
       } else {

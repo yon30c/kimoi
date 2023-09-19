@@ -340,9 +340,9 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     String backChapterUrl = '$url-$chap2';
     String nextChapterUrl = '$url-$chap';
 
-    AsyncValue<Chapter?> previusChapter =
+    AsyncValue<List?> previusChapter =
         ref.watch(previousChapterProvider(backChapterUrl));
-    AsyncValue<Chapter?> nextChapter =
+    AsyncValue<List?> nextChapter =
         ref.watch(nextChapterProvider(nextChapterUrl));
 
     // ********************************************************** //
@@ -458,8 +458,8 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   // ********************************************************** //
 
   // Barra de controles inferior
-  Row _videoButtomBarControls(AsyncValue<Chapter?> previusChapter,
-      BuildContext context, AsyncValue<Chapter?> nextChapter) {
+  Row _videoButtomBarControls(AsyncValue<List?> previusChapter,
+      BuildContext context, AsyncValue<List?> nextChapter) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -495,12 +495,17 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                 return () {
                   isClose = true;
                   _betterPlayerController.dispose();
-                  data.imageUrl = widget.videos.imageUrl;
-                  data.animeUrl = widget.videos.animeUrl;
-                  data.isWatching = true;
-                  ref.read(chapterProvider.notifier).update((state) => data);
+                  data.first.imageUrl = widget.videos.imageUrl;
+                  data.first.animeUrl = widget.videos.animeUrl;
+                  data.first.isWatching = true;
+                  ref
+                      .read(fixedServerProvider.notifier)
+                      .update((state) => data.last.first);
+                  ref
+                      .read(chapterProvider.notifier)
+                      .update((state) => data.first);
                   // ref.read(videoProvider.notifier).getVideos();
-                  context.pushReplacement('/local-player', extra: data);
+                  context.pushReplacement('/local-player', extra: data.first);
                 };
               },
               error: (error, stackTrace) {
@@ -534,12 +539,16 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                 return () {
                   isClose = true;
                   _betterPlayerController.dispose();
-                  data.imageUrl = widget.videos.imageUrl;
-                  data.animeUrl = widget.videos.animeUrl;
-                  data.isWatching = true;
-                  ref.read(chapterProvider.notifier).update((state) => data);
+                  data.first.imageUrl = widget.videos.imageUrl;
+                  data.first.animeUrl = widget.videos.animeUrl;
+                  data.first.isWatching = true;
+
+                  ref
+                      .read(fixedServerProvider.notifier)
+                      .update((state) => data.last.first);
+                  ref.read(chapterProvider.notifier).update((state) => data.first);
                   // ref.read(videoProvider.notifier).getVideos();
-                  context.pushReplacement('/local-player', extra: data);
+                  context.pushReplacement('/local-player', extra: data.first);
                 };
               },
               error: (error, stackTrace) {

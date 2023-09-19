@@ -1,6 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kimoi/src/utils/download/check_permission.dart';
+import 'package:kimoi/src/utils/updater/updater.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String name = 'Home-screen';
@@ -14,18 +15,74 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late UpdaterController controller;
+  late Updater updater;
+
+  void initializeUpdater() {
+    controller = UpdaterController(
+
+      listener: (UpdateStatus status) {
+        debugPrint('Listener: $status');
+      },
+      
+      onChecked: (bool isAvailable) {
+        debugPrint('$isAvailable');
+      },
+      progress: (current, total) {
+        // debugPrint('Progress: $current -- $total');
+      },
+      onError: (status) {
+        debugPrint('Error: $status');
+      },
+    );
+
+    updater = Updater(
+      context: context,
+
+      delay: const Duration(milliseconds: 300),
+
+      url:
+          'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater.json',
+      titleText: 'Stay with time',
+      // backgroundDownload: false,
+      allowSkip: false,
+      contentText:
+          'Update your app to the latest version to enjoy new feature.',
+      callBack: (UpdateModel model) {
+        debugPrint(model.versionName);
+        debugPrint(model.versionCode.toString());
+        debugPrint(model.contentText);
+      },
+
+
+      enableResume: true,
+      controller: controller,
+    );
+  }
+
+  checkUpdate() async {
+    bool isAvailable = await updater.check();
+
+    debugPrint('$isAvailable');
+
+    // controller.pause();
+    // controller.resume();
+  }
+
   void onTap(BuildContext context, int value) {
     widget.navigationShell.goBranch(value,
         initialLocation: value == widget.navigationShell.currentIndex);
   }
+
   List<NavigationDestination> items = const [
     NavigationDestination(
       icon: Icon(Icons.newspaper),
       label: "Noticias",
     ),
     NavigationDestination(
-        selectedIcon: Icon(Icons.video_collection_rounded) ,
-        icon: Icon(Icons.video_collection_rounded), label: "Animes"),
+        selectedIcon: Icon(Icons.video_collection_rounded),
+        icon: Icon(Icons.video_collection_rounded),
+        label: "Animes"),
     NavigationDestination(
       icon: Icon(Icons.bookmarks_rounded),
       label: "Mis listas",
@@ -33,25 +90,23 @@ class _HomeScreenState extends State<HomeScreen> {
     NavigationDestination(icon: Icon(Icons.explore), label: "Explorar"),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+
+    CheckPermission().isStoragePermission();
+    initializeUpdater();
+    checkUpdate();
+  }
 
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
 
-
-
     return Scaffold(
-        // appBar: AppBar(
-        //   title: const Text('LatAnime'),
-        //   actions: [_colorized(context)],
-        // ),
         body: AnimatedSwitcher(
             duration: const Duration(seconds: 1),
             child: widget.navigationShell),
-        // IndexedStack(
-        //   index: index,
-        //   children: pages.map((e) => e.page).toList(),
-        // ),,
         bottomNavigationBar: NavigationBar(
           indicatorColor: color.primaryContainer,
           destinations: items,

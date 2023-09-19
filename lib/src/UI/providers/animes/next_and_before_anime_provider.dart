@@ -14,54 +14,12 @@ final dio1 = Dio(BaseOptions(
 ))
   ..httpClientAdapter;
 
-final nextChPro = StateProvider.family((ref, String path) async {
-  return await getNextChap(path);
-});
 
-getNextChap(String path) async {
-  try {
-    final response = await dio1.get(path);
-
-    if (response.statusCode! > 400) return null;
-
-    final number = path.split('-').last;
-    final Document document = parse(response.data);
-
-    final title = document.getElementById('anime_name')?.text;
-
-    if (title == null) return null;
-
-    final servs =
-        document.querySelector('.fuentes-lista')!.querySelectorAll('button');
-    final chapterInfo = document
-        .querySelector('.titulo-episodio')!
-        .querySelectorAll('p')
-        .last
-        .text;
-
-    List<String> servers = [];
-
-    for (var serv in servs) {
-      String serverUrl = serv.attributes['data-url']!;
-      servers.add(serverUrl);
-    }
-
-    return Chapter(
-        id: '$title/$number/$path',
-        chapter: 'Episodio $number',
-        chapterUrl: path,
-        chapterInfo: chapterInfo,
-        title: title,
-        chapterNumber: int.parse(number),
-        servers: servers);
-  } on Exception catch (e) {
-    debugPrint('$e');
-    return null;
-  }
-}
 
 final nextChapterProvider =
     FutureProvider.family.autoDispose((ref, String path) async {
+  print(' NextChapterProvider $path');
+
   try {
     final response = await dio1.get(path);
     final Document doc = parse(response.data);
@@ -190,18 +148,16 @@ final nextChapterProvider =
         }
       }
     }
-    ref
-        .read(fixedServerProvider.notifier)
-        .update((state) => fixedServers.first);
 
-    return Chapter(
+
+    return [Chapter(
         title: title,
         id: id,
         chapterUrl: path,
         chapterNumber: int.parse(chapterNumber),
         servers: servers,
         chapterInfo: '',
-        chapter: 'Episodio $chapterNumber');
+        chapter: 'Episodio $chapterNumber'), fixedServers];
   } on Exception catch (e) {
     debugPrint('$e');
     return null;
@@ -210,6 +166,7 @@ final nextChapterProvider =
 
 final previousChapterProvider =
     FutureProvider.family.autoDispose((ref, String path) async {
+  print(' PreviusChapterProvider $path');
   try {
     final response = await dio1.get(path);
     final Document doc = parse(response.data);
@@ -338,23 +295,21 @@ final previousChapterProvider =
         }
       }
     }
-    ref
-        .read(fixedServerProvider.notifier)
-        .update((state) => fixedServers.first);
-    return Chapter(
+
+
+
+    return [Chapter(
         title: title,
         id: id,
         chapterUrl: path,
         chapterNumber: int.parse(chapterNumber),
         servers: servers,
         chapterInfo: '',
-        chapter: 'Episodio $chapterNumber');
+        chapter: 'Episodio $chapterNumber'), fixedServers];
   } on Exception catch (e) {
     debugPrint('$e');
     return null;
   }
 });
 
-
 final chapterProvider = StateProvider<Chapter?>((ref) => null);
-

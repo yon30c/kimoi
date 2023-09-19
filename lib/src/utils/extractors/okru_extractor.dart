@@ -34,7 +34,7 @@ class OkruExtractor {
     bool isLoading = true;
 
     try {
-      final headless = HeadlessInAppWebView(
+      HeadlessInAppWebView(
         initialUrlRequest: URLRequest(url: Uri.parse(url), headers: headers),
         onLoadStop: (controller, url) async {
           html = await controller.getHtml();
@@ -45,7 +45,6 @@ class OkruExtractor {
         ..dispose();
 
       while (isLoading) {
-        print(isLoading);
         await Future.delayed(const Duration(seconds: 1));
       }
 
