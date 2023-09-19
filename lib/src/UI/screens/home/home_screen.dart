@@ -43,20 +43,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
       url:
           'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater.json',
-      titleText: 'Stay with time',
+      titleText: 'Actualización disponible',
       // backgroundDownload: false,
       allowSkip: false,
       contentText:
-          'Update your app to the latest version to enjoy new feature.',
+          'Actualice su aplicación a la última versión para disfrutar de nuevas funciones.',
       callBack: (UpdateModel model) {
         debugPrint(model.versionName);
         debugPrint(model.versionCode.toString());
         debugPrint(model.contentText);
       },
-
-
+      confirmText: 'Descargar',
       enableResume: true,
       controller: controller,
+
     );
   }
 

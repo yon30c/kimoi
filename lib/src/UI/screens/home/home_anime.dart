@@ -166,7 +166,7 @@ class __AboutDialogState extends State<_AboutDialog> {
   late Updater updater;
 
   final Uri newFeatures =
-      Uri.parse('https://github.com/yon30c/kimoi_updater/releases/tag/v1.0.1');
+      Uri.parse('https://github.com/yon30c/kimoi_updater/releases/tag/v1.2.0');
 
   final Uri discordUrl = Uri.parse('https://discord.gg/FZjCttmF');
 
@@ -195,17 +195,17 @@ class __AboutDialogState extends State<_AboutDialog> {
 
       url:
           'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater.json',
-      titleText: 'Stay with time',
+      titleText: 'Actualización disponible',
       // backgroundDownload: false,
       allowSkip: false,
       contentText:
-          'Update your app to the latest version to enjoy new feature.',
+          'Actualice su aplicación a la última versión para disfrutar de nuevas funciones.',
       callBack: (UpdateModel model) {
         debugPrint(model.versionName);
         debugPrint(model.versionCode.toString());
         debugPrint(model.contentText);
       },
-
+      confirmText: 'Descargar',
       enableResume: true,
       controller: controller,
     );
