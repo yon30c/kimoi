@@ -12,7 +12,7 @@ final animeDirectoryProvider =
 typedef GetDirectoryCallback = Future<List<Anime>> Function(
     {int? estado,
     int? estreno,
-   String? genero,
+    String? genero,
     int? idioma,
     int? p,
     String? q,
@@ -38,7 +38,8 @@ class AnimeDirectoryNotifier extends StateNotifier<List<Anime>> {
 
     isLoading = true;
 
-     currentPage++;
+    currentPage++;
+    print(currentPage);
 
     List<Anime> animes = [];
 

@@ -71,7 +71,6 @@ class _Slide extends StatelessWidget {
                 _NetworkImage(article: article),
                 const _ShadowBox(),
                 _Description(article: article),
-                _Buttons(article: article)
               ],
             )),
       ),
@@ -79,51 +78,6 @@ class _Slide extends StatelessWidget {
   }
 }
 
-class _Buttons extends StatelessWidget {
-  const _Buttons({
-    required this.article,
-  });
-
-  final ArticleInfo article;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme;
-    return Positioned(
-      right: 0,
-      top: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            IconButton.filled(
-                style: ButtonStyle(
-                    visualDensity: VisualDensity.compact,
-                    backgroundColor:
-                        MaterialStatePropertyAll(color.onPrimaryContainer)),
-                onPressed: () {
-                  browser.openUrlRequest(
-                      urlRequest: URLRequest(url: Uri.parse(article.url)),
-                      options: options);
-                },
-                icon: const Icon(
-                  Symbols.remove_red_eye_sharp,
-                )),
-            IconButton.filled(
-                style: ButtonStyle(
-                    visualDensity: VisualDensity.compact,
-                    backgroundColor:
-                        MaterialStatePropertyAll(color.onPrimaryContainer)),
-                onPressed: () {},
-                icon: const Icon(Symbols.share))
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _Description extends StatelessWidget {
   const _Description({

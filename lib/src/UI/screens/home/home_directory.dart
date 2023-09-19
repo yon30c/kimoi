@@ -152,7 +152,7 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
     scrollController.addListener(() {
       // if (widget.loadNextPage == null) return;
 
-      if ((scrollController.position.pixels + 300) >=
+      if ((scrollController.position.pixels + 500) >=
               scrollController.position.maxScrollExtent &&
           tabController.index == 0) {
         // add5();
@@ -177,21 +177,22 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
         tipo: ref.read(tipoProvider),
         genero: ref.read(generoProvider),
         idioma: ref.read(idiomaProvider));
-    await Future.delayed(const Duration(seconds: 2));
 
-    isLoading = false;
+
+    await Future.delayed(const Duration(seconds: 3), () {
+      isLoading = false;
+      finalLength = ref.read(animeDirectoryProvider).length;
+    });
     setState(() {});
-
-    finalLength = ref.read(animeDirectoryProvider).length;
 
     // if (scrollController.position.pixels + 100 <=
     //     scrollController.position.maxScrollExtent) return;
     // if (scrollController.position.pixels + 200 <=
     //     scrollController.position.maxScrollExtent) return;
 
-    scrollController.animateTo(scrollController.position.pixels + 100,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.fastLinearToSlowEaseIn);
+    // scrollController.animateTo(scrollController.position.pixels + 100,
+    //     duration: const Duration(milliseconds: 300),
+    //     curve: Curves.fastLinearToSlowEaseIn);
 
     if (initialLength == finalLength) {
       isLastPage = true;

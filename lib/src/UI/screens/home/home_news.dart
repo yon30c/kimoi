@@ -47,8 +47,6 @@ class HomeNewsState extends ConsumerState<HomeNews>
     ref.read(popularNewsProvider.notifier).getNews();
     ref.read(recentNewsProvider.notifier).getNews();
 
-    ref.read(animeDirectoryProvider.notifier).getAnimes();
-
     scrollController.addListener(listen);
   }
 
@@ -226,7 +224,8 @@ class HomeNewsState extends ConsumerState<HomeNews>
               onTap: onTap,
             ),
           ),
-          SliverList.builder(
+          SliverGrid.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
             itemCount: articles.length,
             itemBuilder: (context, index) {
               final e = articles[index];

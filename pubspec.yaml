@@ -30,6 +30,7 @@ dependencies:
   path_provider: ^2.1.1
   permission_handler: ^11.0.0
   shared_preferences: ^2.2.1
+  url_launcher: ^6.1.14
   wakelock_plus: ^1.1.1
   youtube_player_flutter: ^8.1.2
 
@@ -65,3 +66,5 @@ flutter:
     - assets/icons/laughing.png
     - assets/icons/watch-movie.png
     - assets/videos/loading.mp4
+    - assets/app_icon.webp
+    - assets/app_icon_rounded.webp

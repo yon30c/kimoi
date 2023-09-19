@@ -33,7 +33,7 @@ class _ArticleState extends State<Article> {
           color: color.background,
           child: (widget.loading)
               ? const SizedBox(
-                  height: 300,
+                  height: 120,
                   child: Center(
                     child: CircularProgressIndicator(),
                   ))
@@ -44,52 +44,58 @@ class _ArticleState extends State<Article> {
                       FadeInImage(
                         image: NetworkImage(widget.articleInfo.imageUrl),
                         placeholder: const AssetImage("assets/loading4.gif"),
-                        height: 207,
+                        height: 100,
                         placeholderFit: BoxFit.contain,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: FilledButton(
-                          onPressed: () {},
-                          style: const ButtonStyle(
-                              visualDensity: VisualDensity.compact),
-                          child: Text(
-                            widget.articleInfo.category,
-                          ),
+
+                      Container(
+                        decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(5)),
+                        color: Colors.black54,
+                        ),
+                        padding: const EdgeInsets.all(3.0),
+                        margin: const EdgeInsets.all(3.0),
+                        child: Text(
+                          widget.articleInfo.category,
+                          style: textStyle.labelSmall?.copyWith(color: color.primary),
                         ),
                       ),
+                      
                     ],
                   ),
                   Padding(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                     child: Text(
                       widget.articleInfo.description,
-                      style: textStyle.titleMedium,
+                      maxLines: 3,
+                      style: textStyle.labelMedium,
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      TextButton.icon(
-                          onPressed: () {
-                            browser.openUrlRequest(
-                                urlRequest: URLRequest(
-                                    url: Uri.parse(widget.articleInfo.url)),
-                                options: options);
-                          },
-                          icon: const Icon(Icons.remove_red_eye),
-                          label: const Text('Ver más')),
-                      TextButton.icon(
-                          onPressed: () {
+
+                  
+                  // const Divider(),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  //   children: [
+                  //     TextButton.icon(
+                  //         onPressed: () {
+                  //           browser.openUrlRequest(
+                  //               urlRequest: URLRequest(
+                  //                   url: Uri.parse(widget.articleInfo.url)),
+                  //               options: options);
+                  //         },
+                  //         icon: const Icon(Icons.remove_red_eye),
+                  //         label: const Text('Ver más')),
+                  //     TextButton.icon(
+                  //         onPressed: () {
                             
-                          },
-                          icon: const Icon(Icons.share_outlined),
-                          label: const Text('Compartir')),
-                    ],
-                  )
+                  //         },
+                  //         icon: const Icon(Icons.share_outlined),
+                  //         label: const Text('Compartir')),
+                  //   ],
+                  // )
                 ]),
         ),
       ),
