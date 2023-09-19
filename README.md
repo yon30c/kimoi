@@ -12,7 +12,9 @@ En esta aplicacion hago uso de:
 - Como gestor de base de datos uso isar
 - Para enviar actualizaciones, hago uso del paquete "updater" con algunas modificaciones (src/utils/updater)
 
-Nota: hay clases y archivos que no estan implementadas. los uso como referencia
+Nota: 
+- Hay clases y archivos que no estan implementadas. los uso como referencia
 y algunas son funcionalidades que alguna vez use.
+- Solamente la he probado en android, no conozco su funcionamiento en ios
 
 Por favor pruebela y me deja saber su opinion sobre el codigo.
