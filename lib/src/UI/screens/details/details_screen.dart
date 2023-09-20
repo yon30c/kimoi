@@ -579,9 +579,19 @@ class _BottomAppBarState extends ConsumerState<_BottomAppBar> {
                 shape: MaterialStatePropertyAll(RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(5))))),
             onPressed: () async {
+              final ani = Anime(
+                  animeUrl: widget.anime.animeUrl,
+                  imageUrl: widget.sortedEpisodes.first.imageUrl!,
+                  animeTitle: widget.anime.animeTitle,
+                  chapterInfo: widget.anime.chapterInfo,
+                  chapterUrl: widget.anime.chapterUrl,
+                  release: widget.anime.release,
+                  type: widget.anime.type
+                );
+
               await ref
                   .read(favoriteAnimesProvider.notifier)
-                  .toggleFavorite(widget.anime);
+                  .toggleFavorite(ani);
               ref.invalidate(isFavoriteProvider(widget.anime.animeTitle));
               setState(() {});
             },

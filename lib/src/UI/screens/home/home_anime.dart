@@ -166,7 +166,7 @@ class __AboutDialogState extends State<_AboutDialog> {
   late Updater updater;
 
   final Uri newFeatures =
-      Uri.parse('https://github.com/yon30c/kimoi_updater/releases/tag/v1.2.0');
+      Uri.parse('https://github.com/yon30c/kimoi_updater/releases/tag/v1.2.1');
 
   final Uri discordUrl = Uri.parse('https://discord.gg/FZjCttmF');
 
@@ -252,7 +252,7 @@ class __AboutDialogState extends State<_AboutDialog> {
           )),
           const ListTile(
             title: Text('Versión'),
-            subtitle: Text('Beta: 0.2.0'),
+            subtitle: Text('stable: 1.2.1'),
           ),
           ListTile(
             title: const Text('Buscar actualizaciones'),
@@ -274,6 +274,9 @@ class __AboutDialogState extends State<_AboutDialog> {
           const ListTile(
             title: Text('Política de privacidad'),
           ),
+
+          const SizedBox(height: 20),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

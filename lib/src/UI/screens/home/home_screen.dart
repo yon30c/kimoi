@@ -20,11 +20,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void initializeUpdater() {
     controller = UpdaterController(
-
       listener: (UpdateStatus status) {
         debugPrint('Listener: $status');
       },
-      
       onChecked: (bool isAvailable) {
         debugPrint('$isAvailable');
       },
@@ -34,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onError: (status) {
         debugPrint('Error: $status');
       },
+      
     );
 
     updater = Updater(
@@ -56,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
       confirmText: 'Descargar',
       enableResume: true,
       controller: controller,
-
     );
   }
 
