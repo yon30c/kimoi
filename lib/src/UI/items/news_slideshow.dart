@@ -3,7 +3,6 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:kimoi/src/infrastructure/models/article_info.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 import '../services/webview/webview.dart';
 

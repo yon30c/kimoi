@@ -13,7 +13,6 @@ import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/screens/player/youtube_player.dart';
 import 'package:kimoi/src/infrastructure/datasources/anime_mac_datasource.dart';
 import 'package:kimoi/src/infrastructure/models/extra_data.dart';
-import 'package:kimoi/src/utils/download/check_permission.dart';
 
 import '../../../domain/domain.dart';
 import '../../items/items.dart';
@@ -59,17 +58,6 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
   late ScrollController scrollController;
   final tabs = [const Tab(text: 'Episodios'), const Tab(text: 'Relacionados')];
 
-  var checkAllPermissions = CheckPermission();
-
-  checkPermission() async {
-    var permission = await checkAllPermissions.isStoragePermission();
-    if (permission) {
-      setState(() {
-        isPermission = true;
-      });
-    }
-  }
-
   String get sortLabel {
     if (isSorted) return "Ascendente";
     return "Descendente";
@@ -88,7 +76,6 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
     tabController = TabController(length: 2, vsync: this);
     getXData(anime!);
     getAniInfo(anime.animeUrl);
-    checkPermission();
     // scrollController.addListener(listen);
   }
 
@@ -300,7 +287,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
       bottomNavigationBar: SafeArea(
         child: ScrollToHideWidget(
           controller: scrollController,
-          child: _BottomAppBar(
+          child: _BottomAppBar(animeInfo: animeInfo,
               anime: anime, isSorted: isSorted, sortedEpisodes: sortedEpisodes),
         ),
       ),
@@ -480,11 +467,13 @@ class _BottomAppBar extends ConsumerStatefulWidget {
   const _BottomAppBar({
     required this.anime,
     required this.isSorted,
+    required this.animeInfo,
     required this.sortedEpisodes,
   });
 
   final Anime anime;
   final bool isSorted;
+  final AnimeInfo animeInfo;
   final List<Chapter> sortedEpisodes;
 
   @override
@@ -581,13 +570,12 @@ class _BottomAppBarState extends ConsumerState<_BottomAppBar> {
             onPressed: () async {
               final ani = Anime(
                   animeUrl: widget.anime.animeUrl,
-                  imageUrl: widget.sortedEpisodes.first.imageUrl!,
+                  imageUrl: widget.animeInfo.imageUrl,
                   animeTitle: widget.anime.animeTitle,
                   chapterInfo: widget.anime.chapterInfo,
                   chapterUrl: widget.anime.chapterUrl,
                   release: widget.anime.release,
-                  type: widget.anime.type
-                );
+                  type: widget.anime.type);
 
               await ref
                   .read(favoriteAnimesProvider.notifier)

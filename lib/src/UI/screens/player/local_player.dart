@@ -6,9 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/items/forward_and_rewind.dart';
+import 'package:kimoi/src/UI/items/items.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
-import 'package:kimoi/src/UI/items/transitions.dart';
 import 'package:kimoi/src/UI/providers/animes/next_and_before_anime_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/player/center_play_button.dart';
@@ -146,7 +145,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
     WakelockPlus.enable();
 
-    autoHide();
   }
 
   //* Guardar videos reproducidos en el historial
@@ -199,11 +197,11 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   }
 
   //* Para ocultar los botones automaticamente
-  void autoHide() async {
-    showControls();
-    await Future.delayed(const Duration(seconds: 2));
-    if (!isChanging && !isPause && !isClose) hideControls();
-  }
+  // void autoHide() async {
+  //   showControls();
+  //   await Future.delayed(const Duration(seconds: 2));
+  //   if (!isChanging && !isPause && !isClose) hideControls();
+  // }
 
   //* Para mostrar controles
   void showControls() {
@@ -353,7 +351,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
       child: Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
-          onTap: !isVisible ? autoHide : hideControls,
+          onTap: !isVisible ? showControls : hideControls,
           child: Center(
             child: !isInitialize
                 //* Mostrar carga de pantalla si el reproductor no esta inicializado
@@ -652,7 +650,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                   : () {
                       _betterPlayerController.play();
                       isPause = false;
-                      autoHide();
                       setState(() {});
                     },
             )

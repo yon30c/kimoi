@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/utils/download/check_permission.dart';
 import 'package:kimoi/src/utils/updater/updater.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,12 +31,12 @@ class _HomeScreenState extends State<HomeScreen> {
       onError: (status) {
         debugPrint('Error: $status');
       },
-      
+
     );
 
     updater = Updater(
       context: context,
-
+      backgroundDownload: false,
       delay: const Duration(milliseconds: 300),
 
       url:
@@ -47,13 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
       allowSkip: false,
       contentText:
           'Actualice su aplicación a la última versión para disfrutar de nuevas funciones.',
-      callBack: (UpdateModel model) {
-        debugPrint(model.versionName);
-        debugPrint(model.versionCode.toString());
-        debugPrint(model.contentText);
-      },
+      callBack: (UpdateModel model) {},
       confirmText: 'Descargar',
-      enableResume: true,
       controller: controller,
     );
   }
@@ -63,8 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     debugPrint('$isAvailable');
 
-    // controller.pause();
-    // controller.resume();
   }
 
   void onTap(BuildContext context, int value) {
@@ -92,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    CheckPermission().isStoragePermission();
     initializeUpdater();
     checkUpdate();
   }

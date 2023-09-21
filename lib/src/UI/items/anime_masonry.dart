@@ -42,13 +42,13 @@ class _AnimeMasonryState extends State<AnimeMasonry> with AutomaticKeepAliveClie
   Widget build(BuildContext context) {
     super.build(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
       child: MasonryGridView.count(
         physics: const BouncingScrollPhysics(),
         controller: scrollController,
         crossAxisCount: 3,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
+        mainAxisSpacing: 7,
+        crossAxisSpacing: 2,
         itemCount: widget.animes.length,
         itemBuilder: (context, index) {
           if (index == 1) {

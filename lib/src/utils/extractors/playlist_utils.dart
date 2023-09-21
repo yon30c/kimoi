@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:kimoi/src/infrastructure/infrastructure.dart';
 
 
 typedef HeadersGen = Headers Function({Headers baseHeaders, String referer});

@@ -1,5 +1,5 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:kimoi/src/infrastructure/infrastructure.dart';
 import 'package:kimoi/src/utils/extensions/extension.dart';
@@ -32,7 +32,6 @@ class Mp4UploadExtractor {
         ..dispose();
 
       while (isLoading) {
-        print(isLoading);
         await Future.delayed(const Duration(seconds: 1));
       }
 
@@ -55,6 +54,7 @@ class Mp4UploadExtractor {
             headers: headers)
       ];
     } on Exception catch (e) {
+      debugPrint('$e');
       return [];
     }
   }

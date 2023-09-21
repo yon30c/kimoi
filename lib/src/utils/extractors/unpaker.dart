@@ -157,7 +157,7 @@ class JsUnpack {
 
   String _unHexlify(String str) {
     var s = "";
-    var un = UnBaser(16);
+    var un = const UnBaser(16);
     for (var value in str.codeUnits) {
       s += un.unBase(value);
     }

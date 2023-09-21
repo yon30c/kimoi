@@ -39,7 +39,6 @@ class AnimeDirectoryNotifier extends StateNotifier<List<Anime>> {
     isLoading = true;
 
     currentPage++;
-    print(currentPage);
 
     List<Anime> animes = [];
 

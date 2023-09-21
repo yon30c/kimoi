@@ -18,7 +18,6 @@ final dio1 = Dio(BaseOptions(
 
 final nextChapterProvider =
     FutureProvider.family.autoDispose((ref, String path) async {
-  print(' NextChapterProvider $path');
 
   try {
     final response = await dio1.get(path);
@@ -166,7 +165,6 @@ final nextChapterProvider =
 
 final previousChapterProvider =
     FutureProvider.family.autoDispose((ref, String path) async {
-  print(' PreviusChapterProvider $path');
   try {
     final response = await dio1.get(path);
     final Document doc = parse(response.data);

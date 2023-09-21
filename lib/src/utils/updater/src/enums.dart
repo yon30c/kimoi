@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 enum UpdateStatus {
   ///when checking for an update
   Checking,

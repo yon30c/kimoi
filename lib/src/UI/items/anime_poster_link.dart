@@ -17,6 +17,8 @@ class AnimePosterLink extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     final random = Random();
 
+    final textStyle = Theme.of(context).textTheme;
+
     return FadeInUp(
       from: random.nextInt(100) + 80,
       delay: Duration(milliseconds: random.nextInt(450) + 0),
@@ -32,13 +34,23 @@ class AnimePosterLink extends ConsumerWidget {
             context.push('/anime-screen');
           });
         },
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: FadeInImage(
-            height: 180,
-            fit: BoxFit.cover,
-            placeholder: const AssetImage('assets/jar-loading.gif'),
-            image: NetworkImage(anime.imageUrl),
+        child: Card(
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                child: FadeInImage(
+                  height: 180,
+                  fit: BoxFit.cover,
+                  placeholder: const AssetImage('assets/jar-loading.gif'),
+                  image: NetworkImage(anime.imageUrl),
+                ),
+              ),
+              Container(
+                height: 50,
+                padding: const EdgeInsets.all(5), 
+                child: Text(anime.animeTitle, style: textStyle.labelMedium, maxLines: 2, overflow: TextOverflow.ellipsis,),)
+            ],
           ),
         ),
       ),

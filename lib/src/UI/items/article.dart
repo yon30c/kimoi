@@ -22,8 +22,10 @@ class _ArticleState extends State<Article> {
     final color = Theme.of(context).colorScheme;
     final textStyle = Theme.of(context).textTheme;
 
+    final size = MediaQuery.of(context).size;
+
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(1),
       child: GestureDetector(
         onTap: () => browser.openUrlRequest(
             urlRequest: URLRequest(url: Uri.parse(widget.articleInfo.url)),
@@ -44,8 +46,9 @@ class _ArticleState extends State<Article> {
                       FadeInImage(
                         image: NetworkImage(widget.articleInfo.imageUrl),
                         placeholder: const AssetImage("assets/loading4.gif"),
-                        height: 100,
-                        placeholderFit: BoxFit.contain,
+                        height: 105,
+                        // width: (size.width * 2) - 10 ,
+                        placeholderFit: BoxFit.cover,
                       ),
 
                       Container(
