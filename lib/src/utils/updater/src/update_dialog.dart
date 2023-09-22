@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/utils/updater/src/controller.dart';
 import 'package:kimoi/src/utils/updater/src/download_core.dart';
 import 'package:kimoi/src/utils/updater/src/enums.dart';
@@ -121,16 +122,16 @@ class _UpdateDialogState extends State<UpdateDialog> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (widget.allowSkip)
-            Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                onPressed: () {
-                  _dismiss();
-                },
-                icon: const Icon(Icons.clear_rounded),
-              ),
-            ),
+          // if (widget.allowSkip)
+            // Align(
+            //   alignment: Alignment.topRight,
+            //   child: IconButton(
+            //     onPressed: () {
+            //       _dismiss();
+            //     },
+            //     icon: const Icon(Icons.clear_rounded),
+            //   ),
+            // ),
           Container(
             alignment: Alignment.center,
             child: Text(
@@ -203,7 +204,8 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
                     decoration: BoxDecoration(
-                      // color: Colors.white,
+                      color: Colors.black,
+                      
                       borderRadius: BorderRadius.circular(
                         14,
                       ),
@@ -217,7 +219,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     child: Text(
                       '${widget.cancelText}',
                       style: const TextStyle(
-                        color: Colors.black,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -293,71 +295,103 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   },
                 ),
               ),
-              IconButton(
-                onPressed: () {
-                  if (!widget.enableResume) {
-                    core.cancel();
-                    return;
-                  }
-                  if (status == UpdateStatus.Downloading ||
-                      status == UpdateStatus.Resume) {
-                    core.pause();
-                    _updateStatus(UpdateStatus.Paused);
-                  } else if (status == UpdateStatus.Paused ||
-                      status == UpdateStatus.Cancelled) {
-                    core.resume();
-                    _updateStatus(UpdateStatus.Resume);
-                  }
+              // IconButton(
+              //   onPressed: () {
+              //     if (!widget.enableResume) {
+              //       core.cancel();
+              //       return;
+              //     }
+              //     if (status == UpdateStatus.Downloading ||
+              //         status == UpdateStatus.Resume) {
+              //       core.pause();
+              //       _updateStatus(UpdateStatus.Paused);
+              //     } else if (status == UpdateStatus.Paused ||
+              //         status == UpdateStatus.Cancelled) {
+              //       core.resume();
+              //       _updateStatus(UpdateStatus.Resume);
+              //     }
 
-                  // _dismiss();
-                },
-                padding: const EdgeInsets.all(6),
-                constraints: const BoxConstraints(),
-                icon: Icon(
-                  !widget.enableResume
-                      ? Icons.clear_rounded
-                      : (status == UpdateStatus.Downloading
-                          ? Icons.clear_rounded
-                          : status == UpdateStatus.Resume
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded),
-                ),
-              ),
+              //     // _dismiss();
+              //   },
+              //   padding: const EdgeInsets.all(6),
+              //   constraints: const BoxConstraints(),
+              // icon: Icon(
+              //   !widget.enableResume
+              //       ? Icons.clear_rounded
+              //       : (status == UpdateStatus.Downloading
+              //           ? Icons.clear_rounded
+              //           : status == UpdateStatus.Resume
+              //               ? Icons.pause_rounded
+              //               : Icons.play_arrow_rounded),
+              // ),
+              // ),
             ],
           ),
           const SizedBox(
-            height: 8,
+            height: 15,
           ),
           if (widget.backgroundDownload)
-            Align(
-              alignment: Alignment.bottomRight,
-              child: InkWell(
-                onTap: () {
-                  _dismiss();
-                },
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(
-                      14,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                InkWell(
+                  onTap: () {
+                    core.cancel();
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(
+                        14,
+                      ),
                     ),
-                  ),
-                  padding: const EdgeInsets.only(
-                    left: 20,
-                    right: 20,
-                    top: 12,
-                    bottom: 12,
-                  ),
-                  child: const Text(
-                    'Hide',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    padding: const EdgeInsets.only(
+                      left: 20,
+                      right: 20,
+                      top: 12,
+                      bottom: 12,
+                    ),
+                    child: const Text(
+                      'Cancelar',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
+
+                const SizedBox(width: 10,),
+
+                InkWell(
+                  onTap: () {
+                    _dismiss();
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(
+                        14,
+                      ),
+                    ),
+                    padding: const EdgeInsets.only(
+                      left: 20,
+                      right: 20,
+                      top: 12,
+                      bottom: 12,
+                    ),
+                    child: const Text(
+                      'Ocultar',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             )
         ],
       ),

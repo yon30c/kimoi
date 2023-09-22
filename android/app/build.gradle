@@ -35,7 +35,8 @@ if (flutterVersionName == null) {
 
 android {
     namespace "rd.ycd.kimoi"
-    compileSdkVersion 33
+    testNamespace "rd.ycd.kimoi.test"
+    compileSdk 33
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -58,7 +59,7 @@ android {
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
-        versionCode 6
+        versionCode 7
         versionName flutterVersionName
     }
 

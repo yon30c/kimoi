@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kimoi/src/UI/services/webview/webview.dart';
 
 import '../../../infrastructure/infrastructure.dart';
 import '../../items/items.dart';
@@ -186,7 +188,7 @@ class HomeNewsState extends ConsumerState<HomeNews>
       return SliverPersistentHeader(
         // pinned: true,
         delegate: SliverAppBarDelegate(
-            minHeight: kToolbarHeight , maxHeight:kToolbarHeight, child: child),
+            minHeight: kToolbarHeight, maxHeight: kToolbarHeight, child: child),
       );
     }
 
@@ -218,18 +220,20 @@ class HomeNewsState extends ConsumerState<HomeNews>
                     child: const Center(child: CircularProgressIndicator()))
                 : NewsSlideshow(articles: popularNews),
           ),
-          makeHeader( TabBar(
+          makeHeader(
+            TabBar(
               tabs: tabs,
               controller: controller,
               onTap: onTap,
             ),
           ),
           SliverGrid.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2),
             itemCount: articles.length,
             itemBuilder: (context, index) {
               final e = articles[index];
-              return Article(
+              return article(
                 articleInfo: e,
                 loading: loading,
               );
@@ -245,6 +249,66 @@ class HomeNewsState extends ConsumerState<HomeNews>
               ),
             )
         ]));
+  }
+
+  Widget article({required ArticleInfo articleInfo, required bool loading}) {
+    final color = Theme.of(context).colorScheme;
+    final textStyle = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.all(1),
+      child: GestureDetector(
+        onTap: () => browser.openUrlRequest(
+            urlRequest: URLRequest(url: Uri.parse(articleInfo.url)),
+            options: options),
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          color: color.background,
+          child: (loading)
+              ? const SizedBox(
+                  height: 120,
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ))
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Stack(
+                    alignment: Alignment.bottomLeft,
+                    children: [
+                      FadeInImage(
+                        image: NetworkImage(articleInfo.imageUrl),
+                        placeholder: const AssetImage("assets/loading4.gif"),
+                        height: 105,
+                        // width: (size.width * 2) - 10 ,
+                        placeholderFit: BoxFit.cover,
+                      ),
+                      Container(
+                        decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(5)),
+                          color: Colors.black54,
+                        ),
+                        padding: const EdgeInsets.all(3.0),
+                        margin: const EdgeInsets.all(3.0),
+                        child: Text(
+                          articleInfo.category,
+                          style: textStyle.labelSmall
+                              ?.copyWith(color: color.primary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    child: Text(
+                      articleInfo.description,
+                      maxLines: 3,
+                      style: textStyle.labelMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ]),
+        ),
+      ),
+    );
   }
 
   @override

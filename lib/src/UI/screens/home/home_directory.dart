@@ -465,11 +465,11 @@ class _GenrePage extends ConsumerWidget {
                 ClipRRect(
                     clipBehavior: Clip.antiAlias,
                     borderRadius: const BorderRadius.all(Radius.circular(10)),
-                    child: SizedBox.expand(
-                        child: Image.asset(
-                      genre.imagePath,
-                      fit: BoxFit.cover,
-                    ))),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        image: DecorationImage(image: AssetImage(genre.imagePath), fit: BoxFit.cover),
+                      ),
+                    )),
                 Container(
                   decoration: const BoxDecoration(
                     borderRadius: BorderRadius.all(Radius.circular(10)),

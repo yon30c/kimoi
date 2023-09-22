@@ -16,6 +16,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late UpdaterController controller;
   late Updater updater;
+  bool isAvailable = true;
 
   void initializeUpdater() {
     controller = UpdaterController(
@@ -31,32 +32,28 @@ class _HomeScreenState extends State<HomeScreen> {
       onError: (status) {
         debugPrint('Error: $status');
       },
-
     );
 
     updater = Updater(
       context: context,
-      backgroundDownload: false,
       delay: const Duration(milliseconds: 300),
 
       url:
-          'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater.json',
+          'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater_test.json',
       titleText: 'Actualización disponible',
       // backgroundDownload: false,
-      allowSkip: false,
+      allowSkip: true,
       contentText:
           'Actualice su aplicación a la última versión para disfrutar de nuevas funciones.',
       callBack: (UpdateModel model) {},
       confirmText: 'Descargar',
       controller: controller,
+      cancelText: 'Más tarde'
     );
   }
 
   checkUpdate() async {
-    bool isAvailable = await updater.check();
-
-    debugPrint('$isAvailable');
-
+    isAvailable = await updater.check();
   }
 
   void onTap(BuildContext context, int value) {
@@ -92,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
 
+    
     return Scaffold(
         body: AnimatedSwitcher(
             duration: const Duration(seconds: 1),

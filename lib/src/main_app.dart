@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show SystemChrome, DeviceOrientation, SystemUiOverlayStyle;
 import 'package:kimoi/main.dart';
 import 'package:kimoi/src/config/theme/theme.dart';
 

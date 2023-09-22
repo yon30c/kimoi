@@ -1,7 +1,7 @@
 name: kimoi
 description: A new Flutter project.
 publish_to: 'yon30c'
-version: 1.2.3
+version: 1.3.1
 
 environment:
   sdk: '>=3.1.0 <4.0.0'
@@ -26,7 +26,6 @@ dependencies:
   http: ^1.1.0
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
-  material_symbols_icons: ^4.2668.0
   meta: ^1.9.1
   open_filex: ^4.3.2
   shared_preferences: ^2.2.1

@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' as rv;
 import 'package:go_router/go_router.dart';
@@ -6,7 +7,6 @@ import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 
 import '../../domain/entities/anime.dart';
-import '../items/anime_item.dart';
 
 class AnimesView extends StatefulWidget {
   const AnimesView({super.key, required this.animes, required this.title});
@@ -99,6 +99,8 @@ class _SwiperView extends rv.ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final color = Theme.of(context).colorScheme;
+    final size = MediaQuery.of(context).size;
+    final textStyle = Theme.of(context).textTheme;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -153,13 +155,92 @@ class _SwiperView extends rv.ConsumerWidget {
                     ),
                   ];
                 },
-                child: AnimeItem(
-                  anime: anime,
-                ),
+                child: animeItem(
+                    anime: anime,
+                    size: size,
+                    textStyles: textStyle,
+                    color: color),
               ),
             )
             .toList()
       ],
+    );
+  }
+
+  animeItem(
+      {required Anime anime,
+      required Size size,
+      required TextTheme textStyles,
+      required ColorScheme color}) {
+    return GestureDetector(
+      // onTap:onAnimeSelected,
+      child: FadeIn(
+        child: Card(
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5))),
+          child: Container(
+            height: size.height * 0.196,
+            padding: const EdgeInsets.all(2.0),
+            child: Column(
+              children: [
+                // Image
+                Stack(
+                  children: [
+                    SizedBox(
+                      width: size.width * 0.42,
+                      child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: FadeInImage(
+                            height: size.height * 0.11,
+                            fit: BoxFit.cover,
+                            image: NetworkImage(anime.imageUrl),
+                            placeholder:
+                                const AssetImage('assets/jar-loading.gif'),
+                          )),
+                    ),
+                    Positioned(
+                        bottom: 5,
+                        right: 5,
+                        child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(5)),
+                              color: color.primaryContainer,
+                            ),
+                            padding: const EdgeInsets.all(3),
+                            child: Text(anime.type!,
+                                style: textStyles.labelMedium?.copyWith(
+                                    color: color.onPrimaryContainer)))),
+                  ],
+                ),
+
+                const SizedBox(height: 5),
+
+                // Description
+                SizedBox(
+                  height: size.height * 0.07,
+                  width: size.width * 0.4,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text(
+                        anime.animeTitle,
+                        style: textStyles.titleSmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(anime.chapterInfo!,
+                          style: textStyles.labelMedium
+                              ?.copyWith(color: color.primary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
