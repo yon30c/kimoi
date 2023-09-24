@@ -5,8 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
-
-import '../../domain/entities/anime.dart';
+import 'package:kimoi/src/domain/domain.dart';
 
 class AnimesView extends StatefulWidget {
   const AnimesView({super.key, required this.animes, required this.title});
@@ -122,9 +121,18 @@ class _SwiperView extends rv.ConsumerWidget {
                         ],
                       ),
                       onTap: () {
+                        final chapt = Chapter(
+                            title: '',
+                            id: '',
+                            chapterUrl: '',
+                            chapterNumber: 0,
+                            servers: [],
+                            chapterInfo: '',
+                            chapter: '');
+
                         showDialog(
                             context: context,
-                            builder: (context) => ServerDialog(anime));
+                            builder: (context) => ServerDialog(anime, chapt));
                       },
                     ),
                     PopupMenuItem(
@@ -138,6 +146,7 @@ class _SwiperView extends rv.ConsumerWidget {
                         ],
                       ),
                       onTap: () async {
+                        print(anime.animeUrl);
                         ref
                             .read(animeProvider.notifier)
                             .update((state) => anime);
@@ -167,7 +176,7 @@ class _SwiperView extends rv.ConsumerWidget {
     );
   }
 
-  animeItem(
+  Widget animeItem(
       {required Anime anime,
       required Size size,
       required TextTheme textStyles,
@@ -176,8 +185,7 @@ class _SwiperView extends rv.ConsumerWidget {
       // onTap:onAnimeSelected,
       child: FadeIn(
         child: Card(
-          shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(5))),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
           child: Container(
             height: size.height * 0.196,
             padding: const EdgeInsets.all(2.0),
@@ -189,7 +197,7 @@ class _SwiperView extends rv.ConsumerWidget {
                     SizedBox(
                       width: size.width * 0.42,
                       child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
+                          borderRadius: BorderRadius.circular(2),
                           child: FadeInImage(
                             height: size.height * 0.11,
                             fit: BoxFit.cover,

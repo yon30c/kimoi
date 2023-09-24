@@ -1,6 +1,3 @@
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,9 +8,10 @@ import 'package:kimoi/src/utils/extractors/extractors.dart';
 import 'package:kimoi/src/utils/extractors/voe_extractor.dart';
 
 class ServerDialog extends ConsumerStatefulWidget {
-  const ServerDialog(this.anime, {super.key});
+  const ServerDialog(this.anime, this.chapter, {super.key});
 
   final Anime anime;
+  final Chapter chapter;
 
   @override
   ServerDialogState createState() => ServerDialogState();
@@ -181,6 +179,8 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                       chapt.isWatching = true;
                       chapt.imageUrl = widget.anime.imageUrl;
                       chapt.animeUrl = widget.anime.animeUrl;
+                      chapt.position = widget.chapter.position;
+                      
                       ref
                           .read(fixedServerProvider.notifier)
                           .update((state) => e);

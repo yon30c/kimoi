@@ -12,9 +12,6 @@ export 'datasources/local_storage_datasource.dart';
 export 'entities/anime.dart';
 export 'entities/anime_info.dart';
 export 'entities/chapter.dart';
-export 'entities/episodes.dart';
-export 'entities/server.dart';
-export 'entities/top_anime_data.dart';
 
 // Repositories
 

@@ -261,6 +261,7 @@ class HomeNewsState extends ConsumerState<HomeNews>
             urlRequest: URLRequest(url: Uri.parse(articleInfo.url)),
             options: options),
         child: Card(
+          shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(1)),
           clipBehavior: Clip.antiAlias,
           color: color.background,
           child: (loading)
@@ -273,12 +274,17 @@ class HomeNewsState extends ConsumerState<HomeNews>
                   Stack(
                     alignment: Alignment.bottomLeft,
                     children: [
-                      FadeInImage(
-                        image: NetworkImage(articleInfo.imageUrl),
-                        placeholder: const AssetImage("assets/loading4.gif"),
+                      Container(
+                        decoration: BoxDecoration(
+
+                          image: DecorationImage(image: 
+                          NetworkImage(articleInfo.imageUrl),fit: BoxFit.cover
+                          // placeholder: const AssetImage("assets/loading4.gif"),
+                          ) 
+                        ),
                         height: 105,
                         // width: (size.width * 2) - 10 ,
-                        placeholderFit: BoxFit.cover,
+                        // placeholderFit: BoxFit.cover,
                       ),
                       Container(
                         decoration: const BoxDecoration(

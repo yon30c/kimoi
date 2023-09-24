@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/utils/updater/src/controller.dart';
 import 'package:kimoi/src/utils/updater/src/download_core.dart';
 import 'package:kimoi/src/utils/updater/src/enums.dart';

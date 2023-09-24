@@ -361,7 +361,7 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
                 ),
               SliverGrid.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, mainAxisExtent: size.height * 0.40),
+                    crossAxisCount: 2, mainAxisExtent: size.height * 0.38),
                 itemCount: animes.length,
                 itemBuilder: (BuildContext context, int index) {
                   final size = MediaQuery.of(context).size;
@@ -373,7 +373,6 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
                     height: size.height * 0.27,
                     width: (size.width / 2) - 5,
                     anime: anime,
-                    borderRadius: 5,
                     // onTap: () => showButtonSheet(context, ref: ref, anime: anime),
                   );
                 },
@@ -464,7 +463,7 @@ class _GenrePage extends ConsumerWidget {
               children: [
                 ClipRRect(
                     clipBehavior: Clip.antiAlias,
-                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    borderRadius: const BorderRadius.all(Radius.circular(2)),
                     child: Container(
                       decoration: BoxDecoration(
                         image: DecorationImage(image: AssetImage(genre.imagePath), fit: BoxFit.cover),
@@ -472,7 +471,7 @@ class _GenrePage extends ConsumerWidget {
                     )),
                 Container(
                   decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    borderRadius: BorderRadius.all(Radius.circular(2)),
                     color: Colors.black38,
                   ),
                 ),

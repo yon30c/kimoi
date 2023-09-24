@@ -85,7 +85,6 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
                   anime: widget.animes[index],
                   width: widget.width,
                   height: widget.height,
-                  borderRadius: 5,
                 ));
               },
             ),

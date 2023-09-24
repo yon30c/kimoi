@@ -11,12 +11,10 @@ class AnimeCard extends ConsumerWidget {
       {super.key,
       required this.anime,
       this.height = 230,
-      this.width = 150,
-      this.borderRadius});
+      this.width = 150});
 
   final double? height;
   final double? width;
-  final double? borderRadius;
 
   @override
   Widget build(BuildContext context, ref) {
@@ -35,60 +33,56 @@ class AnimeCard extends ConsumerWidget {
         });
       },
       child: Card(
+        shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(1)),
         clipBehavior: Clip.antiAlias,
         // margin: const EdgeInsets.symmetric(horizontal: 8),
-        child: Padding(
-          padding: const EdgeInsets.all(3.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              //* Esto es la imagen
-              SizedBox(
-                width: width,
-                height: height,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(borderRadius ?? 10)),
-                  child: Image.network(
-                    anime.imageUrl,
-                    width: 150,
-                    fit: BoxFit.cover,
-                  ),
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            //* Esto es la imagen
+            Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: NetworkImage(
+                      anime.imageUrl,
+                    ),
+                    fit: BoxFit.cover),
               ),
+            ),
 
-              const SizedBox(
-                height: 5,
-              ),
+            const SizedBox(
+              height: 5,
+            ),
 
-              //* Este es el titulo
+            //* Este es el titulo
 
-              Container(
-                  padding: const EdgeInsets.all(2),
-                  height: 43,
-                  width: width ?? 150,
-                  child: Text(
-                    anime.animeTitle,
-                    maxLines: 2,
-                    style: textStyle.labelLarge,
-                    overflow: TextOverflow.ellipsis,
-                  )),
-
-              const SizedBox(
-                height: 5,
-              ),
-
-              //* Rating
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
+            Container(
+                padding: const EdgeInsets.symmetric( vertical:2, horizontal: 5),
+                height: 43,
+                width: width ?? 150,
                 child: Text(
-                  '${anime.type} • ${anime.release}',
-                  style: textStyle.labelMedium?.copyWith(color: color.primary),
-                ),
-              )
-            ],
-          ),
+                  anime.animeTitle,
+                  maxLines: 2,
+                  style: textStyle.labelLarge,
+                  overflow: TextOverflow.ellipsis,
+                )),
+
+            const SizedBox(
+              height: 5,
+            ),
+
+            //* Rating
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: Text(
+                '${anime.type} • ${anime.release}',
+                style: textStyle.labelMedium?.copyWith(color: color.primary),
+              ),
+            )
+          ],
         ),
       ),
     );

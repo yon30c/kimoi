@@ -131,7 +131,7 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
                       // padding: const EdgeInsets.only(bottom: 20, top: 10),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2, 
-                          mainAxisExtent: size.height * 0.40),
+                          mainAxisExtent: size.height * 0.38),
                       itemCount: animes.length,
                       itemBuilder: (BuildContext context, int index) {
                         final size = MediaQuery.of(context).size;
@@ -143,7 +143,6 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
                           height: size.height * 0.27,
                           width: (size.width / 2) - 5,
                           anime: anime,
-                          borderRadius: 5,
                           // onTap: () => showButtonSheet(context, ref: ref, anime: anime),
                         );
                       },

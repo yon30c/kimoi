@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
       delay: const Duration(milliseconds: 300),
 
       url:
-          'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater_test.json',
+          'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater.json',
       titleText: 'Actualización disponible',
       // backgroundDownload: false,
       allowSkip: true,

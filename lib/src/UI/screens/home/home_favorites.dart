@@ -261,7 +261,7 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
                 onTap: () async {
                   showDialog(
                       context: context,
-                      builder: (context) => ServerDialog(anime));
+                      builder: (context) => ServerDialog(anime, chapter));
                 },
                 child: _HistoryTile(
                   chapter: chapter,

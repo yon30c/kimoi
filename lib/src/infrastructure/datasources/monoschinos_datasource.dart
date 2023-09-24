@@ -57,7 +57,7 @@ class MonoschinosDatasource extends AnimeDatasource {
     for (var element in episodeList) {
       final chapterUrl = element.attributes['href']!;
       final tmpUrl =
-          chapterUrl.substringBefore('episodio').replaceAll('ver', 'anime');
+          chapterUrl.substringBefore('episodio').replaceFirst('ver', 'anime');
       final url = '${tmpUrl}sub-espanol';
       final imageUrl = element
           .querySelector('.animeimgdiv')!
@@ -342,7 +342,7 @@ class MonoschinosDatasource extends AnimeDatasource {
     for (var element in animeData) {
       final chapterUrl = element.attributes['href']!;
       final tmpUrl =
-          chapterUrl.substringBefore('episodio').replaceAll('ver', 'anime');
+          chapterUrl.substringBefore('episodio').replaceFirst('ver', 'anime');
       final url = '${tmpUrl}sub-espanol';
       final imageUrl = element
           .querySelector('.animeimgdiv')!

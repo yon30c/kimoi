@@ -287,8 +287,11 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
       bottomNavigationBar: SafeArea(
         child: ScrollToHideWidget(
           controller: scrollController,
-          child: _BottomAppBar(animeInfo: animeInfo,
-              anime: anime, isSorted: isSorted, sortedEpisodes: sortedEpisodes),
+          child: _BottomAppBar(
+              animeInfo: animeInfo,
+              anime: anime,
+              isSorted: isSorted,
+              sortedEpisodes: sortedEpisodes),
         ),
       ),
     );
@@ -403,7 +406,7 @@ class _EpisodesTileState extends ConsumerState<_EpisodesTile> {
   void onTap(Chapter eps, Anime anime) async {
     final ani = anime;
     ani.chapterUrl = eps.chapterUrl;
-    showDialog(context: context, builder: (context) => ServerDialog(ani));
+    showDialog(context: context, builder: (context) => ServerDialog(ani, eps));
   }
 
   @override
@@ -508,13 +511,21 @@ class _BottomAppBarState extends ConsumerState<_BottomAppBar> {
                                         BorderRadius.all(Radius.circular(5))))),
                         onPressed: () async {
                           final ani = widget.anime;
+                          final chapt = Chapter(
+                              title: ani.animeTitle,
+                              id: '',
+                              chapterUrl: ' ',
+                              chapterNumber: 0,
+                              servers: [],
+                              chapterInfo: '',
+                              chapter: '');
                           String url = widget.isSorted
                               ? widget.sortedEpisodes.first.chapterUrl
                               : widget.sortedEpisodes.last.chapterUrl;
                           ani.chapterUrl = url;
                           showDialog(
                               context: context,
-                              builder: (context) => ServerDialog(ani));
+                              builder: (context) => ServerDialog(ani, chapt));
                         },
                         label: const Text('Comenzar a ver Ep. 1'),
                         icon: const Icon(Icons.play_arrow_rounded),
@@ -535,18 +546,19 @@ class _BottomAppBarState extends ConsumerState<_BottomAppBar> {
                           final ani = widget.anime;
                           String url = widget.sortedEpisodes[eps].chapterUrl;
 
+                          data.position = 0;
                           ani.chapterUrl = url;
 
                           showDialog(
                               context: context,
-                              builder: (context) => ServerDialog(ani));
+                              builder: (context) => ServerDialog(ani, data));
                         } else {
                           final ani = widget.anime;
                           ani.chapterUrl = data.chapterUrl;
 
                           showDialog(
                               context: context,
-                              builder: (context) => ServerDialog(ani));
+                              builder: (context) => ServerDialog(ani, data));
                         }
                       },
                       label: data.isCompleted && eps != -1

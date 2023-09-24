@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
+import 'package:kimoi/src/domain/domain.dart';
 import 'package:kimoi/src/domain/entities/anime.dart';
 
 import '../providers/providers.dart';
@@ -58,16 +59,17 @@ class RandomSlideState extends ConsumerState<RandomSlide> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final decoration = BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(5),
         image: DecorationImage(
             image: NetworkImage(widget.anime.imageUrl),
             fit: BoxFit.cover,
             opacity: 0.4,
+            filterQuality: FilterQuality.low,
             colorFilter:
-                const ColorFilter.mode(Colors.black54, BlendMode.color)),
+                const ColorFilter.mode(Colors.black54, BlendMode.color,) ),
         boxShadow: const [
           BoxShadow(
-              color: Colors.black12, blurRadius: 10, offset: Offset(0, 10))
+              color: Colors.black12, blurRadius: 10, offset: Offset(0, 10), blurStyle: BlurStyle.solid)
         ]);
 
     final textStyle = Theme.of(context).textTheme;
@@ -75,7 +77,7 @@ class RandomSlideState extends ConsumerState<RandomSlide> {
     return DecoratedBox(
       decoration: decoration,
       child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(5),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
@@ -128,9 +130,17 @@ class RandomSlideState extends ConsumerState<RandomSlide> {
                       FilledButton.icon(
                           icon: const Icon(Icons.play_arrow_rounded),
                           onPressed: () async {
+                            final chapt = Chapter(
+                            title: '',
+                            id: '',
+                            chapterUrl: '',
+                            chapterNumber: 0,
+                            servers: [],
+                            chapterInfo: '',
+                            chapter: '');
                            showDialog(
                             context: context,
-                            builder: (context) => ServerDialog(widget.anime));
+                            builder: (context) => ServerDialog(widget.anime, chapt));
                           },
                           label: const Text('Ver ahora'),
                           style: const ButtonStyle(
