@@ -77,6 +77,44 @@ class AnimeMacDatasource extends AnimeDatasource {
     return animes;
   }
 
+  Future<List<Anime>> getPopularAnime() async {
+    final res = await dio.get('');
+
+    List<Anime> animes = [];
+
+    final Document document = parse(res.data);
+
+    final result = document.getElementsByClassName('card2');
+
+    for (var element in result) {
+      final animeTitle =
+          element.querySelector('.anime-title')!.querySelector('h2')!.text;
+      final chapterUrl =
+          element.querySelectorAll('a').first.attributes['href']!;
+      final animeUrl = element.querySelectorAll('a').last.attributes['href']!;
+      final chapterInfo = element.querySelector('p')!.text.trim();
+      final imageUrl =
+          'https://animemac.net${element.querySelectorAll('img').last.attributes['src']}';
+
+      // https://monoschinos2.com/anime/itai-no-wa-iya-nano-de-bougyoryoku-ni-kyokufuri-shitai-to-omoimasu-sub-espanol
+      // https://monoschinos2.com/anime/itai-no-wa-iya-nano-de-bougyoryoku-ni-kyokufuri-shitai-a-omoimasu-sub-espanol
+
+      final type = element.querySelector('.meta')!.querySelectorAll('span').first.text;
+      final release = element.querySelector('.meta')!.querySelectorAll('span').last.text;
+
+      animes.add(Anime(
+        type: type,
+        release: release,
+          animeTitle: animeTitle,
+          animeUrl: animeUrl,
+          imageUrl: imageUrl,
+          chapterInfo: chapterInfo,
+          chapterUrl: chapterUrl));
+    }
+
+    return animes;
+  }
+
   @override
   Future<AnimeInfo> getAnimeInfo(String path) async {
     final response = await dio.get(path);

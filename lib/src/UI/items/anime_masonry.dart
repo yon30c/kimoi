@@ -3,8 +3,8 @@ import 'dart:math';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kimoi/src/UI/items/items.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 
@@ -20,7 +20,8 @@ class AnimeMasonry extends ConsumerStatefulWidget {
   AnimeMasonryState createState() => AnimeMasonryState();
 }
 
-class AnimeMasonryState extends ConsumerState<AnimeMasonry> with AutomaticKeepAliveClientMixin {
+class AnimeMasonryState extends ConsumerState<AnimeMasonry>
+    with AutomaticKeepAliveClientMixin {
   final scrollController = ScrollController();
 
   @override
@@ -49,71 +50,66 @@ class AnimeMasonryState extends ConsumerState<AnimeMasonry> with AutomaticKeepAl
     super.build(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
-      child: MasonryGridView.count(
+      child: GridView.builder(
         physics: const BouncingScrollPhysics(),
         controller: scrollController,
-        crossAxisCount: 3,
-        mainAxisSpacing: 7,
-        crossAxisSpacing: 2,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 7,
+          mainAxisExtent: 240,
+          crossAxisSpacing: 2,
+        ),
         itemCount: widget.animes.length,
         itemBuilder: (context, index) {
-          if (index == 1) {
-            return Column(
-              children: [
-                const SizedBox(height: 20),
-                animePosterLink(anime: widget.animes[index])
-              ],
-            );
-          }
-
           return animePosterLink(anime: widget.animes[index]);
         },
       ),
     );
   }
-    animePosterLink({required Anime anime}) {
-       final random = Random();
+
+  Widget animePosterLink({required Anime anime}) {
 
     final textStyle = Theme.of(context).textTheme;
 
-    return FadeInUp(
-      from: random.nextInt(100) + 80,
-      delay: Duration(milliseconds: random.nextInt(450) + 0),
-      child: GestureDetector(
-        onTap: () async {
-          ref.read(animeProvider.notifier).update((state) => anime);
+    return GestureDetector(
+      onTap: () async {
+        ref.read(animeProvider.notifier).update((state) => anime);
 
-          await ref
-              .read(isWatchingAnimeProvider.notifier)
-              .loadLastWatchingChapter(anime.animeTitle)
-              .then((value) {
-            ref.read(lastChapterWProvider.notifier).update((state) => value);
-            context.push('/anime-screen');
-          });
-        },
-        child: Card(
-          child: Column(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                child: FadeInImage(
-                  height: 180,
-                  fit: BoxFit.cover,
-                  placeholder: const AssetImage('assets/jar-loading.gif'),
-                  image: NetworkImage(anime.imageUrl),
-                ),
+        await ref
+            .read(isWatchingAnimeProvider.notifier)
+            .loadLastWatchingChapter(anime.animeTitle)
+            .then((value) {
+          ref.read(lastChapterWProvider.notifier).update((state) => value);
+          context.push('/anime-screen');
+        });
+      },
+      child: Card(
+        shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(2)),
+        
+        child: Column(
+          children: [
+            FadeInImage(
+              height: 180,
+              fit: BoxFit.cover,
+              placeholder: const AssetImage('assets/jar-loading.gif'),
+              image: NetworkImage(anime.imageUrl),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                anime.animeTitle,
+                style: textStyle.labelMedium,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
-              Container(
-                height: 50,
-                padding: const EdgeInsets.all(5), 
-                child: Text(anime.animeTitle, style: textStyle.labelMedium, maxLines: 2, overflow: TextOverflow.ellipsis,),)
-            ],
-          ),
+            )
+          ],
         ),
       ),
     );
-    }
-  
+  }
+
   @override
   bool get wantKeepAlive => true;
 }

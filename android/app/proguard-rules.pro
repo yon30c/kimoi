@@ -9,4 +9,4 @@
 -keep class com.google.android.gms.tasks.** { *; }
 -keep class com.google.android.gms.common.** { *; }
 -keep class com.google.android.gms.internal.** { *; }
--keep class io.flutter.plugins.firebase.analytics.** { *; }
+-keep class io.flutter.plugins.firebase.** { *; }

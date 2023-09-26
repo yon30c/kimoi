@@ -24,6 +24,9 @@ class AnimesViewState extends State<AnimesView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    final color = Theme.of(context).colorScheme;
+
     final textStyle = Theme.of(context).textTheme;
     final size = MediaQuery.of(context).size;
     List<List<Anime>> subList = [];
@@ -43,14 +46,19 @@ class AnimesViewState extends State<AnimesView>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
+          alignment: Alignment.center,
           width: double.infinity,
-          padding: const EdgeInsets.all(5),
-          child: FilledButton(
-            onPressed: null,
-            child: Text(
-              widget.title,
-              style: textStyle.titleMedium,
-            ),
+          padding: const EdgeInsets.only( top: 15, bottom: 3),
+          child: Column(
+            children: [
+              // Divider(),
+
+              Text(
+                widget.title,
+                style: textStyle.titleLarge,
+              ),
+              const Divider()
+            ],
           ),
         ),
         SizedBox(
@@ -146,7 +154,6 @@ class _SwiperView extends rv.ConsumerWidget {
                         ],
                       ),
                       onTap: () async {
-                        print(anime.animeUrl);
                         ref
                             .read(animeProvider.notifier)
                             .update((state) => anime);

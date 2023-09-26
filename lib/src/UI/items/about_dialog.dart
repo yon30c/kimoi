@@ -20,6 +20,7 @@ class _CsAboutDialogState extends State<CsAboutDialog> {
   final github = dotenv.env['github'];
   final discord = dotenv.env['discord'];
   final release = dotenv.env['release'];
+  final politica = dotenv.env['politica'];
 
   void initializeUpdater() {
     controller = UpdaterController(
@@ -84,11 +85,11 @@ class _CsAboutDialogState extends State<CsAboutDialog> {
 
   @override
   Widget build(BuildContext context) {
-
     final Uri paypal = Uri.parse(paypalUrl!);
     final Uri githubUrl = Uri.parse(github!);
     final Uri newrelease = Uri.parse(release!);
     final Uri discordUrl = Uri.parse(discord!);
+    final Uri politicaUrl = Uri.parse(politica!);
 
     final color = Theme.of(context).colorScheme;
     return Scaffold(
@@ -130,8 +131,9 @@ class _CsAboutDialogState extends State<CsAboutDialog> {
             title: const Text('Que hay de nuevo'),
             onTap: () => _launchUrl(newrelease),
           ),
-          const ListTile(
-            title: Text('Política de privacidad'),
+          ListTile(
+            title: const Text('Política de privacidad'),
+            onTap: () => _launchUrl(politicaUrl),
           ),
           const SizedBox(height: 20),
           Row(

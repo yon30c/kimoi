@@ -4,7 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/filter_dialog.dart';
+import 'package:kimoi/src/UI/providers/jikan/jikan_provider.dart';
+import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
+import 'package:kimoi/src/UI/screens/player/youtube_player.dart';
+// import 'package:kimoi/src/UI/providers/jikan/jikan_provider.dart';
 import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
+import 'package:kimoi/src/infrastructure/models/jikan_upcoming.dart' as up;
 
 import '../../items/items.dart';
 import '../../providers/providers.dart';
@@ -23,7 +28,7 @@ class HomeDirectoryState extends ConsumerState<HomeDirectory>
   @override
   void initState() {
     super.initState();
-    tabController = TabController(length: 2, vsync: this);
+    tabController = TabController(length: 3, vsync: this);
     tabController.addListener(() {
       setState(() {});
     });
@@ -56,38 +61,26 @@ class HomeDirectoryState extends ConsumerState<HomeDirectory>
                   size: 30,
                 ))
           ],
-          bottom: PreferredSize(
-            preferredSize: Size(size.width, 50),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    TabBar.secondary(
-                        dividerColor: Colors.transparent,
-                        tabAlignment: TabAlignment.start,
-                        isScrollable: true,
-                        controller: tabController,
-                        tabs: const [
-                          Tab(
-                            text: 'TODO EL ANIME',
-                          ),
-                          Tab(
-                            text: 'GÉNEROS',
-                          ),
-                        ]),
-                  ],
-                ),
-                const Divider(
-                  height: 1,
-                )
-              ],
-            ),
+          bottom: TabBar.secondary(
+            tabAlignment: TabAlignment.start,
+            isScrollable: true,
+            controller: tabController,
+            tabs: const [
+              Tab(
+                text: 'TODO EL ANIME',
+              ),
+              Tab(
+                text: 'GÉNEROS',
+              ),
+              Tab(
+                text: 'PRÓXIMAMENTE',
+              ),
+            ],
           ),
         ),
         body: TabBarView(
             controller: tabController,
-            children: const [_AllAnimesPage(), _GenrePage()]));
+            children: const [_AllAnimesPage(), _GenrePage(), _UpcomingPage()]));
   }
 
   @override
@@ -177,7 +170,6 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
         tipo: ref.read(tipoProvider),
         genero: ref.read(generoProvider),
         idioma: ref.read(idiomaProvider));
-
 
     await Future.delayed(const Duration(seconds: 3), () {
       isLoading = false;
@@ -466,7 +458,9 @@ class _GenrePage extends ConsumerWidget {
                     borderRadius: const BorderRadius.all(Radius.circular(2)),
                     child: Container(
                       decoration: BoxDecoration(
-                        image: DecorationImage(image: AssetImage(genre.imagePath), fit: BoxFit.cover),
+                        image: DecorationImage(
+                            image: AssetImage(genre.imagePath),
+                            fit: BoxFit.cover),
                       ),
                     )),
                 Container(
@@ -637,3 +631,136 @@ List<GenresTab> genresTab = [
       imagePath: 'assets/images/tri-ani.jpeg',
       icon: null)
 ];
+
+class _UpcomingPage extends ConsumerStatefulWidget {
+  const _UpcomingPage({super.key});
+
+  @override
+  _UpcomingPageState createState() => _UpcomingPageState();
+}
+
+class _UpcomingPageState extends ConsumerState<_UpcomingPage> {
+  late ScrollController controller;
+  @override
+  void initState() {
+    super.initState();
+    controller = ScrollController();
+    ref.read(upcomingProvider.notifier).getAnimes();
+
+    controller.addListener(() {
+      if (controller.position.pixels + 200 >=
+          controller.position.maxScrollExtent) {
+        fetchMoreUp();
+      }
+    });
+  }
+
+  fetchMoreUp() async {
+    ref.read(upcomingProvider.notifier).getAnimes();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final animes = ref.watch(upcomingProvider);
+
+    final size = MediaQuery.of(context).size;
+
+    if (animes.isEmpty) {
+      return const Scaffold(
+        body: FullScreenLoader(),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+      child: GridView.builder(
+        physics: const BouncingScrollPhysics(),
+        controller: controller,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 7,
+          mainAxisExtent: size.height * 0.4,
+          crossAxisSpacing: 2,
+        ),
+        itemCount: animes.length,
+        itemBuilder: (context, index) {
+          return animePosterLink(anime: animes[index]);
+        },
+      ),
+    );
+  }
+
+  Widget animePosterLink({required up.UpDatum anime}) {
+    final textStyle = Theme.of(context).textTheme;
+    final size = MediaQuery.of(context).size;
+    final color = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      child: Card(
+        shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(2)),
+        child: Column(
+          children: [
+            Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                FadeInImage(
+                  height: size.height * 0.3,
+                  fit: BoxFit.cover,
+                  placeholder: const AssetImage('assets/jar-loading.gif'),
+                  image:
+                      NetworkImage(anime.images.entries.first.value.imageUrl),
+                ),
+                if (anime.trailer.youtubeId != null)
+                  Padding(
+                    padding: const EdgeInsets.all(3.0),
+                    child: IconButton.filled(
+                      onPressed: () {
+                        showGeneralDialog(
+                          context: context,
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) {
+                            return YoutubePlayerScreen(
+                                id: anime.trailer.youtubeId!);
+                          },
+                        );
+                      },
+                      style: const ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                          backgroundColor:
+                              MaterialStatePropertyAll(Colors.white)),
+                      icon: const FaIcon(
+                        FontAwesomeIcons.youtube,
+                        color: Colors.red,
+                      ),
+                      // label: const Text('Trailer', style: TextStyle(color: Colors.white),)
+                    ),
+                  )
+              ],
+            ),
+            Container(
+              height: size.height * 0.09,
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Text(
+                    anime.title,
+                    style: textStyle.labelMedium,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                  const Spacer(),
+                  Text(
+                    anime.aired.string,
+                    style:
+                        textStyle.labelMedium?.copyWith(color: color.primary),
+                  )
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}

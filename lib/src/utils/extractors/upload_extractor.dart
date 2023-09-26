@@ -1,24 +1,40 @@
+import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:kimoi/src/infrastructure/infrastructure.dart';
 import 'package:kimoi/src/utils/extensions/extension.dart';
 
-class UploadExtractor extends HeadlessInAppWebView {
+class UqloadExtractor extends HeadlessInAppWebView {
   final client = http.Client();
 
   final headers = {
-    "Accept": "application/json",
-    "referer": "https://upload.com/",
+    "referer": "https://uqload.com/",
     "User-Agent":
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
   };
 
   Future<Video?> videoFromUrl(String url) async {
-    final res = await client.get(Uri.parse(url), headers: headers);
+    String? html;
 
-    if (res.body.isNotEmpty && res.statusCode == 200) {
-      final doc = parse(res.body);
+    bool isLoading = true;
+
+    try {
+      HeadlessInAppWebView(
+        initialUrlRequest: URLRequest(url: Uri.parse(url), headers: headers),
+        onLoadStop: (controller, url) async {
+          html = await controller.getHtml();
+          isLoading = false;
+        },
+      )
+        ..run()
+        ..dispose();
+
+      while (isLoading) {
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      final doc = parse(html);
 
       final basicUrl = doc
           .querySelectorAll('script')
@@ -27,15 +43,16 @@ class UploadExtractor extends HeadlessInAppWebView {
           .substringAfter('sources: ["')
           .substringBefore('"],');
 
-      if (!basicUrl.contains('http')) return null;
-
-      return Video(
+        return Video(
           url: basicUrl,
-          quality: 'Upload',
+          quality: 'Uqload',
           videoUrl: basicUrl,
           headers: headers);
-    }
 
-    return null;
+      
+    } on Exception catch (e) {
+      debugPrint('$e');
+      return null;
+    }
   }
 }

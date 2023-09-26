@@ -27,9 +27,6 @@ class AnimeNotifier extends StateNotifier<List<Anime>> {
   int currentPage = 0;
   int year = 2023;
 
-  void decreaseYear(int page) {
-    if (page == 8) year--;
-  }
 
   Future<void> getAnimes() async {
     if (isLoading) return;
@@ -39,7 +36,6 @@ class AnimeNotifier extends StateNotifier<List<Anime>> {
     List<Anime> animes = [];
 
     currentPage++;
-    decreaseYear(currentPage);
 
     animes = await fetchMoreAnimes(page: currentPage, year: year);
 

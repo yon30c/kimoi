@@ -62,6 +62,8 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
     int voeIndex = servers.indexWhere((element) => element.contains('voe'));
     int mixdroIndex =
         servers.indexWhere((element) => element.contains('mixdro'));
+    int uqloadIndex =
+        servers.indexWhere((element) => element.contains('uqload'));
 
     for (var url in servers) {
       if (url.contains('yourupload')) {
@@ -76,7 +78,9 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                         ? servers[mixdroIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
       } else if (url.contains('mp4upload')) {
         fixedServers.add(FixedServer(
             name: 'Mp4Upload',
@@ -89,7 +93,9 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                         ? servers[okruIndex]
                         : youruploadIndex != -1
                             ? servers[youruploadIndex]
-                            : null));
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
       } else if (url.contains('ok.ru')) {
         fixedServers.add(FixedServer(
             name: 'Okru',
@@ -102,7 +108,9 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                         ? servers[voeIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
       } else if (url.contains('solid')) {
         fixedServers.add(FixedServer(
             name: 'SolidFiles',
@@ -115,7 +123,9 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                         ? servers[mixdroIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
       } else if (url.contains('mixdro')) {
         fixedServers.add(FixedServer(
             name: 'MixDrop',
@@ -128,7 +138,9 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                         ? servers[youruploadIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
       } else if (url.contains('voe')) {
         fixedServers.add(FixedServer(
             name: 'VoeCDN',
@@ -141,21 +153,25 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                         ? servers[voeIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
-      } else if (url.contains("upload")) {
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
+      } else if (url.contains("uqload")) {
         if (!url.contains('yourupload') || !url.contains("mp4upload")) {
           fixedServers.add(FixedServer(
-              name: 'Upload',
+              name: 'Uqload',
               url: url,
               optional: okruIndex != -1
                   ? servers[okruIndex]
                   : youruploadIndex != -1
                       ? servers[youruploadIndex]
                       : mixdroIndex != -1
-                          ? servers[voeIndex]
+                          ? servers[mixdroIndex]
                           : mp4uploadIndex != -1
                               ? servers[mp4uploadIndex]
-                              : null));
+                              : voeIndex != -1
+                                  ? servers[voeIndex]
+                                  : null));
         }
       }
     }
@@ -180,7 +196,7 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                       chapt.imageUrl = widget.anime.imageUrl;
                       chapt.animeUrl = widget.anime.animeUrl;
                       chapt.position = widget.chapter.position;
-                      
+
                       ref
                           .read(fixedServerProvider.notifier)
                           .update((state) => e);
@@ -242,9 +258,9 @@ final videoServers = StateProvider((ref) async {
     } else {
       videos.addAll(await extract(servers.optional!));
     }
-  } else if (url.contains("upload")) {
+  } else if (url.contains("uqload")) {
     if (!url.contains('yourupload') || !url.contains("mp4upload")) {
-      final video = await UploadExtractor().videoFromUrl(url);
+      final video = await UqloadExtractor().videoFromUrl(url);
       if (video != null) {
         videos.add(video);
       } else {
@@ -282,9 +298,9 @@ Future<List<Video>> extract(String url) async {
   } else if (url.contains('voe')) {
     final video = await MixDropExtractor().videoFromUrl(url);
     if (video.isNotEmpty) videos.addAll(video);
-  } else if (url.contains("upload")) {
+  } else if (url.contains("uqload")) {
     if (!url.contains('yourupload') || !url.contains("mp4upload")) {
-      final video = await UploadExtractor().videoFromUrl(url);
+      final video = await UqloadExtractor().videoFromUrl(url);
       if (video != null) videos.add(video);
     }
   }

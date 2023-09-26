@@ -509,25 +509,30 @@ class _BottomAppBarState extends ConsumerState<_BottomAppBar> {
                                 RoundedRectangleBorder(
                                     borderRadius:
                                         BorderRadius.all(Radius.circular(5))))),
-                        onPressed: () async {
-                          final ani = widget.anime;
-                          final chapt = Chapter(
-                              title: ani.animeTitle,
-                              id: '',
-                              chapterUrl: ' ',
-                              chapterNumber: 0,
-                              servers: [],
-                              chapterInfo: '',
-                              chapter: '');
-                          String url = widget.isSorted
-                              ? widget.sortedEpisodes.first.chapterUrl
-                              : widget.sortedEpisodes.last.chapterUrl;
-                          ani.chapterUrl = url;
-                          showDialog(
-                              context: context,
-                              builder: (context) => ServerDialog(ani, chapt));
-                        },
-                        label: const Text('Comenzar a ver Ep. 1'),
+                        onPressed: widget.sortedEpisodes.isEmpty
+                            ? null
+                            : () async {
+                                final ani = widget.anime;
+                                final chapt = Chapter(
+                                    title: ani.animeTitle,
+                                    id: '',
+                                    chapterUrl: ' ',
+                                    chapterNumber: 0,
+                                    servers: [],
+                                    chapterInfo: '',
+                                    chapter: '');
+                                String url = widget.isSorted
+                                    ? widget.sortedEpisodes.first.chapterUrl
+                                    : widget.sortedEpisodes.last.chapterUrl;
+                                ani.chapterUrl = url;
+                                showDialog(
+                                    context: context,
+                                    builder: (context) =>
+                                        ServerDialog(ani, chapt));
+                              },
+                        label: widget.sortedEpisodes.isEmpty
+                            ? const Text('Próximamente')
+                            : const Text('Comenzar a ver Ep. 1'),
                         icon: const Icon(Icons.play_arrow_rounded),
                       );
                     }

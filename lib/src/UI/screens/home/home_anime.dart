@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,14 +22,32 @@ class HomeAnime extends ConsumerStatefulWidget {
 }
 
 class HomeAnimeState extends ConsumerState<HomeAnime> {
-  List<Anime> shounenAnime = [];
-  List<Anime> accionAnime = [];
+  List<Anime> animes = [];
+
+  int getRandomYear() {
+    final allowedYears = [2022, 2021, 2020, 2019];
+    return allowedYears[Random().nextInt(allowedYears.length)];
+  }
+
+  int getRandomPage() {
+    final allowedPage = [1, 2, 3, 4, 5];
+    return allowedPage[Random().nextInt(allowedPage.length)];
+  }
+
+  Future fetchData() async {
+    setState(() {});
+    animes = await ref
+        .read(animeRepositoryProvider)
+        .getDirectory(estreno: getRandomYear(), p: getRandomPage());
+    setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
     ref.read(lastAnimesAddedProvider.notifier).getAnimes();
     ref.read(recentAnimesProvider.notifier).getAnimes();
+    fetchData();
   }
 
   void onPressed() async {
@@ -64,8 +84,11 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
       return FadeIn(
         child: Scaffold(
           body: RefreshIndicator(
-            onRefresh: () async =>
-                await ref.refresh(recentAnimesProvider.notifier).getAnimes(),
+            onRefresh: () async {
+              animes.clear();
+              fetchData();
+              await ref.refresh(recentAnimesProvider.notifier).getAnimes();
+            },
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
@@ -91,7 +114,7 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                         height: 10,
                       ),
                       RandomListView(
-                        animes: lastAnimes,
+                        animes: animes,
                       ),
                       AnimesView(
                         animes: lastEpisodes,
@@ -103,40 +126,7 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                         animes: lastAnimes,
                         title: 'Últimos animes',
                         subtitle: '2023',
-                      ),
-                      // AnimesListview(
-                      //     genre: GenresTab(
-                      //       iconPath: null,
-                      //       name: 'Acción',
-                      //       id: 'accion',
-                      //       title: 'ACCIÓN',
-                      //       imagePath: 'assets/images/acc-ani.jpeg',
-                      //       icon: FontAwesomeIcons.fire,
-                      //     ),
-                      //     subtitle: 'Ver más',
-                      //     height: 180,
-                      //     width: 130,
-                      //     animes: accionAnime,
-                      //     title: 'Accion',
-                      //     loadNextPage: ref
-                      //         .read(lastAnimesAddedProvider.notifier)
-                      //         .getAnimes),
-                      // AnimesListview(
-                      //     genre: GenresTab(
-                      //         iconPath: null,
-                      //         name: 'Shounen',
-                      //         id: 'shonen',
-                      //         title: 'SHOUNEN',
-                      //         imagePath: 'assets/images/shoune-ani2.jpeg',
-                      //         icon: FontAwesomeIcons.gamepad),
-                      //     subtitle: 'Ver más',
-                      //     height: 180,
-                      //     width: 130,
-                      //     animes: shounenAnime,
-                      //     title: 'Shounen',
-                      //     loadNextPage: ref
-                      //         .read(lastAnimesAddedProvider.notifier)
-                      //         .getAnimes),
+                      ),                      //         .getAnimes),
                       const SizedBox(
                         height: 15,
                       )

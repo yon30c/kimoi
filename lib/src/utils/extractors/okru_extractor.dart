@@ -46,7 +46,7 @@ class OkruExtractor {
         ..dispose();
 
       while (isLoading) {
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 500));
       }
 
       var doc = parse(html);
