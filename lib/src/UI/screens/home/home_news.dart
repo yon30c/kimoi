@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kimoi/src/UI/items/about_dialog.dart';
 import 'package:kimoi/src/UI/services/webview/webview.dart';
 
 import '../../../infrastructure/infrastructure.dart';
@@ -208,8 +209,17 @@ class HomeNewsState extends ConsumerState<HomeNews>
               )
             : null,
         body: CustomScrollView(controller: scrollController, slivers: [
-          const SliverAppBar(
-            title: Text('Noticias'),
+          SliverAppBar(
+            title: const Text('Noticias'),
+            actions: [
+              IconButton(
+                        onPressed: () => showGeneralDialog(
+                              context: context,
+                              pageBuilder: (context, __, ___) =>
+                                  const CsAboutDialog(),
+                            ),
+                        icon: const Icon(Icons.info)),
+            ],
             // pinned: true,
           ),
           SliverToBoxAdapter(

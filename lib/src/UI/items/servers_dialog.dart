@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
+import 'package:kimoi/src/UI/screens/player/local_player.dart';
 import 'package:kimoi/src/domain/domain.dart';
 import 'package:kimoi/src/infrastructure/infrastructure.dart';
 import 'package:kimoi/src/utils/extractors/extractors.dart';
@@ -111,7 +112,7 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                             : uqloadIndex != -1
                                 ? servers[uqloadIndex]
                                 : null));
-      } else if (url.contains('solid')) {
+      } /* else if (url.contains('solid')) {
         fixedServers.add(FixedServer(
             name: 'SolidFiles',
             url: url,
@@ -126,7 +127,7 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                             : uqloadIndex != -1
                                 ? servers[uqloadIndex]
                                 : null));
-      } else if (url.contains('mixdro')) {
+      } */ else if (url.contains('mixdro')) {
         fixedServers.add(FixedServer(
             name: 'MixDrop',
             url: url,
@@ -157,22 +158,20 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                                 ? servers[uqloadIndex]
                                 : null));
       } else if (url.contains("uqload")) {
-        if (!url.contains('yourupload') || !url.contains("mp4upload")) {
-          fixedServers.add(FixedServer(
-              name: 'Uqload',
-              url: url,
-              optional: okruIndex != -1
-                  ? servers[okruIndex]
-                  : youruploadIndex != -1
-                      ? servers[youruploadIndex]
-                      : mixdroIndex != -1
-                          ? servers[mixdroIndex]
-                          : mp4uploadIndex != -1
-                              ? servers[mp4uploadIndex]
-                              : voeIndex != -1
-                                  ? servers[voeIndex]
-                                  : null));
-        }
+        fixedServers.add(FixedServer(
+            name: 'Uqload',
+            url: url,
+            optional: okruIndex != -1
+                ? servers[okruIndex]
+                : youruploadIndex != -1
+                    ? servers[youruploadIndex]
+                    : mixdroIndex != -1
+                        ? servers[mixdroIndex]
+                        : mp4uploadIndex != -1
+                            ? servers[mp4uploadIndex]
+                            : voeIndex != -1
+                                ? servers[voeIndex]
+                                : null));
       }
     }
 
@@ -201,7 +200,13 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                           .read(fixedServerProvider.notifier)
                           .update((state) => e);
                       context.pop();
-                      context.push('/local-player', extra: chapt);
+                      // context.push('/local-player', extra: chapt);
+
+                      showDialog(
+                        context: context,
+                        builder: (context) => Dialog.fullscreen(
+                            child: LocalPlayer(videos: chapt)),
+                      );
                     }))
                 .toList(),
           )
@@ -237,14 +242,14 @@ final videoServers = StateProvider((ref) async {
     } else {
       videos.addAll(vid);
     }
-  } else if (url.contains('solid')) {
+  }/*  else if (url.contains('solid')) {
     final videos = await SolidFilesExtractor().videoFromUrl(url);
     if (videos.isNotEmpty) {
       videos.addAll(videos);
     } else {
       videos.addAll(await extract(servers.optional!));
     }
-  } else if (url.contains('mixdro')) {
+  } */ else if (url.contains('mixdro')) {
     final video = await MixDropExtractor().videoFromUrl(url);
     if (video.isNotEmpty) {
       videos.addAll(video);
@@ -259,13 +264,11 @@ final videoServers = StateProvider((ref) async {
       videos.addAll(await extract(servers.optional!));
     }
   } else if (url.contains("uqload")) {
-    if (!url.contains('yourupload') || !url.contains("mp4upload")) {
-      final video = await UqloadExtractor().videoFromUrl(url);
-      if (video != null) {
-        videos.add(video);
-      } else {
-        videos.addAll(await extract(servers.optional!));
-      }
+    final video = await UqloadExtractor().videoFromUrl(url);
+    if (video != null) {
+      videos.add(video);
+    } else {
+      videos.addAll(await extract(servers.optional!));
     }
   }
   return videos;
@@ -289,20 +292,18 @@ Future<List<Video>> extract(String url) async {
     if (video.isNotEmpty) videos.addAll(video);
   } else if (url.contains('ok.ru')) {
     videos.addAll(await OkruExtractor().videosFromUrl(url));
-  } else if (url.contains('solid')) {
+  } /* else if (url.contains('solid')) {
     final videos = await SolidFilesExtractor().videoFromUrl(url);
     if (videos.isNotEmpty) videos.addAll(videos);
-  } else if (url.contains('mixdro')) {
+  } */ else if (url.contains('mixdro')) {
     final video = await MixDropExtractor().videoFromUrl(url);
     if (video.isNotEmpty) videos.addAll(video);
   } else if (url.contains('voe')) {
     final video = await MixDropExtractor().videoFromUrl(url);
     if (video.isNotEmpty) videos.addAll(video);
   } else if (url.contains("uqload")) {
-    if (!url.contains('yourupload') || !url.contains("mp4upload")) {
-      final video = await UqloadExtractor().videoFromUrl(url);
-      if (video != null) videos.add(video);
-    }
+    final video = await UqloadExtractor().videoFromUrl(url);
+    if (video != null) videos.add(video);
   }
 
   return videos;

@@ -88,7 +88,7 @@ class _CsAboutDialogState extends State<CsAboutDialog> {
     final Uri paypal = Uri.parse(paypalUrl!);
     final Uri githubUrl = Uri.parse(github!);
     final Uri newrelease = Uri.parse(release!);
-    final Uri discordUrl = Uri.parse(discord!);
+    final Uri telegram = Uri.parse(discord!);
     final Uri politicaUrl = Uri.parse(politica!);
 
     final color = Theme.of(context).colorScheme;
@@ -140,9 +140,9 @@ class _CsAboutDialogState extends State<CsAboutDialog> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                  onPressed: () => _launchUrl(discordUrl),
-                  icon: Icon(
-                    Icons.discord,
+                  onPressed: () => _launchUrl(telegram),
+                  icon: FaIcon(
+                    FontAwesomeIcons.telegram,
                     size: 30,
                     color: color.primary,
                   )),

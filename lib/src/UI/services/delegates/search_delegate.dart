@@ -9,7 +9,6 @@ typedef SearchAnimesCallback = Future<List<Anime>> Function(String query);
 class SearchAnimeDelegate extends SearchDelegate<Anime?> {
   final SearchAnimesCallback searchAnimes;
 
-
   StreamController<List<Anime>> debouncedMovies = StreamController.broadcast();
   StreamController<bool> isLoadingStream = StreamController.broadcast();
 
@@ -142,16 +141,18 @@ class _AnimeItem extends StatelessWidget {
                   width: size.width * 0.15,
                   child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: FadeInImage(
+                      child: Container(
                         height: 90,
-                        fit: BoxFit.cover,
-                        image: NetworkImage(anime.imageUrl),
-                        placeholder: const AssetImage('assets/jar-loading.gif'),
+                        decoration: BoxDecoration(
+                            image: DecorationImage(
+                          image: NetworkImage(anime.imageUrl),
+                          fit: BoxFit.cover,
+                        )),
                       )),
                 ),
-        
+
                 const SizedBox(width: 10),
-        
+
                 // Description
                 SizedBox(
                   width: size.width * 0.7,

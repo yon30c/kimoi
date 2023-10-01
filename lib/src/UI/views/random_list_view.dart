@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
 import 'package:kimoi/src/domain/domain.dart';
-import 'package:kimoi/src/domain/entities/anime.dart';
 
 import '../providers/providers.dart';
 
@@ -25,9 +24,9 @@ class _RandomListViewState extends State<RandomListView>
     super.build(context);
     final size = MediaQuery.of(context).size;
     return SizedBox(
-      height: size.height * 0.20,
+      height: size.height * 0.22,
       child: Swiper(
-        viewportFraction: 0.85,
+        viewportFraction: 0.99,
         itemCount: widget.animes.length,
         scale: 0.9,
         autoplay: true,
@@ -59,7 +58,6 @@ class RandomSlideState extends ConsumerState<RandomSlide> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final decoration = BoxDecoration(
-        borderRadius: BorderRadius.circular(5),
         image: DecorationImage(
             image: NetworkImage(widget.anime.imageUrl),
             fit: BoxFit.cover,
@@ -76,100 +74,104 @@ class RandomSlideState extends ConsumerState<RandomSlide> {
 
     return DecoratedBox(
       decoration: decoration,
-      child: ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Image.network(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          FadeIn(
+            child: Container(
+              width: size.width * 0.35,
+              decoration: BoxDecoration(
+                image: DecorationImage(image: NetworkImage(
                 widget.anime.imageUrl,
+          
+                ),
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress != null) {
-                    return const DecoratedBox(
-                      decoration: BoxDecoration(color: Colors.black12),
-                    );
-                  }
-                  return FadeIn(child: child);
-                },
+                )
               ),
-              Column(
+             
+            ),
+          ),
+          Column(
+            children: [
+              Container(
+                width: size.width * 0.6,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                child: Text(
+                  widget.anime.animeTitle,
+                  style: widget.anime.animeTitle.length < 20
+                      ? textStyle.titleLarge?.copyWith(color: Colors.white)
+                      : textStyle.titleMedium?.copyWith(
+                          color: Colors.white,
+                        ),
+                  textAlign: TextAlign.start,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                width: size.width * 0.6,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                child: Text(
+                  ' ${widget.anime.type} • ${widget.anime.release}',
+                  style:
+                      textStyle.titleMedium?.copyWith(color: Colors.white),
+                  textAlign: TextAlign.start,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Container(
-                    width: size.width * 0.48,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    child: Text(
-                      widget.anime.animeTitle,
-                      style: widget.anime.animeTitle.length < 20
-                          ? textStyle.titleLarge?.copyWith(color: Colors.white)
-                          : textStyle.titleMedium?.copyWith(
-                              color: Colors.white,
-                            ),
-                      textAlign: TextAlign.start,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Container(
-                    width: size.width * 0.45,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    child: Text(
-                      ' ${widget.anime.type} • ${widget.anime.release}',
-                      style:
-                          textStyle.titleMedium?.copyWith(color: Colors.white),
-                      textAlign: TextAlign.start,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      FilledButton.icon(
-                          icon: const Icon(Icons.play_arrow_rounded),
-                          onPressed: () async {
-                            final chapt = Chapter(
-                            title: '',
-                            id: '',
-                            chapterUrl: '',
-                            chapterNumber: 0,
-                            servers: [],
-                            chapterInfo: '',
-                            chapter: '');
-                           showDialog(
-                            context: context,
-                            builder: (context) => ServerDialog(widget.anime, chapt));
-                          },
-                          label: const Text('Ver ahora'),
-                          style: const ButtonStyle(
-                              visualDensity: VisualDensity.compact)),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      IconButton.filled(
-                        icon: const Icon(Icons.info),
-                        onPressed: () {
-                          ref
-                              .read(animeProvider.notifier)
-                              .update((state) => widget.anime);
-                          context.push(
-                            '/anime-screen',
-                          );
-                        },
-                        style: const ButtonStyle(
-                            visualDensity: VisualDensity.compact),
-                      )
-                    ],
-                  ),
                   const SizedBox(
-                    height: 8,
+                    width: 8,
+                  ),
+                  FilledButton.icon(
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      onPressed: () async {
+                        final chapt = Chapter(
+                        title: '',
+                        id: '',
+                        chapterUrl: '',
+                        chapterNumber: 0,
+                        servers: [],
+                        chapterInfo: '',
+                        chapter: '');
+                       showDialog(
+                        context: context,
+                        builder: (context) => ServerDialog(widget.anime, chapt));
+                      },
+                      label: const Text('Ver ahora'),
+                      style: const ButtonStyle(
+                          visualDensity: VisualDensity.compact)),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                  IconButton.filled(
+                    icon: const Icon(Icons.info),
+                    onPressed: () {
+                      ref
+                          .read(animeProvider.notifier)
+                          .update((state) => widget.anime);
+                      context.push(
+                        '/anime-screen',
+                      );
+                    },
+                    style: const ButtonStyle(
+                        visualDensity: VisualDensity.compact),
                   )
                 ],
               ),
+              const SizedBox(
+                height: 8,
+              )
             ],
-          )),
+          ),
+        ],
+      ),
     );
   }
 }

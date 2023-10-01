@@ -1,6 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kimoi/src/UI/items/about_dialog.dart';
+import 'package:kimoi/src/UI/items/items.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
 import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
@@ -45,40 +48,22 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
           title: const Text('Mis listas'),
           bottom: PreferredSize(
             preferredSize: Size(size.width, 45),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                TabBar.secondary(
-                    controller: tabController,
-                    dividerColor: Colors.transparent,
-                    tabAlignment: TabAlignment.start,
-                    isScrollable: true,
-                    tabs: const [
-                      Tab(
-                        text: 'FAVORITOS',
-                      ),
-                      Tab(
-                        text: 'HISTORIAL',
-                      ),
-                    ]),
-              ],
-            ),
+            child: TabBar(controller: tabController, tabs: const [
+              Tab(
+                text: 'FAVORITOS',
+              ),
+              Tab(
+                text: 'HISTORIAL',
+              ),
+            ]),
           ),
           actions: [
-            if (index == 1)
-              IconButton(
-                  onPressed: () async {
-                    await ref
-                        .read(watchingHistoryProvider.notifier)
-                        .clearHistory()
-                        .then((value) => ref.refresh(watchingHistoryProvider));
-
-                    setState(() {});
-                  },
-                  icon: const Icon(
-                    Icons.delete_forever,
-                    color: Colors.red,
-                  )),
+            IconButton(
+                onPressed: () => showGeneralDialog(
+                      context: context,
+                      pageBuilder: (context, __, ___) => const CsAboutDialog(),
+                    ),
+                icon: const Icon(Icons.info)),
             IconButton(
                 onPressed: () async {
                   await showSearch(
@@ -184,6 +169,10 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   bool isWatchinLoading = false;
   late final ScrollController controller;
 
+  ValueNotifier label = ValueNotifier('Todo');
+
+  final estados = ["Todo", "Completado", "Viendo"];
+
   void loadWatchin() async {
     if (isWatchinLoading || isWatchinLastPage) return;
     isWatchinLoading = true;
@@ -217,14 +206,44 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     }
   }
 
+  SliverPersistentHeader makeHeader(Widget child) {
+    return SliverPersistentHeader(
+      // pinned: true,
+      floating: true,
+      delegate:
+          SliverAppBarDelegate(minHeight: 40.0, maxHeight: 40.0, child: child),
+    );
+  }
+
+  List<Chapter> filterChapters() {
+    switch (label.value) {
+      case "Completado":
+        return ref
+            .watch(watchingHistoryProvider)
+            .values
+            .toList()
+            .where((value) => value.isCompleted == true)
+            .toList();
+      case "Viendo":
+        return ref
+            .watch(watchingHistoryProvider)
+            .values
+            .toList()
+            .where((value) => value.isWatching == true)
+            .toList();
+      default:
+        return ref.watch(watchingHistoryProvider).values.toList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final history = ref.watch(watchingHistoryProvider);
+    final history = filterChapters();
 
     final color = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size;
 
-    if (history.isEmpty) {
+    if (ref.watch(watchingHistoryProvider).isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -241,33 +260,110 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
       );
     }
 
+    final textStyle = Theme.of(context).textTheme;
+
     return Scaffold(
       body: Stack(
         children: [
-          ListView.builder(
+          CustomScrollView(
             controller: controller,
-            itemCount: history.length,
-            itemBuilder: (BuildContext context, int index) {
-              final chapter = history.values.toList()[index];
+            slivers: [
+              makeHeader(DecoratedBox(
+                decoration: BoxDecoration(color: color.background),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    PopupMenuButton(
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: color.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              label.value,
+                              style: TextStyle(color: color.primary),
+                            ),
+                          ],
+                        ),
+                        itemBuilder: (context) => estados
+                            .map((e) => PopupMenuItem(
+                                  child: Text(
+                                    e,
+                                    style: textStyle.titleSmall,
+                                  ),
+                                  onTap: () {
+                                    setState(() {
+                                      label.value = e;
+                                    });
+                                  },
+                                ))
+                            .toList()),
+                    const Spacer(),
+                    // IconButton(
+                    //     onPressed: () {}, icon: const Icon(Icons.filter_alt)),
+                    IconButton(
+                      onPressed: () => showDialog(
+                        context: context,
+                        builder: (context) => CupertinoAlertDialog(
+                          title: const Text("Limpiar historial"),
+                          content:
+                              const Text("¿Deseas eliminar todo el historial?"),
+                          actions: [
+                            TextButton(
+                                onPressed: () => context.pop(),
+                                child: const Text(
+                                  "Cancelar",
+                                  style: TextStyle(color: Colors.red),
+                                )),
+                            TextButton(
+                                onPressed: () async {
+                                  await ref
+                                      .read(watchingHistoryProvider.notifier)
+                                      .clearHistory()
+                                      .then((value) =>
+                                          ref.refresh(watchingHistoryProvider));
 
-              final Anime anime = Anime(
-                animeUrl: chapter.animeUrl!,
-                imageUrl: chapter.imageUrl!,
-                animeTitle: chapter.title,
-                chapterInfo: chapter.chapterInfo,
-                chapterUrl: chapter.chapterUrl,
-              );
-              return GestureDetector(
-                onTap: () async {
-                  showDialog(
-                      context: context,
-                      builder: (context) => ServerDialog(anime, chapter));
-                },
-                child: _HistoryTile(
-                  chapter: chapter,
+                                  await Future(() => context.pop());
+
+                                  setState(() {});
+                                },
+                                child: const Text("Aceptar")),
+                          ],
+                        ),
+                      ),
+                      icon: const Icon(Icons.delete_forever),
+                      color: Colors.red,
+                    )
+                  ],
                 ),
-              );
-            },
+              )),
+              SliverList.builder(
+                itemCount: history.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final chapter = history[index];
+
+                  final Anime anime = Anime(
+                    animeUrl: chapter.animeUrl!,
+                    imageUrl: chapter.imageUrl!,
+                    animeTitle: chapter.title,
+                    chapterInfo: chapter.chapterInfo,
+                    chapterUrl: chapter.chapterUrl,
+                  );
+                  return GestureDetector(
+                    onTap: () async {
+                      showDialog(
+                          context: context,
+                          builder: (context) => ServerDialog(anime, chapter));
+                    },
+                    child: _HistoryTile(
+                      chapter: chapter,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           if (isWatchinLoading)
             Positioned(

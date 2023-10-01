@@ -36,6 +36,8 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
     with AutomaticKeepAliveClientMixin {
   final ScrollController scrollController = ScrollController();
 
+  List optional = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+
   @override
   void initState() {
     super.initState();
@@ -73,22 +75,42 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
           const SizedBox(
             height: 5,
           ),
-          Expanded(
-            child: ListView.builder(
-              controller: scrollController,
-              itemCount: widget.animes.length,
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemBuilder: (BuildContext context, int index) {
-                return FadeInRight(
-                    child: AnimeCard(
-                  anime: widget.animes[index],
-                  width: widget.width,
-                  height: widget.height,
-                ));
-              },
+          if (widget.animes.isEmpty)
+            Expanded(
+              child: ListView.builder(
+                itemCount: optional.length,
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemBuilder: (BuildContext context, int index) {
+                  return FadeInRight(
+                    child: Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                      child: Container(
+                        height: 250,
+                        width: 130,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
+          if (widget.animes.isNotEmpty)
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                itemCount: widget.animes.length,
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemBuilder: (BuildContext context, int index) {
+                  return FadeInRight(
+                      child: AnimeCard(
+                    anime: widget.animes[index],
+                    width: widget.width,
+                    height: widget.height,
+                  ));
+                },
+              ),
+            ),
         ],
       ),
     );

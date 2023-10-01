@@ -25,8 +25,6 @@ class AnimesViewState extends State<AnimesView>
   Widget build(BuildContext context) {
     super.build(context);
 
-    final color = Theme.of(context).colorScheme;
-
     final textStyle = Theme.of(context).textTheme;
     final size = MediaQuery.of(context).size;
     List<List<Anime>> subList = [];
@@ -48,7 +46,7 @@ class AnimesViewState extends State<AnimesView>
         Container(
           alignment: Alignment.center,
           width: double.infinity,
-          padding: const EdgeInsets.only( top: 15, bottom: 3),
+          padding: const EdgeInsets.only(top: 15, bottom: 3),
           child: Column(
             children: [
               // Divider(),
@@ -201,16 +199,14 @@ class _SwiperView extends rv.ConsumerWidget {
                 // Image
                 Stack(
                   children: [
-                    SizedBox(
+                    Container(
                       width: size.width * 0.42,
-                      child: ClipRRect(
+                      height: size.height * 0.11,
+                      decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(2),
-                          child: FadeInImage(
-                            height: size.height * 0.11,
-                            fit: BoxFit.cover,
+                          image: DecorationImage(
                             image: NetworkImage(anime.imageUrl),
-                            placeholder:
-                                const AssetImage('assets/jar-loading.gif'),
+                            fit: BoxFit.cover,
                           )),
                     ),
                     Positioned(

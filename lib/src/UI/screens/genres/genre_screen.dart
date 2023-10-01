@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kimoi/src/UI/items/items.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_filter_provider.dart';
@@ -7,7 +8,6 @@ import 'package:kimoi/src/UI/providers/animes/anime_repository_provider.dart';
 import 'package:kimoi/src/UI/screens/home/home.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/domain/domain.dart';
-
 
 class GenreScreen extends ConsumerStatefulWidget {
   const GenreScreen({
@@ -105,32 +105,45 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
                       floating: true,
                       pinned: true,
                       title: const Text('Géneros'),
-                      bottom: PreferredSize(preferredSize: Size(size.width, 50),
-                       child: Padding(
-                         padding: const EdgeInsets.only(bottom: 15),
-                         child: Row(
+                      bottom: PreferredSize(
+                        preferredSize: Size(size.width, 50),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 15),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              genre.icon != null ?
-                              FaIcon(genre.icon,) : Image.asset(genre.iconPath! , height: 25),
-                              const SizedBox(width: 10,),
+                              genre.icon != null
+                                  ? FaIcon(
+                                      genre.icon,
+                                    )
+                                  : !genre.iconPath!.endsWith("svg")
+                                      ? Image.asset(
+                                          genre.iconPath!,
+                                          height: 25,
+                                        )
+                                      : SvgPicture.asset(genre.iconPath!,
+                                          height: 25,
+                                          colorFilter: const ColorFilter.mode(
+                                              Colors.white, BlendMode.srcIn),
+                                          semanticsLabel: 'A red up arrow'),
+                              const SizedBox(
+                                width: 10,
+                              ),
                               Text(
-                              genre.name, style: textStyle.titleMedium,
-                            ), 
+                                genre.name,
+                                style: textStyle.titleMedium,
+                              ),
                             ],
                           ),
-                       ),
+                        ),
                       ),
                     ),
-
-                    
                     SliverGrid.builder(
-                      
                       // controller: widget.scrollController,
                       // padding: const EdgeInsets.only(bottom: 20, top: 10),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, 
+                          crossAxisCount: 2,
                           mainAxisExtent: size.height * 0.38),
                       itemCount: animes.length,
                       itemBuilder: (BuildContext context, int index) {

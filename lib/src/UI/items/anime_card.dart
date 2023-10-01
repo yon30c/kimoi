@@ -49,6 +49,7 @@ class AnimeCard extends ConsumerWidget {
                       anime.imageUrl,
                     ),
                     fit: BoxFit.cover),
+
               ),
             ),
 

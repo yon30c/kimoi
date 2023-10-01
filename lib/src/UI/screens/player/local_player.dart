@@ -5,6 +5,7 @@ import 'package:better_player_v3/better_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fullscreen_window/fullscreen_window.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/items.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
@@ -33,7 +34,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   // ********************************************************** //
 
   late BetterPlayerController _betterPlayerController;
-  var channel = const MethodChannel("extractors");
 
   List<v.Video> videoList = [];
 
@@ -46,6 +46,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   bool isVisible = false;
   bool showForward = false;
   bool showRewind = false;
+  bool isFullScreen = false;
 
   String chapterInfo = '';
   String title = '';
@@ -54,6 +55,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   ValueNotifier<String> chapterName = ValueNotifier('');
 
   final responsive = Responsive();
+  
 
   // ********************************************************** //
 
@@ -72,8 +74,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
         BetterPlayerConfiguration(
             startAt: Duration(seconds: widget.videos.position),
             allowedScreenSleep: false,
-            aspectRatio: 16 / 9,
-            fit: BoxFit.contain,
+            fit: BoxFit.fill,
             autoPlay: true,
             controlsConfiguration: BetterPlayerControlsConfiguration(
               playerTheme: BetterPlayerTheme.custom,
@@ -96,7 +97,9 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
       resolutions: resolutions,
     );
 
-    _betterPlayerController = BetterPlayerController(betterPlayerConfiguration);
+    _betterPlayerController = BetterPlayerController(
+      betterPlayerConfiguration,
+    );
     _betterPlayerController.setupDataSource(dataSource);
 
     isInitialize = true;
@@ -144,7 +147,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     });
 
     WakelockPlus.enable();
-
   }
 
   //* Guardar videos reproducidos en el historial
@@ -297,6 +299,10 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     return true;
   }
 
+  void setFullScreen(bool isFullScreen) {
+    FullScreenWindow.setFullScreen(isFullScreen);
+  }
+
   // ********************************************************** //
 
   // ********************************************************** //
@@ -311,10 +317,18 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     title = widget.videos.title;
     //* Bloquea la pantalla para que no se apague automaticamente
 
+    FullScreenWindow.setFullScreen(true);
+
+    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+
+
+    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle())
     // Preferencias de pantalla
     SystemChrome.setPreferredOrientations(
-        [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
+    );
 
     // Inicializar el reproductor de video
     initPlayer(widget.videos);
@@ -343,13 +357,18 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     AsyncValue<List?> nextChapter =
         ref.watch(nextChapterProvider(nextChapterUrl));
 
+    MediaQuery.of(context).removePadding(
+        removeTop: true,
+        removeBottom: true,
+        removeLeft: true,
+        removeRight: true);
+
     // ********************************************************** //
     // ********************************************************** //
 
     return WillPopScope(
       onWillPop: onWillPop,
       child: Scaffold(
-        backgroundColor: Colors.black,
         body: GestureDetector(
           onTap: !isVisible ? showControls : hideControls,
           child: Center(
@@ -364,7 +383,9 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                 // Reproductor de video
                 : Stack(
                     children: [
-                      BetterPlayer(controller: _betterPlayerController),
+                      SizedBox.expand(
+                          child: BetterPlayer(
+                              controller: _betterPlayerController)),
                       Center(
                         child: _betterPlayerController.isBuffering()!
                             ? const CircularProgressIndicator()
@@ -544,7 +565,9 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                   ref
                       .read(fixedServerProvider.notifier)
                       .update((state) => data.last.first);
-                  ref.read(chapterProvider.notifier).update((state) => data.first);
+                  ref
+                      .read(chapterProvider.notifier)
+                      .update((state) => data.first);
                   // ref.read(videoProvider.notifier).getVideos();
                   context.pushReplacement('/local-player', extra: data.first);
                 };

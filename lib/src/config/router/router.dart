@@ -10,7 +10,6 @@ final GlobalKey<NavigatorState> _rootNavigatorKey =
 final GlobalKey<NavigatorState> _sectionANavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'sectionANav');
 
-
 final router =
     GoRouter(navigatorKey: _rootNavigatorKey, initialLocation: '/', routes: [
   StatefulShellRoute.indexedStack(

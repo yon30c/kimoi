@@ -35,21 +35,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     updater = Updater(
-      context: context,
-      delay: const Duration(milliseconds: 300),
-
-      url:
-          'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater.json',
-      titleText: 'Actualización disponible',
-      // backgroundDownload: false,
-      allowSkip: true,
-      contentText:
-          'Actualice su aplicación a la última versión para disfrutar de nuevas funciones.',
-      callBack: (UpdateModel model) {},
-      confirmText: 'Descargar',
-      controller: controller,
-      cancelText: 'Más tarde'
-    );
+        context: context,
+        delay: const Duration(milliseconds: 300),
+        url:
+            'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater.json',
+        titleText: 'Actualización disponible',
+        // backgroundDownload: false,
+        allowSkip: true,
+        contentText:
+            'Actualice su aplicación a la última versión para disfrutar de nuevas funciones.',
+        callBack: (UpdateModel model) {},
+        confirmText: 'Descargar',
+        controller: controller,
+        cancelText: 'Más tarde');
   }
 
   checkUpdate() async {
@@ -80,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
+    
     initializeUpdater();
     checkUpdate();
   }
@@ -89,7 +87,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
 
-    
     return Scaffold(
         body: AnimatedSwitcher(
             duration: const Duration(seconds: 1),

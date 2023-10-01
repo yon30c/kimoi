@@ -193,13 +193,17 @@ class MonoschinosDatasource extends AnimeDatasource {
     for (var element in data) {
       final title = element.querySelector('h3')?.text ?? 'no title';
       final animeUrl = element.attributes['href']!;
+      final chapterUrl = animeUrl
+          .replaceFirst('anime', 'ver')
+          .replaceFirst('sub-espanol', 'episodio-1');
       final imageUrl = element.querySelector('img')!.attributes['data-src']!;
       final seriesInfo = element.querySelector('.seriesinfo')!.text;
 
-      final type = seriesInfo.substringBefore(' ');
+      final type = seriesInfo.substringBeforeLast(' ').substringBeforeLast(' ');
       final release = seriesInfo.substringAfterLast(' ');
 
       animes.add(Anime(
+        chapterUrl: chapterUrl ,
           animeUrl: animeUrl,
           imageUrl: imageUrl,
           animeTitle: title,

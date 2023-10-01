@@ -1,5 +1,6 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
 import 'package:kimoi/src/utils/extensions/extension.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -118,8 +119,9 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
           )),
       actions: [
         if (xData.trailer != null)
-          FilledButton(
-              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+          FilledButton.icon(
+              style: const ButtonStyle(visualDensity: VisualDensity.compact, 
+              backgroundColor: MaterialStatePropertyAll(Colors.white)),
               onPressed: () {
                 final route = MaterialPageRoute(
                     builder: (context) => YoutubePlayerScreen(
@@ -127,7 +129,8 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
                         ));
                 Navigator.of(context).push(route);
               },
-              child: const Text('ver trailer')),
+              label: const Text("Ver trailer"),
+              icon: const FaIcon(FontAwesomeIcons.youtube, color: Colors.red,)),
         const SizedBox(
           width: 8,
         )
@@ -425,9 +428,12 @@ class _EpisodesTileState extends ConsumerState<_EpisodesTile> {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.all(Radius.circular(10)),
-                child: FadeInImage.assetNetwork(
-                  placeholder: 'assets/jar-loading.gif',
-                  image: widget.xData.imageUrl,
+                child: Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage(widget.xData.imageUrl),
+                    )
+                  ),
                   height: 100,
                   width: 70,
                 ),

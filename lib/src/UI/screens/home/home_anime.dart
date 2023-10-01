@@ -2,9 +2,12 @@ import 'dart:math';
 
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/about_dialog.dart';
+import 'package:kimoi/src/UI/screens/home/home.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
 
@@ -23,14 +26,17 @@ class HomeAnime extends ConsumerStatefulWidget {
 
 class HomeAnimeState extends ConsumerState<HomeAnime> {
   List<Anime> animes = [];
+  List<Anime> latanimes = [];
+  bool lastCharge = false;
+  late ScrollController controller;
 
   int getRandomYear() {
-    final allowedYears = [2022, 2021, 2020, 2019];
+    final allowedYears = [2022, 2021, 2020, 2019, 2018, 2017];
     return allowedYears[Random().nextInt(allowedYears.length)];
   }
 
   int getRandomPage() {
-    final allowedPage = [1, 2, 3, 4, 5];
+    final allowedPage = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     return allowedPage[Random().nextInt(allowedPage.length)];
   }
 
@@ -42,11 +48,28 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
     setState(() {});
   }
 
+  void listen() async {
+    final direction = controller.position.userScrollDirection;
+
+    if (direction == ScrollDirection.reverse) {
+      if (lastCharge) return;
+      lastCharge = true;
+      setState(() {});
+      ref.read(lastAnimesAddedProvider.notifier).getAnimes();
+      latanimes = await ref
+          .read(animeRepositoryProvider)
+          .getDirectory(genero: "latino", p: getRandomPage());
+      setState(() {});
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    ref.read(lastAnimesAddedProvider.notifier).getAnimes();
+    controller = ScrollController();
     ref.read(recentAnimesProvider.notifier).getAnimes();
+
+    controller.addListener(listen);
     fetchData();
   }
 
@@ -77,7 +100,7 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                 body: Center(child: CircularProgressIndicator())));
       }
 
-      if (lastAnimes.isEmpty || lastEpisodes.isEmpty) {
+      if (lastEpisodes.isEmpty) {
         return const Scaffold(body: FullScreenLoader());
       }
 
@@ -90,6 +113,7 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
               await ref.refresh(recentAnimesProvider.notifier).getAnimes();
             },
             child: CustomScrollView(
+              controller: controller,
               physics: const BouncingScrollPhysics(),
               slivers: [
                 SliverAppBar(
@@ -126,7 +150,21 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                         animes: lastAnimes,
                         title: 'Últimos animes',
                         subtitle: '2023',
-                      ),                      //         .getAnimes),
+                      ),
+                      AnimesListview(
+                        height: 180,
+                        width: 130,
+                        animes: latanimes,
+                        title: 'Animes latinos',
+                        subtitle: 'Ver más',
+                        genre: GenresTab(
+                            id: "latino",
+                            iconPath: null,
+                            name: "Latino",
+                            title: "Latino",
+                            imagePath: '',
+                            icon: FontAwesomeIcons.map),
+                      ), //         .getAnimes),
                       const SizedBox(
                         height: 15,
                       )
