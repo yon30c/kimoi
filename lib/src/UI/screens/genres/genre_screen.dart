@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kimoi/src/UI/items/items.dart';
+import 'package:kimoi/src/UI/items/search_icon.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_filter_provider.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_repository_provider.dart';
 import 'package:kimoi/src/UI/screens/home/home.dart';
@@ -105,6 +106,9 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
                       floating: true,
                       pinned: true,
                       title: const Text('Géneros'),
+                      actions: const [
+                        SearchIcon()
+                      ],
                       bottom: PreferredSize(
                         preferredSize: Size(size.width, 50),
                         child: Padding(

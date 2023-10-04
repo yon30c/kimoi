@@ -11,7 +11,7 @@ abstract class AnimeRepository {
   Future<List<Anime>> getLastAnimeAdded({int? year, int? page});
   Future<AnimeInfo> getAnimeInfo(String path);
   Future<List<Chapter>> getChapterData(String path);
-  Future<XData> getExtraData(Anime anime);
+  Future<XData> getExtraData(Anime anime, String title);
 
 
     Future<List<Anime>> getDirectory(

@@ -46,16 +46,26 @@ class AnimesViewState extends State<AnimesView>
         Container(
           alignment: Alignment.center,
           width: double.infinity,
-          padding: const EdgeInsets.only(top: 15, bottom: 3),
+          padding: const EdgeInsets.only(top: 3, bottom: 3),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Divider(),
+              const Divider(),
 
-              Text(
-                widget.title,
-                style: textStyle.titleLarge,
+              Padding(
+                padding: const EdgeInsets.symmetric( horizontal: 10.0, vertical: 8),
+                child: Row(
+                  children: [
+                    Text(
+                      widget.title,
+                      style: textStyle.titleLarge,
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.new_releases, color: Colors.amber,)
+                  ],
+                ),
               ),
-              const Divider()
+              // const Divider()
             ],
           ),
         ),
@@ -112,18 +122,19 @@ class _SwiperView extends rv.ConsumerWidget {
         ...animeList
             .map(
               (anime) => PopupMenuButton(
-                color: color.surfaceVariant,
+                // color: color.surfaceVariant,
+                elevation: 20,
                 position: PopupMenuPosition.under,
                 itemBuilder: (context) {
                   return <PopupMenuEntry>[
                     PopupMenuItem(
-                      child: const Row(
+                      child:  Row(
                         children: [
-                          Icon(Icons.remove_red_eye),
-                          SizedBox(
+                          Icon(Icons.play_circle_fill_rounded, color: color.primary,),
+                          const SizedBox(
                             width: 8,
                           ),
-                          Text('Ver ahora'),
+                          const Text('Ver ahora'),
                         ],
                       ),
                       onTap: () {
@@ -142,13 +153,13 @@ class _SwiperView extends rv.ConsumerWidget {
                       },
                     ),
                     PopupMenuItem(
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.info),
-                          SizedBox(
+                          Icon(Icons.info, color: color.primary,),
+                          const SizedBox(
                             width: 8,
                           ),
-                          Text('Informacion'),
+                          const Text('Informacion'),
                         ],
                       ),
                       onTap: () async {

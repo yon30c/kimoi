@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/about_dialog.dart';
 import 'package:kimoi/src/UI/items/filter_dialog.dart';
+import 'package:kimoi/src/UI/items/search_icon.dart';
 import 'package:kimoi/src/UI/providers/jikan/jikan_provider.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/screens/player/youtube_player.dart';
@@ -39,7 +40,6 @@ class HomeDirectoryState extends ConsumerState<HomeDirectory>
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
         appBar: AppBar(
           title: const Text('Explorar'),
@@ -50,24 +50,7 @@ class HomeDirectoryState extends ConsumerState<HomeDirectory>
                       pageBuilder: (context, __, ___) => const CsAboutDialog(),
                     ),
                 icon: const Icon(Icons.info)),
-            IconButton(
-                onPressed: () async {
-                  await showSearch(
-                          context: context,
-                          delegate: SearchAnimeDelegate(
-                              searchAnimes: ref
-                                  .watch(searchedMoviesProvider.notifier)
-                                  .searchAnimes))
-                      .then((value) {
-                    if (value == null) return;
-                    ref.read(animeProvider.notifier).update((state) => value);
-                    context.push('/anime-screen');
-                  });
-                },
-                icon: const Icon(
-                  Icons.search,
-                  size: 30,
-                ))
+            const SearchIcon()
           ],
           bottom: TabBar(
             isScrollable: true,
@@ -437,17 +420,15 @@ List<String> years = [
 ];
 
 final genre = GenresTab(
-  id: 'latino', 
-  iconPath: null,
-   name: "Latino", 
-   title: "Latino", 
-   imagePath: "assets/images/ani-esp.webp", 
-icon: FontAwesomeIcons.map);
+    id: 'latino',
+    iconPath: null,
+    name: "Latino",
+    title: "Latino",
+    imagePath: "assets/images/ani-esp.webp",
+    icon: FontAwesomeIcons.map);
 
 class _GenrePage extends ConsumerWidget {
   const _GenrePage();
-
-  
 
   @override
   Widget build(BuildContext context, ref) {
@@ -458,26 +439,23 @@ class _GenrePage extends ConsumerWidget {
         SliverToBoxAdapter(
           child: GestureDetector(
             onTap: () {
-                ref.read(genreProvider.notifier).update((state) => genre);
-                ref.read(generoProvider.notifier).update((state) => genre.id);
-                context.push('/explorar/genre-screen/${genre.title}');
-              },
+              ref.read(genreProvider.notifier).update((state) => genre);
+              ref.read(generoProvider.notifier).update((state) => genre.id);
+              context.push('/explorar/genre-screen/${genre.title}');
+            },
             child: Card(
-              
               margin: const EdgeInsets.all(4),
-                  child: Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      image: DecorationImage(
-                          image: AssetImage(genre.imagePath),
-                          fit: BoxFit.cover),
-                    ),
-                  ),
+              child: Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  image: DecorationImage(
+                      image: AssetImage(genre.imagePath), fit: BoxFit.cover),
                 ),
+              ),
+            ),
           ),
         ),
-
         SliverGrid.builder(
           // controller: scrollController,
           // padding: const EdgeInsets.only(bottom: 30, top: 10),
@@ -497,7 +475,8 @@ class _GenrePage extends ConsumerWidget {
                   children: [
                     ClipRRect(
                         clipBehavior: Clip.antiAlias,
-                        borderRadius: const BorderRadius.all(Radius.circular(2)),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(2)),
                         child: Container(
                           decoration: BoxDecoration(
                             image: DecorationImage(
@@ -517,16 +496,16 @@ class _GenrePage extends ConsumerWidget {
                         children: [
                           genre.icon != null
                               ? FaIcon(genre.icon)
-                              : !genre.iconPath!.endsWith("svg")  ?
-                              Image.asset(
-                                  genre.iconPath!,
-                                  height: 30,
-                                ):  SvgPicture.asset(
-                                  genre.iconPath!,
-                                  height: 30,
-                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                  semanticsLabel: 'A red up arrow'
-                                ),
+                              : !genre.iconPath!.endsWith("svg")
+                                  ? Image.asset(
+                                      genre.iconPath!,
+                                      height: 30,
+                                    )
+                                  : SvgPicture.asset(genre.iconPath!,
+                                      height: 30,
+                                      colorFilter: const ColorFilter.mode(
+                                          Colors.white, BlendMode.srcIn),
+                                      semanticsLabel: 'A red up arrow'),
                           Text(
                             genre.title,
                             style: textStyle.labelMedium
@@ -563,8 +542,6 @@ class GenresTab {
       required this.icon});
 }
 
-
-
 List<GenresTab> genresTab = [
   GenresTab(
     iconPath: null,
@@ -587,7 +564,7 @@ List<GenresTab> genresTab = [
       id: 'comedia',
       title: 'COMEDIA',
       imagePath: 'assets/images/com-ani.jpeg',
-      icon: null),
+      icon: Icons.theater_comedy),
   GenresTab(
       iconPath: null,
       name: 'Drama',
@@ -609,7 +586,6 @@ List<GenresTab> genresTab = [
       title: 'ESCOLARES',
       imagePath: 'assets/images/anime-esc.webp',
       icon: Icons.school_rounded),
-
   GenresTab(
       iconPath: null,
       name: 'Harem',
@@ -707,7 +683,7 @@ List<GenresTab> genresTab = [
       imagePath: 'assets/images/sob-ani2.jpeg',
       icon: FontAwesomeIcons.ghost),
   GenresTab(
-      iconPath: 'assets/icons/knif.png',
+      iconPath: 'assets/icons/triller.svg',
       name: 'Triller',
       id: 'horror',
       title: 'TRILLER',
@@ -786,18 +762,14 @@ class _UpcomingPageState extends ConsumerState<_UpcomingPage> {
             Stack(
               alignment: Alignment.bottomRight,
               children: [
-                FadeIn(
-                  child: Container(
-                
-                    height: size.height * 0.3,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(image: 
-                      
-                        NetworkImage(anime.images.entries.first.value.imageUrl),
+                Container(
+                  height: size.height * 0.3,
+                  decoration: BoxDecoration(
+                      image: DecorationImage(
+                    image: NetworkImage(
+                        anime.images.entries.first.value.imageUrl),
                     fit: BoxFit.cover,
-                      )
-                    ),
-                  ),
+                  )),
                 ),
                 if (anime.trailer.youtubeId != null)
                   Padding(

@@ -34,7 +34,17 @@ class MonoschinosDatasource extends AnimeDatasource {
 
     List<String> genres = [];
 
-    final title = contain.querySelector('h1')!.text;
+    String title = contain.querySelector('h1')!.text;
+    final title2 = contain.querySelector('h2');
+
+    if (title2 != null) {
+      if (title2.text.contains('-')) {
+        title = title2.text.substringBeforeLast('-');
+      } else {
+        title = title2.text;
+      }
+    }
+
     final imageUrl = contain.querySelector('img')!.attributes['src']!;
     final estado = contain.querySelector('.btn1')!.text;
     const idioma = 'sub español';
@@ -203,7 +213,7 @@ class MonoschinosDatasource extends AnimeDatasource {
       final release = seriesInfo.substringAfterLast(' ');
 
       animes.add(Anime(
-        chapterUrl: chapterUrl ,
+          chapterUrl: chapterUrl,
           animeUrl: animeUrl,
           imageUrl: imageUrl,
           animeTitle: title,
@@ -215,9 +225,10 @@ class MonoschinosDatasource extends AnimeDatasource {
   }
 
   @override
-  Future<XData> getExtraData(Anime anime) async {
+  Future<XData> getExtraData(Anime anime, String title) async {
     try {
-      final title = anime.animeTitle;
+      print(title);
+      // final title = anime.animeTitle;
       final lastUrl = 'https://api.jikan.moe/v4/anime?q=$title&limit=20';
 
       final jikRes = await Dio().get(lastUrl);
@@ -227,7 +238,9 @@ class MonoschinosDatasource extends AnimeDatasource {
       final popularity = jikan.data.first.popularity;
       final rank = jikan.data.first.rank;
       String? season = jikan.data.first.season;
-      final studios = jikan.data.first.studios.first.name;
+      final studios = jikan.data.first.studios.isEmpty
+          ? ''
+          : jikan.data.first.studios.first.name;
       final trailer = jikan.data.first.trailer?.youtubeId;
       final score = jikan.data.first.score;
       final largeImageUrl = jikan.data.first.images.values.first.largeImageUrl;
@@ -267,7 +280,7 @@ class MonoschinosDatasource extends AnimeDatasource {
           malId: jikan.data.first.malId,
           url: jikan.data.first.url,
           trailer: trailer,
-          title: title,
+          title: jikan.data.first.title,
           type: jikan.data.first.type,
           source: jikan.data.first.source,
           episodes: jikan.data.first.episodes,

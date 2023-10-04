@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
-import 'package:kimoi/src/UI/screens/player/local_player.dart';
 import 'package:kimoi/src/domain/domain.dart';
 import 'package:kimoi/src/infrastructure/infrastructure.dart';
 import 'package:kimoi/src/utils/extractors/extractors.dart';
@@ -34,10 +33,11 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final chapter = ref.watch(getVideoDataProvider);
+    final chapters = ref.watch(getVideoDataProvider);
 
-    if (chapter.isEmpty) {
+    if (chapters.isEmpty) {
       return const AlertDialog(
+        elevation: 3,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(10))),
         content: Column(
@@ -112,22 +112,7 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                             : uqloadIndex != -1
                                 ? servers[uqloadIndex]
                                 : null));
-      } /* else if (url.contains('solid')) {
-        fixedServers.add(FixedServer(
-            name: 'SolidFiles',
-            url: url,
-            optional: okruIndex != -1
-                ? servers[okruIndex]
-                : voeIndex != -1
-                    ? servers[voeIndex]
-                    : mixdroIndex != -1
-                        ? servers[mixdroIndex]
-                        : mp4uploadIndex != -1
-                            ? servers[mp4uploadIndex]
-                            : uqloadIndex != -1
-                                ? servers[uqloadIndex]
-                                : null));
-      } */ else if (url.contains('mixdro')) {
+      } else if (url.contains('mixdro')) {
         fixedServers.add(FixedServer(
             name: 'MixDrop',
             url: url,
@@ -174,8 +159,8 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                                 : null));
       }
     }
-
     return SimpleDialog(
+        elevation: 3,
         title: const Text('Servidores'),
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(10))),
@@ -190,23 +175,21 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                     leading: const Icon(Icons.play_circle),
                     title: Text(e.name),
                     onTap: () {
-                      final chapt = chapter.first;
+                      final chapt = chapters.first;
                       chapt.isWatching = true;
                       chapt.imageUrl = widget.anime.imageUrl;
                       chapt.animeUrl = widget.anime.animeUrl;
-                      chapt.position = widget.chapter.position;
-
+                      if (widget.chapter.isCompleted) {
+                        chapt.position = 0;
+                        chapt.isCompleted = false;
+                      } else {
+                        chapt.position = widget.chapter.position;
+                      }
                       ref
                           .read(fixedServerProvider.notifier)
                           .update((state) => e);
                       context.pop();
-                      // context.push('/local-player', extra: chapt);
-
-                      showDialog(
-                        context: context,
-                        builder: (context) => Dialog.fullscreen(
-                            child: LocalPlayer(videos: chapt)),
-                      );
+                      context.push('/local-player', extra: chapt);
                     }))
                 .toList(),
           )
@@ -242,14 +225,7 @@ final videoServers = StateProvider((ref) async {
     } else {
       videos.addAll(vid);
     }
-  }/*  else if (url.contains('solid')) {
-    final videos = await SolidFilesExtractor().videoFromUrl(url);
-    if (videos.isNotEmpty) {
-      videos.addAll(videos);
-    } else {
-      videos.addAll(await extract(servers.optional!));
-    }
-  } */ else if (url.contains('mixdro')) {
+  } else if (url.contains('mixdro')) {
     final video = await MixDropExtractor().videoFromUrl(url);
     if (video.isNotEmpty) {
       videos.addAll(video);
@@ -295,7 +271,8 @@ Future<List<Video>> extract(String url) async {
   } /* else if (url.contains('solid')) {
     final videos = await SolidFilesExtractor().videoFromUrl(url);
     if (videos.isNotEmpty) videos.addAll(videos);
-  } */ else if (url.contains('mixdro')) {
+  } */
+  else if (url.contains('mixdro')) {
     final video = await MixDropExtractor().videoFromUrl(url);
     if (video.isNotEmpty) videos.addAll(video);
   } else if (url.contains('voe')) {

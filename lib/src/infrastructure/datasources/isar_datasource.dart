@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:kimoi/src/domain/datasources/local_storage_datasource.dart';
 import 'package:kimoi/src/domain/entities/anime.dart';
 import 'package:kimoi/src/domain/entities/chapter.dart';
+import 'package:kimoi/src/domain/entities/searched_anime.dart';
 import 'package:path_provider/path_provider.dart';
 
 class IsarDatasource extends LocalStorageDatasource {
@@ -14,7 +15,7 @@ class IsarDatasource extends LocalStorageDatasource {
   Future<Isar> openDB() async {
     final dir = await getApplicationDocumentsDirectory();
     if (Isar.instanceNames.isEmpty) {
-      return await Isar.open([AnimeSchema, ChapterSchema],
+      return await Isar.open([AnimeSchema, ChapterSchema, SearchedAnimeSchema],
           inspector: true, directory: dir.path);
     }
 
@@ -107,17 +108,29 @@ class IsarDatasource extends LocalStorageDatasource {
   }
 
   @override
-  Future<List<Chapter>> loadWatchedHistory({int limit = 10, offset = 0}) async {
+  Future<List<Chapter>> loadWatchedHistory(
+      {int limit = 10, offset = 0, bool? isCompleted}) async {
     final isar = await db;
 
-    final chapt = isar.chapters
-        .where()
-        .sortByDateDesc()
-        .offset(offset)
-        .limit(limit)
-        .findAll();
-
-    return chapt;
+    if (isCompleted != null) {
+      final chapt = isar.chapters
+          .where()
+          .filter()
+          .isCompletedEqualTo(isCompleted)
+          .sortByDateDesc()
+          .offset(offset)
+          .limit(limit)
+          .findAll();
+      return chapt;
+    } else {
+      final chapt = isar.chapters
+          .where()
+          .sortByDateDesc()
+          .offset(offset)
+          .limit(limit)
+          .findAll();
+      return chapt;
+    }
     // isar.chapters.where(sort: Sort.desc).findAll();
   }
 
@@ -134,5 +147,52 @@ class IsarDatasource extends LocalStorageDatasource {
     final isar = await db;
     await isar
         .writeTxn(() async => await isar.chapters.delete(chapter.isarId!));
+  }
+
+  @override
+  Future<List<SearchedAnime>> loadSearchedHistory(
+      {int limit = 10, offset = 0}) async {
+    final isar = await db;
+
+    final chapt = isar.searchedAnimes
+        .where()
+        .sortByDateDesc()
+        .offset(offset)
+        .limit(limit)
+        .findAll();
+
+    return chapt;
+  }
+
+  @override
+  Future<void> searched(SearchedAnime anime) async {
+    final isar = await db;
+
+    final isSearched = await isar.searchedAnimes
+        .filter()
+        .animeUrlEqualTo(anime.animeUrl)
+        .findFirst();
+
+    if (isSearched != null) {
+      // editar
+      // chapter.isarId = isWatching.isarId;
+      await isar.writeTxn(() async {
+        await isar.searchedAnimes.delete(isSearched.id);
+        await isar.searchedAnimes.put(anime);
+      });
+      return;
+    }
+    // Insertar
+    await isar.writeTxn(() async {
+      await isar.searchedAnimes.put(anime);
+    });
+  }
+
+  @override
+  Future<void> clearSearchHistory() async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.searchedAnimes.clear();
+    });
   }
 }

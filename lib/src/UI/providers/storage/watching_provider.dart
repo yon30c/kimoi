@@ -61,9 +61,9 @@ class WatchingNotifier extends StateNotifier<Map<String, Chapter>> {
 
   WatchingNotifier({required this.localStorageRepository}) : super({});
 
-  Future<List<Chapter>> loadNextPage() async {
+  Future<List<Chapter>> loadNextPage(bool? isCompleted) async {
     final animes = await localStorageRepository.loadWatchedHistory(
-        offset: page * 10, limit: 20);
+        offset: page * 10, limit: 20, isCompleted: isCompleted);
     page++;
     final tempAnimesMap = <String, Chapter>{};
     for (final anime in animes) {
@@ -75,5 +75,27 @@ class WatchingNotifier extends StateNotifier<Map<String, Chapter>> {
 
   Future<void> clearHistory() async {
     await localStorageRepository.clearHistory();
+  }
+}
+
+final nowWatchingProvider = StateNotifierProvider<NowWatchingNotifier, List<Chapter>>((ref) {
+  final storageRepo = ref.watch(localStorageRepositoryProvider);
+  return NowWatchingNotifier(localStorageRepository: storageRepo);
+});
+
+class NowWatchingNotifier extends StateNotifier<List<Chapter>> {
+  int page = 0;
+  final LocalStorageRepository localStorageRepository;
+
+  NowWatchingNotifier({required this.localStorageRepository}) : super([]);
+
+  Future<List<Chapter>> loadWatching() async {
+    final animes = await localStorageRepository.loadWatchedHistory(
+        offset: page * 10, limit: 20, isCompleted: false);
+    page++;
+
+    state = [...state, ...animes, ];
+
+    return animes;
   }
 }

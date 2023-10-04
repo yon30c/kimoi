@@ -84,15 +84,15 @@ final getExtraDataProvider =
 class ExtraDataNotifier extends StateNotifier<List<XData>> {
   ExtraDataNotifier(this.getAnimeInfo) : super([]);
 
-  final Future<XData> Function(Anime) getAnimeInfo;
+  final Future<XData> Function(Anime, String) getAnimeInfo;
 
   bool isLoading = false;
 
-  Future<void> getXData(Anime anime) async {
+  Future<void> getXData(Anime anime, String title) async {
     if (isLoading) return;
 
     isLoading = true;
-    XData animes = await getAnimeInfo(anime);
+    XData animes = await getAnimeInfo(anime, title);
 
     state = [animes];
     await Future.delayed(const Duration(milliseconds: 300));

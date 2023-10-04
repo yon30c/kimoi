@@ -8,13 +8,15 @@ typedef SearchAnimesCallback = Future<List<Anime>> Function(String query);
 
 class SearchAnimeDelegate extends SearchDelegate<Anime?> {
   final SearchAnimesCallback searchAnimes;
+  List<Anime> initialAnimes;
 
   StreamController<List<Anime>> debouncedMovies = StreamController.broadcast();
   StreamController<bool> isLoadingStream = StreamController.broadcast();
 
   Timer? _debounceTimer;
 
-  SearchAnimeDelegate({
+  SearchAnimeDelegate( {
+    required this.initialAnimes,
     required this.searchAnimes,
   }) : super(
           searchFieldLabel: 'Buscar animes',
@@ -32,11 +34,11 @@ class SearchAnimeDelegate extends SearchDelegate<Anime?> {
 
     _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
       if (query.isEmpty) {
-        debouncedMovies.add([]);
         return;
       }
 
       final movies = await searchAnimes(query);
+      initialAnimes = movies;
       debouncedMovies.add(movies);
       isLoadingStream.add(false);
     });
@@ -44,6 +46,7 @@ class SearchAnimeDelegate extends SearchDelegate<Anime?> {
 
   Widget buildResultsAndSuggestions() {
     return StreamBuilder(
+      initialData: initialAnimes, // TODO,
       stream: debouncedMovies.stream,
       builder: (context, snapshot) {
         final movies = snapshot.data ?? [];

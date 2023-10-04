@@ -52,7 +52,7 @@ class AnimeRepositoryImpl extends AnimeRepository {
   }
 
   @override
-  Future<XData> getExtraData(Anime anime) {
-    return datasource.getExtraData(anime);
+  Future<XData> getExtraData(Anime anime, String title) {
+    return datasource.getExtraData(anime, title);
   }
 }

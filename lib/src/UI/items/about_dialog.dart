@@ -39,26 +39,19 @@ class _CsAboutDialogState extends State<CsAboutDialog> {
     );
 
     updater = Updater(
-      context: context,
-
-      delay: const Duration(milliseconds: 300),
-
-      url:
-          'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater.json',
-      titleText: 'Actualización disponible',
-      // backgroundDownload: false,
-      allowSkip: false,
-      contentText:
-          'Actualice su aplicación a la última versión para disfrutar de nuevas funciones.',
-      callBack: (UpdateModel model) {
-        debugPrint(model.versionName);
-        debugPrint(model.versionCode.toString());
-        debugPrint(model.contentText);
-      },
-      confirmText: 'Descargar',
-      enableResume: true,
-      controller: controller,
-    );
+        context: context,
+        delay: const Duration(milliseconds: 300),
+        url:
+            'https://raw.githubusercontent.com/yon30c/kimoi_updater/main/updater.json',
+        titleText: 'Actualización disponible',
+        // backgroundDownload: false,
+        allowSkip: true,
+        contentText:
+            'Actualice su aplicación a la última versión para disfrutar de nuevas funciones.',
+        callBack: (UpdateModel model) {},
+        confirmText: 'Descargar',
+        controller: controller,
+        cancelText: 'Más tarde');
   }
 
   Future<bool> checkUpdate() async {
@@ -120,7 +113,7 @@ class _CsAboutDialogState extends State<CsAboutDialog> {
               await checkUpdate().then((value) {
                 if (!value) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('No se encontraron actualizaciones'),
+                    content: Text('Tu app esta actualizada'),
                     showCloseIcon: true,
                   ));
                 }
@@ -128,7 +121,7 @@ class _CsAboutDialogState extends State<CsAboutDialog> {
             },
           ),
           ListTile(
-            title: const Text('Que hay de nuevo'),
+            title: const Text('¿Que hay de nuevo?'),
             onTap: () => _launchUrl(newrelease),
           ),
           ListTile(

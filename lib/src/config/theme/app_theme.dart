@@ -22,7 +22,7 @@ class AppTheme {
   // ThemeData getTheme() => ThemeData(
   //   useMaterial3: true,
   //   colorSchemeSeed: themeController.selectedColor,
-  //   // appBarTheme: const AppBarTheme(centerTitle: true),
+  //   appBarTheme: AppBarTheme(foregroundColor: ColorScheme.fromSeed(seedColor: themeController.selectedColor).primary),
   //   sliderTheme: const SliderThemeData(
   //     showValueIndicator: ShowValueIndicator.always
   //   ),

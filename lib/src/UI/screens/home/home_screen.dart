@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/utils/updater/updater.dart';
 
@@ -91,12 +92,14 @@ class _HomeScreenState extends State<HomeScreen> {
         body: AnimatedSwitcher(
             duration: const Duration(seconds: 1),
             child: widget.navigationShell),
-        bottomNavigationBar: NavigationBar(
-          indicatorColor: color.primaryContainer,
-          destinations: items,
-          selectedIndex: widget.navigationShell.currentIndex,
-          onDestinationSelected: (value) => onTap(context, value),
-          // labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        bottomNavigationBar: SafeArea(
+          child: NavigationBar(
+            indicatorColor: color.primaryContainer,
+            destinations: items,
+            selectedIndex: widget.navigationShell.currentIndex,
+            onDestinationSelected: (value) => onTap(context, value),
+            // labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          ),
         ));
   }
 }

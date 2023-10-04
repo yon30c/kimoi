@@ -243,7 +243,7 @@ class AnimeMacDatasource extends AnimeDatasource {
   }
 
   @override
-  Future<XData> getExtraData(Anime anime) async {
+  Future<XData> getExtraData(Anime anime, String title) async {
     try {
       final title = anime.animeTitle;
       final lastUrl = 'https://api.jikan.moe/v4/anime?q=$title&limit=20';

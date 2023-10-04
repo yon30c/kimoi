@@ -21,7 +21,7 @@ List<PageInfo> pages = const [
     page: HomeFavorites(),
   ),
   PageInfo(
-      item: NavigationDestination(icon: Icon(Icons.explore), label: "Explorar"),
+      item: NavigationDestination(icon: Icon(Icons.auto_awesome), label: "Explorar"),
       page: HomeDirectory()),
 ];
 

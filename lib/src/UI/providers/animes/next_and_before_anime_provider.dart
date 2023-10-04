@@ -14,11 +14,8 @@ final dio1 = Dio(BaseOptions(
 ))
   ..httpClientAdapter;
 
-
-
 final nextChapterProvider =
     FutureProvider.family.autoDispose((ref, String path) async {
-
   try {
     final response = await dio1.get(path);
     final Document doc = parse(response.data);
@@ -42,11 +39,13 @@ final nextChapterProvider =
     });
 
     List<FixedServer> fixedServers = [];
-    int youruploadIndex =
+     int youruploadIndex =
         servers.indexWhere((element) => element.contains('yourupload'));
     int mp4uploadIndex =
         servers.indexWhere((element) => element.contains('mp4upload'));
     int okruIndex = servers.indexWhere((element) => element.contains('ok.ru'));
+    int uqloadIndex =
+        servers.indexWhere((element) => element.contains('uqload'));
     int voeIndex = servers.indexWhere((element) => element.contains('voe'));
     int mixdroIndex =
         servers.indexWhere((element) => element.contains('mixdro'));
@@ -64,7 +63,9 @@ final nextChapterProvider =
                         ? servers[mixdroIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
       } else if (url.contains('mp4upload')) {
         fixedServers.add(FixedServer(
             name: 'Mp4Upload',
@@ -75,9 +76,11 @@ final nextChapterProvider =
                     ? servers[voeIndex]
                     : mixdroIndex != -1
                         ? servers[mixdroIndex]
-                        : mp4uploadIndex != -1
-                            ? servers[mp4uploadIndex]
-                            : null));
+                        : uqloadIndex != -1
+                            ? servers[uqloadIndex]
+                            : youruploadIndex != -1
+                                ? servers[youruploadIndex]
+                                : null));
       } else if (url.contains('ok.ru')) {
         fixedServers.add(FixedServer(
             name: 'Okru',
@@ -90,8 +93,10 @@ final nextChapterProvider =
                         ? servers[voeIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
-      } else if (url.contains('solid')) {
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
+      } /* else if (url.contains('solid')) {
         fixedServers.add(FixedServer(
             name: 'SolidFiles',
             url: url,
@@ -103,8 +108,11 @@ final nextChapterProvider =
                         ? servers[mixdroIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
-      } else if (url.contains('mixdro')) {
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
+      } */
+      else if (url.contains('mixdro')) {
         fixedServers.add(FixedServer(
             name: 'MixDrop',
             url: url,
@@ -116,7 +124,9 @@ final nextChapterProvider =
                         ? servers[youruploadIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
       } else if (url.contains('voe')) {
         fixedServers.add(FixedServer(
             name: 'VoeCDN',
@@ -126,37 +136,41 @@ final nextChapterProvider =
                 : youruploadIndex != -1
                     ? servers[youruploadIndex]
                     : mixdroIndex != -1
-                        ? servers[voeIndex]
+                        ? servers[mixdroIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
-      } else if (url.contains("upload")) {
-        if (!url.contains('yourupload') || !url.contains("mp4upload")) {
-          fixedServers.add(FixedServer(
-              name: 'Upload',
-              url: url,
-              optional: okruIndex != -1
-                  ? servers[okruIndex]
-                  : youruploadIndex != -1
-                      ? servers[youruploadIndex]
-                      : mixdroIndex != -1
-                          ? servers[voeIndex]
-                          : mp4uploadIndex != -1
-                              ? servers[mp4uploadIndex]
-                              : null));
-        }
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
+      } else if (url.contains("uqload")) {
+        fixedServers.add(FixedServer(
+            name: 'Upload',
+            url: url,
+            optional: okruIndex != -1
+                ? servers[okruIndex]
+                : youruploadIndex != -1
+                    ? servers[youruploadIndex]
+                    : mixdroIndex != -1
+                        ? servers[mixdroIndex]
+                        : mp4uploadIndex != -1
+                            ? servers[mp4uploadIndex]
+                            : voeIndex != -1
+                                ? servers[voeIndex]
+                                : null));
       }
     }
 
-
-    return [Chapter(
-        title: title,
-        id: id,
-        chapterUrl: path,
-        chapterNumber: int.parse(chapterNumber),
-        servers: servers,
-        chapterInfo: '',
-        chapter: 'Episodio $chapterNumber'), fixedServers];
+    return [
+      Chapter(
+          title: title,
+          id: id,
+          chapterUrl: path,
+          chapterNumber: int.parse(chapterNumber),
+          servers: servers,
+          chapterInfo: '',
+          chapter: 'Episodio $chapterNumber'),
+      fixedServers
+    ];
   } on Exception catch (e) {
     debugPrint('$e');
     return null;
@@ -193,6 +207,8 @@ final previousChapterProvider =
     int mp4uploadIndex =
         servers.indexWhere((element) => element.contains('mp4upload'));
     int okruIndex = servers.indexWhere((element) => element.contains('ok.ru'));
+    int uqloadIndex =
+        servers.indexWhere((element) => element.contains('uqload'));
     int voeIndex = servers.indexWhere((element) => element.contains('voe'));
     int mixdroIndex =
         servers.indexWhere((element) => element.contains('mixdro'));
@@ -210,7 +226,9 @@ final previousChapterProvider =
                         ? servers[mixdroIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
       } else if (url.contains('mp4upload')) {
         fixedServers.add(FixedServer(
             name: 'Mp4Upload',
@@ -221,9 +239,11 @@ final previousChapterProvider =
                     ? servers[voeIndex]
                     : mixdroIndex != -1
                         ? servers[mixdroIndex]
-                        : mp4uploadIndex != -1
-                            ? servers[mp4uploadIndex]
-                            : null));
+                        : uqloadIndex != -1
+                            ? servers[uqloadIndex]
+                            : youruploadIndex != -1
+                                ? servers[youruploadIndex]
+                                : null));
       } else if (url.contains('ok.ru')) {
         fixedServers.add(FixedServer(
             name: 'Okru',
@@ -236,8 +256,10 @@ final previousChapterProvider =
                         ? servers[voeIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
-      } else if (url.contains('solid')) {
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
+      } /* else if (url.contains('solid')) {
         fixedServers.add(FixedServer(
             name: 'SolidFiles',
             url: url,
@@ -249,8 +271,11 @@ final previousChapterProvider =
                         ? servers[mixdroIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
-      } else if (url.contains('mixdro')) {
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
+      } */
+      else if (url.contains('mixdro')) {
         fixedServers.add(FixedServer(
             name: 'MixDrop',
             url: url,
@@ -262,7 +287,9 @@ final previousChapterProvider =
                         ? servers[youruploadIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
       } else if (url.contains('voe')) {
         fixedServers.add(FixedServer(
             name: 'VoeCDN',
@@ -272,38 +299,41 @@ final previousChapterProvider =
                 : youruploadIndex != -1
                     ? servers[youruploadIndex]
                     : mixdroIndex != -1
-                        ? servers[voeIndex]
+                        ? servers[mixdroIndex]
                         : mp4uploadIndex != -1
                             ? servers[mp4uploadIndex]
-                            : null));
-      } else if (url.contains("upload")) {
-        if (!url.contains('yourupload') || !url.contains("mp4upload")) {
-          fixedServers.add(FixedServer(
-              name: 'Upload',
-              url: url,
-              optional: okruIndex != -1
-                  ? servers[okruIndex]
-                  : youruploadIndex != -1
-                      ? servers[youruploadIndex]
-                      : mixdroIndex != -1
-                          ? servers[voeIndex]
-                          : mp4uploadIndex != -1
-                              ? servers[mp4uploadIndex]
-                              : null));
-        }
+                            : uqloadIndex != -1
+                                ? servers[uqloadIndex]
+                                : null));
+      } else if (url.contains("uqload")) {
+        fixedServers.add(FixedServer(
+            name: 'Upload',
+            url: url,
+            optional: okruIndex != -1
+                ? servers[okruIndex]
+                : youruploadIndex != -1
+                    ? servers[youruploadIndex]
+                    : mixdroIndex != -1
+                        ? servers[mixdroIndex]
+                        : mp4uploadIndex != -1
+                            ? servers[mp4uploadIndex]
+                            : voeIndex != -1
+                                ? servers[voeIndex]
+                                : null));
       }
     }
 
-
-
-    return [Chapter(
-        title: title,
-        id: id,
-        chapterUrl: path,
-        chapterNumber: int.parse(chapterNumber),
-        servers: servers,
-        chapterInfo: '',
-        chapter: 'Episodio $chapterNumber'), fixedServers];
+    return [
+      Chapter(
+          title: title,
+          id: id,
+          chapterUrl: path,
+          chapterNumber: int.parse(chapterNumber),
+          servers: servers,
+          chapterInfo: '',
+          chapter: 'Episodio $chapterNumber'),
+      fixedServers
+    ];
   } on Exception catch (e) {
     debugPrint('$e');
     return null;

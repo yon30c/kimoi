@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/items/about_dialog.dart';
 import 'package:kimoi/src/UI/items/items.dart';
+import 'package:kimoi/src/UI/items/search_icon.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
 import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
@@ -64,24 +65,7 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
                       pageBuilder: (context, __, ___) => const CsAboutDialog(),
                     ),
                 icon: const Icon(Icons.info)),
-            IconButton(
-                onPressed: () async {
-                  await showSearch(
-                          context: context,
-                          delegate: SearchAnimeDelegate(
-                              searchAnimes: ref
-                                  .watch(searchedMoviesProvider.notifier)
-                                  .searchAnimes))
-                      .then((value) {
-                    if (value == null) return;
-                    ref.read(animeProvider.notifier).update((state) => value);
-                    context.push('/anime-screen');
-                  });
-                },
-                icon: const Icon(
-                  Icons.search,
-                  size: 30,
-                ))
+            const SearchIcon()
           ],
         ),
         body: TabBarView(
@@ -169,7 +153,10 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   bool isWatchinLoading = false;
   late final ScrollController controller;
 
+  List<Chapter> history = [];
+
   ValueNotifier label = ValueNotifier('Todo');
+  ValueNotifier<bool?> isCompleted = ValueNotifier(null);
 
   final estados = ["Todo", "Completado", "Viendo"];
 
@@ -177,8 +164,9 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     if (isWatchinLoading || isWatchinLastPage) return;
     isWatchinLoading = true;
     setState(() {});
-    final animes =
-        await ref.read(watchingHistoryProvider.notifier).loadNextPage();
+    final animes = await ref
+        .read(watchingHistoryProvider.notifier)
+        .loadNextPage(isCompleted.value);
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -194,8 +182,8 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   void initState() {
     super.initState();
     controller = ScrollController();
-    ref.read(watchingHistoryProvider.notifier).loadNextPage();
-
+    ref.read(watchingHistoryProvider.notifier).loadNextPage(null);
+    filterChapters('');
     controller.addListener(listen);
   }
 
@@ -215,181 +203,159 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     );
   }
 
-  List<Chapter> filterChapters() {
-    switch (label.value) {
+  Future<void> filterChapters(String e) async {
+    switch (e) {
       case "Completado":
-        return ref
-            .watch(watchingHistoryProvider)
-            .values
-            .toList()
-            .where((value) => value.isCompleted == true)
-            .toList();
+        isCompleted.value = true;
+        history = await ref
+            .refresh(watchingHistoryProvider.notifier)
+            .loadNextPage(true);
+        setState(() {});
+        break;
       case "Viendo":
-        return ref
-            .watch(watchingHistoryProvider)
-            .values
-            .toList()
-            .where((value) => value.isWatching == true)
-            .toList();
+        isCompleted.value = false;
+        history = await ref
+            .refresh(watchingHistoryProvider.notifier)
+            .loadNextPage(false);
+        setState(() {});
+        break;
       default:
-        return ref.watch(watchingHistoryProvider).values.toList();
+        isCompleted.value = null;
+        history = await ref
+            .refresh(watchingHistoryProvider.notifier)
+            .loadNextPage(null);
+        setState(() {});
+        break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final history = filterChapters();
-
     final color = Theme.of(context).colorScheme;
-    final size = MediaQuery.of(context).size;
-
-    if (ref.watch(watchingHistoryProvider).isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(Icons.history, size: 60, color: color.primary),
-            // Text('Ohhh no!!',
-            //     style: TextStyle(fontSize: 30, color: colors.primary)),
-            const SizedBox(height: 20),
-
-            const Text('Historial vacio', style: TextStyle(fontSize: 20)),
-          ],
-        ),
-      );
-    }
-
     final textStyle = Theme.of(context).textTheme;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          CustomScrollView(
-            controller: controller,
-            slivers: [
-              makeHeader(DecoratedBox(
-                decoration: BoxDecoration(color: color.background),
-                child: Row(
+      body: CustomScrollView(
+        controller: controller,
+        slivers: [
+          makeHeader(DecoratedBox(
+            decoration: BoxDecoration(color: color.background),
+            child: Row(
+              children: [
+                const SizedBox(width: 8),
+                PopupMenuButton(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.arrow_drop_down,
+                          color: color.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          label.value,
+                          style: TextStyle(color: color.primary),
+                        ),
+                      ],
+                    ),
+                    itemBuilder: (context) => estados
+                        .map((e) => PopupMenuItem(
+                              child: Text(
+                                e,
+                                style: textStyle.titleSmall,
+                              ),
+                              onTap: () async {
+                                setState(() {
+                                  isWatchinLastPage = false;
+                                  label.value = e;
+                                });
+                                await filterChapters(e);
+                              },
+                            ))
+                        .toList()),
+                const Spacer(),
+                // IconButton(
+                //     onPressed: () {}, icon: const Icon(Icons.filter_alt)),
+                IconButton(
+                  onPressed: () => showDialog(
+                    context: context,
+                    builder: (context) => CupertinoAlertDialog(
+                      title: const Text("Limpiar historial"),
+                      content:
+                          const Text("¿Deseas eliminar todo el historial?"),
+                      actions: [
+                        TextButton(
+                            onPressed: () => context.pop(),
+                            child: const Text(
+                              "Cancelar",
+                              style: TextStyle(color: Colors.red),
+                            )),
+                        TextButton(
+                            onPressed: () async {
+                              await ref
+                                  .read(watchingHistoryProvider.notifier)
+                                  .clearHistory()
+                                  .then((value) =>
+                                      ref.refresh(watchingHistoryProvider));
+
+                              await Future(() => context.pop());
+
+                              setState(() {});
+                            },
+                            child: const Text("Aceptar")),
+                      ],
+                    ),
+                  ),
+                  icon: const Icon(Icons.delete_forever),
+                  color: Colors.red,
+                )
+              ],
+            ),
+          )),
+          if (history.isEmpty)
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 500,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(width: 8),
-                    PopupMenuButton(
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.arrow_drop_down,
-                              color: color.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              label.value,
-                              style: TextStyle(color: color.primary),
-                            ),
-                          ],
-                        ),
-                        itemBuilder: (context) => estados
-                            .map((e) => PopupMenuItem(
-                                  child: Text(
-                                    e,
-                                    style: textStyle.titleSmall,
-                                  ),
-                                  onTap: () {
-                                    setState(() {
-                                      label.value = e;
-                                    });
-                                  },
-                                ))
-                            .toList()),
-                    const Spacer(),
-                    // IconButton(
-                    //     onPressed: () {}, icon: const Icon(Icons.filter_alt)),
-                    IconButton(
-                      onPressed: () => showDialog(
-                        context: context,
-                        builder: (context) => CupertinoAlertDialog(
-                          title: const Text("Limpiar historial"),
-                          content:
-                              const Text("¿Deseas eliminar todo el historial?"),
-                          actions: [
-                            TextButton(
-                                onPressed: () => context.pop(),
-                                child: const Text(
-                                  "Cancelar",
-                                  style: TextStyle(color: Colors.red),
-                                )),
-                            TextButton(
-                                onPressed: () async {
-                                  await ref
-                                      .read(watchingHistoryProvider.notifier)
-                                      .clearHistory()
-                                      .then((value) =>
-                                          ref.refresh(watchingHistoryProvider));
-
-                                  await Future(() => context.pop());
-
-                                  setState(() {});
-                                },
-                                child: const Text("Aceptar")),
-                          ],
-                        ),
-                      ),
-                      icon: const Icon(Icons.delete_forever),
-                      color: Colors.red,
-                    )
+                    Icon(Icons.history, size: 60, color: color.primary),
+                    const SizedBox(height: 20),
+                    const Text('Historial vacio',
+                        style: TextStyle(fontSize: 20)),
                   ],
                 ),
-              )),
-              SliverList.builder(
-                itemCount: history.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final chapter = history[index];
-
-                  final Anime anime = Anime(
-                    animeUrl: chapter.animeUrl!,
-                    imageUrl: chapter.imageUrl!,
-                    animeTitle: chapter.title,
-                    chapterInfo: chapter.chapterInfo,
-                    chapterUrl: chapter.chapterUrl,
-                  );
-                  return GestureDetector(
-                    onTap: () async {
-                      showDialog(
-                          context: context,
-                          builder: (context) => ServerDialog(anime, chapter));
-                    },
-                    child: _HistoryTile(
-                      chapter: chapter,
-                    ),
-                  );
-                },
               ),
-            ],
-          ),
-          if (isWatchinLoading)
-            Positioned(
-                right: (size.width / 2) - 25,
-                bottom: 20,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                      color: color.background, shape: BoxShape.circle),
-                  height: 50,
-                  width: 50,
-                  child: const CircularProgressIndicator(),
-                )),
+            ),
+          if (history.isNotEmpty)
+            SliverList.builder(
+              itemCount: history.length,
+              itemBuilder: (BuildContext context, int index) {
+                final chapter = history[index];
+
+                final Anime anime = Anime(
+                  animeUrl: chapter.animeUrl!,
+                  imageUrl: chapter.imageUrl!,
+                  animeTitle: chapter.title,
+                  chapterInfo: chapter.chapterInfo,
+                  chapterUrl: chapter.chapterUrl,
+                );
+                return GestureDetector(
+                  onTap: () async {
+                    showDialog(
+                        context: context,
+                        builder: (context) => ServerDialog(anime, chapter));
+                  },
+                  child: _HistoryTile(
+                    chapter: chapter,
+                    isCompleted: isCompleted.value,
+                  ),
+                );
+              },
+            ),
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //     key: const Key('History-fab'),
-      //     onPressed: () async {
-      //       await ref
-      //           .read(watchingHistoryProvider.notifier)
-      //           .clearHistory()
-      //           .then((value) => ref.refresh(watchingHistoryProvider));
-
-      //       setState(() {});
-      //     },
-      //     child: const Icon(Icons.delete_forever)),
     );
   }
 
@@ -401,11 +367,10 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
 }
 
 class _HistoryTile extends ConsumerWidget {
-  const _HistoryTile({
-    required this.chapter,
-  });
+  const _HistoryTile({required this.chapter, required this.isCompleted});
 
   final Chapter chapter;
+  final bool? isCompleted;
 
   @override
   Widget build(BuildContext context, ref) {
@@ -491,14 +456,17 @@ class _HistoryTile extends ConsumerWidget {
                 itemBuilder: (context) {
                   return [
                     PopupMenuItem(
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.info),
-                          SizedBox(
-                            width: 5,
+                          Icon(
+                            Icons.info,
+                            color: color.primary,
                           ),
-                          Text('Informacion'),
+                          const SizedBox(
+                            width: 8,
+                          ),
+                          const Text('Informacion'),
                         ],
                       ),
                       onTap: () async {
@@ -523,20 +491,32 @@ class _HistoryTile extends ConsumerWidget {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.delete_forever),
+                          Icon(
+                            Icons.delete_forever,
+                            color: Colors.red,
+                          ),
                           SizedBox(
-                            width: 5,
+                            width: 8,
                           ),
                           Text('Eliminar'),
                         ],
                       ),
                       onTap: () async {
-                        await ref
-                            .read(isWatchingAnimeProvider.notifier)
-                            .removeChapter(chapter)
-                            .then((value) => ref
-                                .refresh(watchingHistoryProvider.notifier)
-                                .loadNextPage());
+                        if (isCompleted != null) {
+                          await ref
+                              .read(isWatchingAnimeProvider.notifier)
+                              .removeChapter(chapter)
+                              .then((value) => ref
+                                  .refresh(watchingHistoryProvider.notifier)
+                                  .loadNextPage(isCompleted));
+                        } else {
+                          await ref
+                              .read(isWatchingAnimeProvider.notifier)
+                              .removeChapter(chapter)
+                              .then((value) => ref
+                                  .refresh(watchingHistoryProvider.notifier)
+                                  .loadNextPage(null));
+                        }
                       },
                     ),
                     // const PopupMenuItem(child: Text('Ver detalles')),

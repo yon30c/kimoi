@@ -78,6 +78,7 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
           if (widget.animes.isEmpty)
             Expanded(
               child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 itemCount: optional.length,
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -97,6 +98,7 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
           if (widget.animes.isNotEmpty)
             Expanded(
               child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 controller: scrollController,
                 itemCount: widget.animes.length,
                 scrollDirection: Axis.horizontal,

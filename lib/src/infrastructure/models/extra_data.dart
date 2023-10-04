@@ -4,7 +4,7 @@ class XData {
   final String url;
   final String imageUrl;
   final String smallImageUrl;
-  final String largeImageUrl;
+  String largeImageUrl;
   final String? trailer;
   final String title;
   final String? type;

@@ -38,14 +38,14 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   List<v.Video> videoList = [];
 
   bool flag = false;
-  bool isChanging = false;
   bool isClose = false;
+  bool isPause = false;
+  ValueNotifier<bool> isVisible = ValueNotifier(true);
+  bool showRewind = false;
+  bool isChanging = false;
+  bool showForward = false;
   bool isCompleted = false;
   bool isInitialize = false;
-  bool isPause = false;
-  bool isVisible = false;
-  bool showForward = false;
-  bool showRewind = false;
   bool isFullScreen = false;
 
   String chapterInfo = '';
@@ -53,9 +53,9 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
   ValueNotifier<String> serverName = ValueNotifier('');
   ValueNotifier<String> chapterName = ValueNotifier('');
+  ValueNotifier<double> speedValue = ValueNotifier(1.0);
 
   final responsive = Responsive();
-  
 
   // ********************************************************** //
 
@@ -134,6 +134,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
           if (isInitialize && _betterPlayerController.isPlaying()!) {
             if (flag) return;
             flag = true;
+            isVisible.value = false;
             final chapter = widget.videos;
             chapter.date = DateTime.now();
             chapter.duration = _betterPlayerController
@@ -171,7 +172,9 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   //* El adecuado para adelantar opening.
   void skipOp(BetterPlayerController controller) async {
     final latestValue = controller.videoPlayerController?.value;
-    if (latestValue != null) {
+    final isInitialized =
+        _betterPlayerController.videoPlayerController!.value.initialized;
+    if (latestValue != null && isInitialized) {
       final end = latestValue.duration!.inSeconds;
       final skip =
           (latestValue.position + const Duration(seconds: 85)).inSeconds;
@@ -186,7 +189,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     if (!isChanging) {
       setState(() {
         isChanging = true;
-        isVisible = true;
+        isVisible.value = true;
       });
     }
   }
@@ -195,7 +198,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   onChangeEnd() async {
     isChanging = false;
     await Future.delayed(const Duration(milliseconds: 300));
-    if (!isPause) setState(() => isVisible = false);
+    if (!isPause) setState(() => isVisible.value = false);
   }
 
   //* Para ocultar los botones automaticamente
@@ -207,12 +210,12 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
   //* Para mostrar controles
   void showControls() {
-    if (!isVisible) setState(() => isVisible = true);
+    if (!isVisible.value) setState(() => isVisible.value = true);
   }
 
   //* Para ocultar controles
   void hideControls() {
-    if (isVisible) setState(() => isVisible = false);
+    if (isVisible.value) setState(() => isVisible.value = false);
   }
 
   //* Para regresar 10 segundos
@@ -253,32 +256,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     setState(() {});
   }
 
-  //* Para obtener los videos
-  Future<List<v.Video>> getVideos(Chapter chapter) async {
-    final List<v.Video> vidList = [];
-    for (var serv in chapter.servers.reversed) {
-      final video = v.Video.fromRawJson(serv);
-
-      video.headers = {
-        "User-Agent":
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
-      };
-
-      if (serv.contains('yourupload')) {
-        video.headers = {
-          "referer": "https://www.yourupload.com/",
-          "User-Agent":
-              "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
-        };
-      }
-      // if (video != null) {
-      return [video];
-      // setState(() {});
-    }
-
-    return vidList;
-  }
-
   // ********************************************************** //
 
   // ********************************************************** //
@@ -288,7 +265,9 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   //* Administrar el comportamiento al salir de la pantalla
   //* usando gestos o botones del hardware
   Future<bool> onWillPop() async {
-    ref.refresh(watchingHistoryProvider.notifier).loadNextPage();
+    ref.refresh(watchingHistoryProvider.notifier).loadNextPage(null);
+    ref.refresh(nowWatchingProvider.notifier).loadWatching();
+
     setState(() {});
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -317,15 +296,8 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     title = widget.videos.title;
     //* Bloquea la pantalla para que no se apague automaticamente
 
-    FullScreenWindow.setFullScreen(true);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-
-
-    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-    // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle())
-    // Preferencias de pantalla
     SystemChrome.setPreferredOrientations(
       [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
     );
@@ -357,12 +329,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     AsyncValue<List?> nextChapter =
         ref.watch(nextChapterProvider(nextChapterUrl));
 
-    MediaQuery.of(context).removePadding(
-        removeTop: true,
-        removeBottom: true,
-        removeLeft: true,
-        removeRight: true);
-
     // ********************************************************** //
     // ********************************************************** //
 
@@ -370,51 +336,56 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
       onWillPop: onWillPop,
       child: Scaffold(
         body: GestureDetector(
-          onTap: !isVisible ? showControls : hideControls,
-          child: Center(
-            child: !isInitialize
-                //* Mostrar carga de pantalla si el reproductor no esta inicializado
-                ? Container(
-                    color: Colors.black,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                // Reproductor de video
-                : Stack(
-                    children: [
-                      SizedBox.expand(
-                          child: BetterPlayer(
-                              controller: _betterPlayerController)),
-                      Center(
-                        child: _betterPlayerController.isBuffering()!
-                            ? const CircularProgressIndicator()
-                            : null,
+          onTap: !isVisible.value ? showControls : hideControls,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeBottom: true,
+            removeLeft: true,
+            removeRight: true,
+            removeTop: true,
+            child: Center(
+              child: !isInitialize
+                  //* Mostrar carga de pantalla si el reproductor no esta inicializado
+                  ? Container(
+                      color: Colors.black,
+                      child: const Center(
+                        child: CircularProgressIndicator(),
                       ),
-                      _playAndPauseButtom(),
-                      VideoCoreForwardAndRewind(
-                        onRightTap: () => onForward(_betterPlayerController),
-                        onLeftTap: () => onRewind(_betterPlayerController),
-                        forwardSeconds: 10,
-                        rewindSeconds: 10,
-                        showForward: showForward,
-                        showRewind: showRewind,
-                        responsive: responsive,
-                      ),
-                      _customVideoTopBar(size, context, textStyle),
-                      if (_betterPlayerController
-                          .videoPlayerController!.value.initialized)
+                    )
+                  // Reproductor de video
+                  : Stack(
+                      children: [
+                        SafeArea(
+                          child:
+                              BetterPlayer(controller: _betterPlayerController),
+                        ),
+                        Center(
+                          child: _betterPlayerController.isBuffering()!
+                              ? const CircularProgressIndicator()
+                              : null,
+                        ),
+                        _playAndPauseButtom(),
+                        VideoCoreForwardAndRewind(
+                          onRightTap: () => onForward(_betterPlayerController),
+                          onLeftTap: () => onRewind(_betterPlayerController),
+                          forwardSeconds: 10,
+                          rewindSeconds: 10,
+                          showForward: showForward,
+                          showRewind: showRewind,
+                          responsive: responsive,
+                        ),
+                        _customVideoTopBar(size, context, textStyle),
                         Positioned(
                             bottom: 0,
                             child: CustomOpacityTransition(
-                              visible: isVisible,
+                              visible: isVisible.value,
                               child: Container(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 10),
                                 width: size.width,
                                 height: 90,
                                 color: Colors.black45,
-                                child: !isVisible
+                                child: !isVisible.value
                                     ? null
                                     : Column(
                                         children: [
@@ -427,8 +398,9 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                                       ),
                               ),
                             ))
-                    ],
-                  ),
+                      ],
+                    ),
+            ),
           ),
         ),
       ),
@@ -438,36 +410,50 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   Row _videoSliderBar(TextTheme textStyle) {
     return Row(
       children: [
-        Expanded(
-          child: CustomSlider(
-            secondaryTrackValue: _betterPlayerController
-                .videoPlayerController!.value.buffered.last.end.inSeconds
-                .toDouble(),
-            value: _betterPlayerController
-                .videoPlayerController!.value.position.inSeconds
-                .toDouble(),
-            max: _betterPlayerController
-                .videoPlayerController!.value.duration!.inSeconds
-                .toDouble(),
-            onChanged: (value) {
-              setState(() {
-                _betterPlayerController
-                    .seekTo(Duration(seconds: value.toInt()));
-              });
-            },
-            onChangeEnd: (value) => onChangeEnd(),
-            onChangeStart: (value) => onChangeStart(),
-            duration:
-                _betterPlayerController.videoPlayerController!.value.position,
+        if (!_betterPlayerController.videoPlayerController!.value.initialized)
+          const Expanded(
+              child: SizedBox(
+                  height: 25, child: Slider(value: 0, onChanged: null))),
+        if (!_betterPlayerController.videoPlayerController!.value.initialized)
+          CustomOpacityTransition(
+            visible: isVisible.value,
+            child: Text(
+              '00:00 - 00:00',
+              style: textStyle.labelMedium?.copyWith(color: Colors.white),
+            ),
           ),
-        ),
-        CustomOpacityTransition(
-          visible: isVisible,
-          child: Text(
-            '${formatDuration(_betterPlayerController.videoPlayerController!.value.position.inSeconds)} - ${formatDuration(_betterPlayerController.videoPlayerController!.value.duration!.inSeconds)}',
-            style: textStyle.labelMedium?.copyWith(color: Colors.white),
+        if (_betterPlayerController.videoPlayerController!.value.initialized)
+          Expanded(
+            child: CustomSlider(
+              secondaryTrackValue: _betterPlayerController
+                  .videoPlayerController!.value.buffered.last.end.inSeconds
+                  .toDouble(),
+              value: _betterPlayerController
+                  .videoPlayerController!.value.position.inSeconds
+                  .toDouble(),
+              max: _betterPlayerController
+                  .videoPlayerController!.value.duration!.inSeconds
+                  .toDouble(),
+              onChanged: (value) {
+                setState(() {
+                  _betterPlayerController
+                      .seekTo(Duration(seconds: value.toInt()));
+                });
+              },
+              onChangeEnd: (value) => onChangeEnd(),
+              onChangeStart: (value) => onChangeStart(),
+              duration:
+                  _betterPlayerController.videoPlayerController!.value.position,
+            ),
           ),
-        ),
+        if (_betterPlayerController.videoPlayerController!.value.initialized)
+          CustomOpacityTransition(
+            visible: isVisible.value,
+            child: Text(
+              '${formatDuration(_betterPlayerController.videoPlayerController!.value.position.inSeconds)} - ${formatDuration(_betterPlayerController.videoPlayerController!.value.duration!.inSeconds)}',
+              style: textStyle.labelMedium?.copyWith(color: Colors.white),
+            ),
+          ),
       ],
     );
   }
@@ -599,6 +585,45 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
               '+85',
               style: TextStyle(color: Colors.white, fontSize: 18),
             )),
+        PopupMenuButton(
+          onSelected: (value) {
+            speedValue.value = value;
+            _betterPlayerController.setSpeed(value);
+          },
+          // initialValue: speedValue.value,
+          itemBuilder: (context) => [
+            CheckedPopupMenuItem(
+              checked: speedValue.value == 0.5 ? true : false,
+              value: 0.5,
+              child: const Text('0.5 x'),
+            ),
+            CheckedPopupMenuItem(
+              checked: speedValue.value == 0.75 ? true : false,
+              value: 0.75,
+              child: const Text('0.75 x'),
+            ),
+            CheckedPopupMenuItem(
+              checked: speedValue.value == 1.0 ? true : false,
+              value: 1.0,
+              child: const Text('1.0 x'),
+            ),
+            CheckedPopupMenuItem(
+              checked: speedValue.value == 1.25 ? true : false,
+              value: 1.25,
+              child: const Text('1.25 x'),
+            ),
+            CheckedPopupMenuItem(
+              checked: speedValue.value == 1.5 ? true : false,
+              value: 1.5,
+              child: const Text('1.5 x'),
+            ),
+          ],
+          icon: const Icon(
+            Icons.speed,
+            color: Colors.white,
+          ),
+          // child: Text(speedLabel.value)
+        )
       ],
     );
   }
@@ -607,7 +632,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   CustomOpacityTransition _customVideoTopBar(
       Size size, BuildContext context, TextTheme textStyle) {
     return CustomOpacityTransition(
-      visible: isVisible,
+      visible: isVisible.value,
       child: Container(
           color: Colors.black45,
           width: size.width,
@@ -623,7 +648,8 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
             ),
             leading: IconButton(
                 onPressed: () {
-                  ref.refresh(watchingHistoryProvider.notifier).loadNextPage();
+                  ref.refresh(watchingHistoryProvider.notifier).loadNextPage(null);
+                  ref.refresh(nowWatchingProvider.notifier).loadWatching();
                   setState(() {});
                   SystemChrome.setPreferredOrientations([
                     DeviceOrientation.portraitUp,
@@ -657,13 +683,13 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   // Controles de reproducir y pausar
   Center _playAndPauseButtom() {
     return Center(
-      child: isVisible
+      child: isVisible.value
           ? CenterPlayButton(
               backgroundColor: Colors.black45,
               iconColor: Colors.white,
               isFinished: false,
               isPlaying: _betterPlayerController.isPlaying()!,
-              show: isVisible,
+              show: isVisible.value,
               onPressed: _betterPlayerController.isPlaying()!
                   ? () {
                       _betterPlayerController.pause();

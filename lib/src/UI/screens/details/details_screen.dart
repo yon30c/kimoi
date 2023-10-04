@@ -2,6 +2,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
+import 'package:kimoi/src/infrastructure/datasources/monoschinos_datasource.dart';
 import 'package:kimoi/src/utils/extensions/extension.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +13,6 @@ import 'package:kimoi/src/UI/providers/storage/local_storage_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/screens/player/youtube_player.dart';
-import 'package:kimoi/src/infrastructure/datasources/anime_mac_datasource.dart';
 import 'package:kimoi/src/infrastructure/models/extra_data.dart';
 
 import '../../../domain/domain.dart';
@@ -64,8 +64,17 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
     return "Descendente";
   }
 
-  getAniInfo(String url) async {
-    await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
+  getAniInfo(String url, Anime anime) async {
+    if (anime.type == 'Donghua') {
+      await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
+      final animeInfo = ref.watch(getAnimeInfoProvider).first;
+      getXData(
+          anime, animeInfo.title == '' ? anime.animeTitle : animeInfo.title);
+    } else {
+      getXData(anime, anime.animeTitle);
+      await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
+    }
+
     listen();
   }
 
@@ -75,8 +84,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
     final anime = ref.read(animeProvider);
     scrollController = ScrollController();
     tabController = TabController(length: 2, vsync: this);
-    getXData(anime!);
-    getAniInfo(anime.animeUrl);
+    getAniInfo(anime!.animeUrl, anime);
     // scrollController.addListener(listen);
   }
 
@@ -88,8 +96,8 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
     setState(() {});
   }
 
-  void getXData(Anime anime) async {
-    _xData = await AnimeMacDatasource().getExtraData(anime);
+  void getXData(Anime anime, String title) async {
+    _xData = await MonoschinosDatasource().getExtraData(anime, title);
     setState(() {});
   }
 
@@ -118,10 +126,11 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
             Icons.arrow_back,
           )),
       actions: [
-        if (xData.trailer != null)
+        if (xData.trailer != null && animeInfo.title.contains(xData.title))
           FilledButton.icon(
-              style: const ButtonStyle(visualDensity: VisualDensity.compact, 
-              backgroundColor: MaterialStatePropertyAll(Colors.white)),
+              style: const ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: MaterialStatePropertyAll(Colors.white)),
               onPressed: () {
                 final route = MaterialPageRoute(
                     builder: (context) => YoutubePlayerScreen(
@@ -130,7 +139,10 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
                 Navigator.of(context).push(route);
               },
               label: const Text("Ver trailer"),
-              icon: const FaIcon(FontAwesomeIcons.youtube, color: Colors.red,)),
+              icon: const FaIcon(
+                FontAwesomeIcons.youtube,
+                color: Colors.red,
+              )),
         const SizedBox(
           width: 8,
         )
@@ -183,7 +195,12 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
     }
 
     final xData = _xData;
+
     final animeInfo = ref.watch(getAnimeInfoProvider).first;
+    // if (!xData!.title.contains(anime!.animeTitle)) {
+    //   xData.largeImageUrl = animeInfo.imageUrl;
+    // }
+
     final isFavoriteFuture = ref.watch(isFavoriteProvider(anime!.animeTitle));
 
     final size = MediaQuery.of(context).size;
@@ -333,15 +350,16 @@ class _ExtraDataBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textStyle = Theme.of(context).textTheme;
+    final tipo = anime.type ?? animeInfo.tipo;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(children: [
         Text(
-          '${animeInfo.tipo} • ${xData.season} $year',
+          '$tipo • ${xData.season} $year',
           style: textStyle.labelMedium,
         ),
         const Spacer(),
-        if (xData.studios != '')
+        if (xData.studios != '' && animeInfo.title.contains(xData.title))
           Text('Estudio: ${xData.studios}', style: textStyle.labelMedium),
       ]),
     );
@@ -430,17 +448,26 @@ class _EpisodesTileState extends ConsumerState<_EpisodesTile> {
                 borderRadius: const BorderRadius.all(Radius.circular(10)),
                 child: Container(
                   decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(widget.xData.imageUrl),
-                    )
-                  ),
+                      image: DecorationImage(
+                    image: NetworkImage(
+                      widget.anime.animeTitle.contains(widget.xData.title)
+                          ? widget.xData.largeImageUrl
+                          : widget.anime.imageUrl,
+                    ),
+                  )),
                   height: 100,
                   width: 70,
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Text(
+                child: /* widget.anime.type == "Pelicula"
+                ? Text(
+                  widget.anime.type!,
+                  style: textStyle.titleMedium,
+                  maxLines: 2,
+                )  
+                 : */Text(
                   widget.eps.chapter,
                   style: textStyle.titleMedium,
                 ),
@@ -537,8 +564,10 @@ class _BottomAppBarState extends ConsumerState<_BottomAppBar> {
                                         ServerDialog(ani, chapt));
                               },
                         label: widget.sortedEpisodes.isEmpty
-                            ? const Text('Próximamente')
-                            : const Text('Comenzar a ver Ep. 1'),
+                            ? const Text('Próximamente') 
+                            : widget.anime.type == "Pelicula" && widget.sortedEpisodes.length == 1 
+                              ? const Text('Ver pelicula') 
+                              : const Text('Comenzar a ver Ep. 1'),
                         icon: const Icon(Icons.play_arrow_rounded),
                       );
                     }
