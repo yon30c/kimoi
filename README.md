@@ -1,8 +1,7 @@
 # kimoi
 
 Aplicacion para ver animes. 
-![photo_2023-10-05_21-58-40](https://github.com/yon30c/kimoi/assets/83658386/bc95eab9-9802-453a-956c-5812c2a13cb8)
-![photo_2023-10-05_21-58-43](https://github.com/yon30c/kimoi/assets/83658386/382cc902-4dd3-4c35-8edc-1e31c4f535a4)
+[![photo_2023-10-05_21-58-40](https://github.com/yon30c/kimoi/assets/83658386/bc95eab9-9802-453a-956c-5812c2a13cb8)](https://github.com/yon30c/kimoi/assets/83658386/382cc902-4dd3-4c35-8edc-1e31c4f535a4)
 ![photo_2023-10-05_21-58-46](https://github.com/yon30c/kimoi/assets/83658386/e48d031d-fdba-4511-aef1-80e17da5befd)
 ![photo_2023-10-05_21-58-47](https://github.com/yon30c/kimoi/assets/83658386/3600aa5e-bce3-46d3-bf4c-cd16c089c132)
 ![photo_2023-10-05_21-58-49](https://github.com/yon30c/kimoi/assets/83658386/73c6c052-eb47-426b-95ea-b2397a7c1fad)
