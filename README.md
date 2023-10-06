@@ -13,9 +13,6 @@ Aplicacion para ver animes.
          <img width="250px" src="https://github.com/yon30c/kimoi/assets/83658386/382cc902-4dd3-4c35-8edc-1e31c4f535a4">
       </td>
       <td>
-         <img width="250px" src="https://github.com/yon30c/kimoi/assets/83658386/e48d031d-fdba-4511-aef1-80e17da5befd">
-      </td>
-      <td>
          <img width="250px" src="https://github.com/yon30c/kimoi/assets/83658386/3600aa5e-bce3-46d3-bf4c-cd16c089c132">
       </td>
       <td>
@@ -28,9 +25,6 @@ Aplicacion para ver animes.
    <tr>
       <td>
          <img width="250px" src="https://github.com/yon30c/kimoi/assets/83658386/d3d943f5-80c7-46a4-96ae-234f56f901a9">
-      </td>
-      <td>
-         <img width="250px" src="https://github.com/yon30c/kimoi/assets/83658386/41deac49-d2ce-4421-99f0-4e903f4b4e8f">
       </td>
       <td>
          <img width="250px" src="https://github.com/yon30c/kimoi/assets/83658386/855b75a2-94c1-452f-ad57-8daa74dbd09e">
@@ -54,9 +48,6 @@ Aplicacion para ver animes.
       </td>
       <td>
          <img width="250px" src="https://github.com/yon30c/kimoi/assets/83658386/1476c6ad-f47d-49b1-b237-477ffcc87c11">
-      </td>
-      <td>
-         <img width="250px" src="https://github.com/yon30c/kimoi/assets/83658386/a3ed5b52-7372-45cb-a61f-f362d9715be9">
       </td>
      <td>
          <img width="250px" src="https://github.com/yon30c/kimoi/assets/83658386/6f9a0b1c-57b5-40fb-8fcc-6bd14acdd0e7">
