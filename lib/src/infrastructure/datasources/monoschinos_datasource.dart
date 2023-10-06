@@ -227,7 +227,6 @@ class MonoschinosDatasource extends AnimeDatasource {
   @override
   Future<XData> getExtraData(Anime anime, String title) async {
     try {
-      print(title);
       // final title = anime.animeTitle;
       final lastUrl = 'https://api.jikan.moe/v4/anime?q=$title&limit=20';
 

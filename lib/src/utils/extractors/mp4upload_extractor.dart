@@ -31,6 +31,10 @@ class Mp4UploadExtractor {
         ..run()
         ..dispose();
 
+      // Future.delayed(const Duration(seconds: 7), () {
+      //   isLoading = false;
+      // });
+
       while (isLoading) {
         await Future.delayed(const Duration(milliseconds: 500));
       }

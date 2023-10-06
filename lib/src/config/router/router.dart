@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kimoi/main.dart';
 import 'package:kimoi/src/UI/screens/genres/genre_screen.dart';
+import 'package:kimoi/src/UI/screens/home/home_settings.dart';
 import 'package:kimoi/src/UI/screens/player/local_player.dart';
 import 'package:kimoi/src/UI/screens/screens.dart';
 import 'package:kimoi/src/domain/domain.dart';
@@ -11,7 +13,7 @@ final GlobalKey<NavigatorState> _sectionANavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'sectionANav');
 
 final router =
-    GoRouter(navigatorKey: _rootNavigatorKey, initialLocation: '/', routes: [
+    GoRouter(navigatorKey: _rootNavigatorKey, initialLocation: routerController.initialLocation, routes: [
   StatefulShellRoute.indexedStack(
       builder: (context, state, child) {
         return HomeScreen(navigationShell: child);
@@ -48,6 +50,14 @@ final router =
                   },
                 ),
               ]),
+        ]),
+
+        StatefulShellBranch(routes: [
+          GoRoute(
+            path: '/settings', 
+            name: HomeSettings.name, 
+            builder: (context, state) => const HomeSettings(),
+          ),
         ])
       ]),
   GoRoute(

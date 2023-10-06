@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/utils/updater/updater.dart';
 
@@ -74,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
       label: "Mis listas",
     ),
     NavigationDestination(icon: Icon(Icons.explore), label: "Explorar"),
+    NavigationDestination(icon: Icon(Icons.more_horiz), label: "Más"),
   ];
 
   @override

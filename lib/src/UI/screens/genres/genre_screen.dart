@@ -120,23 +120,24 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
                               genre.icon != null
                                   ? FaIcon(
                                       genre.icon,
+                                      color: color.primary,
                                     )
                                   : !genre.iconPath!.endsWith("svg")
                                       ? Image.asset(
                                           genre.iconPath!,
                                           height: 25,
+                                          color: color.primary,
                                         )
                                       : SvgPicture.asset(genre.iconPath!,
                                           height: 25,
-                                          colorFilter: const ColorFilter.mode(
-                                              Colors.white, BlendMode.srcIn),
-                                          semanticsLabel: 'A red up arrow'),
+                                          colorFilter: ColorFilter.mode(
+                                            color.primary, BlendMode.srcIn),),
                               const SizedBox(
                                 width: 10,
                               ),
                               Text(
                                 genre.name,
-                                style: textStyle.titleMedium,
+                                style: textStyle.titleMedium?.copyWith(color: color.primary),
                               ),
                             ],
                           ),

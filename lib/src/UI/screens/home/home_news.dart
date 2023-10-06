@@ -297,16 +297,16 @@ class HomeNewsState extends ConsumerState<HomeNews>
                         // placeholderFit: BoxFit.cover,
                       ),
                       Container(
-                        decoration: const BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(5)),
-                          color: Colors.black54,
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.all(Radius.circular(5)),
+                          color: color.primary,
                         ),
                         padding: const EdgeInsets.all(3.0),
                         margin: const EdgeInsets.all(3.0),
                         child: Text(
                           articleInfo.category,
                           style: textStyle.labelSmall
-                              ?.copyWith(color: color.primary),
+                              ?.copyWith(color: color.onPrimary),
                         ),
                       ),
                     ],

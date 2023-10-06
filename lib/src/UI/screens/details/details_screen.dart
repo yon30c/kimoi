@@ -1,7 +1,8 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:kimoi/src/UI/items/servers_dialog.dart';
+import 'package:kimoi/main.dart';
 import 'package:kimoi/src/infrastructure/datasources/monoschinos_datasource.dart';
 import 'package:kimoi/src/utils/extensions/extension.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -70,7 +71,11 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
       final animeInfo = ref.watch(getAnimeInfoProvider).first;
       getXData(
           anime, animeInfo.title == '' ? anime.animeTitle : animeInfo.title);
-    } else {
+    } else if(anime.animeTitle.contains("86 2nd")) {
+      getXData(anime, "86 2");
+      await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
+    }
+     else {
       getXData(anime, anime.animeTitle);
       await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
     }
@@ -122,15 +127,16 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
       pinned: true,
       leading: IconButton(
           onPressed: () => context.pop(),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back,
+            color: color.onBackground,
           )),
       actions: [
-        if (xData.trailer != null && animeInfo.title.contains(xData.title))
+        if (xData.trailer != null)
           FilledButton.icon(
-              style: const ButtonStyle(
+              style:  ButtonStyle(
                   visualDensity: VisualDensity.compact,
-                  backgroundColor: MaterialStatePropertyAll(Colors.white)),
+                  backgroundColor: MaterialStatePropertyAll(color.background)),
               onPressed: () {
                 final route = MaterialPageRoute(
                     builder: (context) => YoutubePlayerScreen(
@@ -138,7 +144,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
                         ));
                 Navigator.of(context).push(route);
               },
-              label: const Text("Ver trailer"),
+              label: Text("Ver trailer", style: TextStyle(color: color.onBackground),),
               icon: const FaIcon(
                 FontAwesomeIcons.youtube,
                 color: Colors.red,
@@ -173,7 +179,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
                             end: Alignment.bottomCenter,
                             stops: const [
                   0.0,
-                  0.2
+                  0.25
                 ],
                             colors: [
                   shadow(context),
@@ -235,7 +241,9 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
             )
           ])),
           SliverToBoxAdapter(
-            child: Container(
+            child: 
+            anime.type == "Pelicula" && animeInfo.episodes.first.length == 1 ? const SizedBox() :
+            Container(
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.all(Radius.circular(5)),
                 color: color.secondaryContainer,
@@ -251,8 +259,11 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
               ),
             ),
           ),
+
+          
           SliverToBoxAdapter(
-            child: Row(
+            child: anime.type == "Pelicula" && animeInfo.episodes.first.length == 1 ? const SizedBox(height: 10): 
+             Row(
               children: [
                 TextButton.icon(
                     label: Text(sortLabel),
@@ -467,7 +478,8 @@ class _EpisodesTileState extends ConsumerState<_EpisodesTile> {
                   style: textStyle.titleMedium,
                   maxLines: 2,
                 )  
-                 : */Text(
+                 : */
+                    Text(
                   widget.eps.chapter,
                   style: textStyle.titleMedium,
                 ),
@@ -564,10 +576,11 @@ class _BottomAppBarState extends ConsumerState<_BottomAppBar> {
                                         ServerDialog(ani, chapt));
                               },
                         label: widget.sortedEpisodes.isEmpty
-                            ? const Text('Próximamente') 
-                            : widget.anime.type == "Pelicula" && widget.sortedEpisodes.length == 1 
-                              ? const Text('Ver pelicula') 
-                              : const Text('Comenzar a ver Ep. 1'),
+                            ? const Text('Próximamente')
+                            : widget.anime.type == "Pelicula" &&
+                                    widget.sortedEpisodes.length == 1
+                                ? const Text('Ver pelicula')
+                                : const Text('Comenzar a ver Ep. 1'),
                         icon: const Icon(Icons.play_arrow_rounded),
                       );
                     }
@@ -726,6 +739,7 @@ class _GenresBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = Theme.of(context).textTheme;
     final color = Theme.of(context).colorScheme;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Column(
@@ -753,9 +767,15 @@ class _GenresBar extends StatelessWidget {
 }
 
 Color shadow(BuildContext context) {
-  if (MediaQuery.platformBrightnessOf(context) == Brightness.light) {
+  if (themeController.themeMode == ThemeMode.dark) {
+    return Colors.black87;
+  } else if (themeController.themeMode == ThemeMode.light) {
     return Colors.white70;
   } else {
-    return Colors.black87;
+    if (SystemChrome.latestStyle!.statusBarBrightness == Brightness.dark) {
+      return Colors.black87;
+    } else {
+      return Colors.white70;
+    }
   }
 }

@@ -1,16 +1,13 @@
 import 'dart:math';
 
 import 'package:animate_do/animate_do.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/items/about_dialog.dart';
 import 'package:kimoi/src/UI/items/search_icon.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
-import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/home/home.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/screens/player/local_player.dart';
@@ -113,17 +110,10 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
               controller: controller,
               physics: const BouncingScrollPhysics(),
               slivers: [
-                SliverAppBar(
-                  title: const Text('Animes'),
+                const SliverAppBar(
+                  title: Text('Animes'),
                   actions: [
-                    IconButton(
-                        onPressed: () => showGeneralDialog(
-                              context: context,
-                              pageBuilder: (context, __, ___) =>
-                                  const CsAboutDialog(),
-                            ),
-                        icon: const Icon(Icons.info)),
-                    const SearchIcon()
+                    SearchIcon()
                   ],
                 ),
                 SliverList(
@@ -245,6 +235,7 @@ class KeepWatching extends ConsumerWidget {
                                 child: Icon(
                                   Icons.play_arrow_rounded,
                                   size: 30,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),

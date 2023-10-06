@@ -14,3 +14,6 @@ export 'animes/anime_repository_provider.dart';
 
 export 'news/news_provider.dart';
 export 'news/news_repository_provider.dart';
+
+export 'animes/next_and_before_anime_provider.dart';
+export 'storage/watching_provider.dart';

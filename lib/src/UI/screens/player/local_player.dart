@@ -1,21 +1,19 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:better_player_v3/better_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fullscreen_window/fullscreen_window.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/items/items.dart';
-import 'package:kimoi/src/UI/items/servers_dialog.dart';
-import 'package:kimoi/src/UI/providers/animes/next_and_before_anime_provider.dart';
-import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
-import 'package:kimoi/src/UI/screens/player/center_play_button.dart';
-import 'package:kimoi/src/infrastructure/models/video.dart' as v;
-import 'package:kimoi/src/utils/extensions/extension.dart';
-import 'package:kimoi/src/utils/helpers/responsive.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:better_player_v3/better_player.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:kimoi/src/UI/items/items.dart';
+import 'package:kimoi/src/UI/providers/providers.dart';
+import 'package:kimoi/src/utils/helpers/responsive.dart';
+import 'package:kimoi/src/utils/extensions/extension.dart';
+import 'package:kimoi/src/infrastructure/models/video.dart' as v;
+import 'package:kimoi/src/UI/screens/player/center_play_button.dart';
 
 import '../../../domain/domain.dart';
 
@@ -278,9 +276,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     return true;
   }
 
-  void setFullScreen(bool isFullScreen) {
-    FullScreenWindow.setFullScreen(isFullScreen);
-  }
 
   // ********************************************************** //
 

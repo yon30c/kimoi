@@ -1,18 +1,15 @@
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/items/about_dialog.dart';
 import 'package:kimoi/src/UI/items/filter_dialog.dart';
 import 'package:kimoi/src/UI/items/search_icon.dart';
 import 'package:kimoi/src/UI/providers/jikan/jikan_provider.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/screens/player/youtube_player.dart';
 // import 'package:kimoi/src/UI/providers/jikan/jikan_provider.dart';
-import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
 import 'package:kimoi/src/infrastructure/models/jikan_upcoming.dart' as up;
 
 import '../../items/items.dart';
@@ -43,14 +40,8 @@ class HomeDirectoryState extends ConsumerState<HomeDirectory>
     return Scaffold(
         appBar: AppBar(
           title: const Text('Explorar'),
-          actions: [
-            IconButton(
-                onPressed: () => showGeneralDialog(
-                      context: context,
-                      pageBuilder: (context, __, ___) => const CsAboutDialog(),
-                    ),
-                icon: const Icon(Icons.info)),
-            const SearchIcon()
+          actions: const [
+            SearchIcon()
           ],
           bottom: TabBar(
             isScrollable: true,
@@ -495,7 +486,7 @@ class _GenrePage extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           genre.icon != null
-                              ? FaIcon(genre.icon)
+                              ? FaIcon(genre.icon, color: Colors.white)
                               : !genre.iconPath!.endsWith("svg")
                                   ? Image.asset(
                                       genre.iconPath!,

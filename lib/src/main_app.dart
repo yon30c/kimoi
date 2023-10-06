@@ -11,13 +11,14 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+   
     return AnimatedBuilder(
       animation: themeController,
       builder: (context, child) => MaterialApp.router(
         title: 'Material App',
-        theme: AppTheme(selectedColor: 2).getDarkTheme(),
+        theme: AppTheme(selectedColor: 2).getTheme(),
         darkTheme: AppTheme(selectedColor: 2).getDarkTheme(),
-        // themeMode: themeController.themeMode,
+        themeMode: themeController.themeMode,
         routerConfig: router,
         debugShowCheckedModeBanner: false,
       ),

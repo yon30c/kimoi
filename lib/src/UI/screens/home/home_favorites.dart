@@ -2,19 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/items/about_dialog.dart';
 import 'package:kimoi/src/UI/items/items.dart';
 import 'package:kimoi/src/UI/items/search_icon.dart';
-import 'package:kimoi/src/UI/items/servers_dialog.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
 import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
-import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/player/local_player.dart';
-import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';
 import 'package:kimoi/src/domain/domain.dart';
 import 'package:kimoi/src/infrastructure/models/chapter_to_anime.dart';
-
-import '../../items/anime_masonry.dart';
 
 class HomeFavorites extends ConsumerStatefulWidget {
   const HomeFavorites({super.key});
@@ -58,14 +52,8 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
               ),
             ]),
           ),
-          actions: [
-            IconButton(
-                onPressed: () => showGeneralDialog(
-                      context: context,
-                      pageBuilder: (context, __, ___) => const CsAboutDialog(),
-                    ),
-                icon: const Icon(Icons.info)),
-            const SearchIcon()
+          actions: const [
+            SearchIcon()
           ],
         ),
         body: TabBarView(
@@ -182,7 +170,6 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   void initState() {
     super.initState();
     controller = ScrollController();
-    ref.read(watchingHistoryProvider.notifier).loadNextPage(null);
     filterChapters('');
     controller.addListener(listen);
   }
@@ -253,7 +240,7 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
                         const SizedBox(width: 8),
                         Text(
                           label.value,
-                          style: TextStyle(color: color.primary),
+                          style: textStyle.labelLarge?.copyWith(color: color.primary),
                         ),
                       ],
                     ),
@@ -366,168 +353,187 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   }
 }
 
-class _HistoryTile extends ConsumerWidget {
+class _HistoryTile extends ConsumerStatefulWidget {
   const _HistoryTile({required this.chapter, required this.isCompleted});
 
   final Chapter chapter;
   final bool? isCompleted;
 
   @override
-  Widget build(BuildContext context, ref) {
-    final res = chapter.duration - chapter.position;
+  _HistoryTileState createState() => _HistoryTileState();
+}
+
+class _HistoryTileState extends ConsumerState<_HistoryTile> {
+  @override
+  Widget build(BuildContext context) {
+    final res = widget.chapter.duration - widget.chapter.position;
     final size = MediaQuery.of(context).size;
     final color = Theme.of(context).colorScheme;
     final textStyle = Theme.of(context).textTheme;
 
     return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
       margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.all(Radius.circular(10)),
-            child: Stack(
-              alignment: Alignment.center,
+      child: SizedBox(
+        height: 100,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.all(Radius.circular(2)),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: size.width * 0.2,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        image: DecorationImage(
+                            fit: BoxFit.cover,
+                            image: NetworkImage(widget.chapter.imageUrl!))),
+                  ),
+                  Container(
+                    color: Colors.black54,
+                    width: size.width * 0.2,
+                    child: const Center(
+                      child: Icon(
+                        Icons.play_arrow_rounded,
+                        size: 30,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(
+              width: 10,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.network(
-                  chapter.imageUrl!,
-                  height: 90,
-                  width: 65,
+                SizedBox(
+                    width: size.width * 0.45,
+                    child: Text(
+                      widget.chapter.title,
+                      style: textStyle.titleSmall
+                          ?.copyWith(color: color.surfaceTint),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    )),
+                const SizedBox(height: 3),
+                Text(
+                  widget.chapter.chapter,
+                  style: textStyle.labelMedium
+                      ?.copyWith(color: color.onBackground, fontSize: 14),
                 ),
-                Container(
-                  height: 90,
-                  width: 65,
-                  color: Colors.black45,
-                ),
-                const Icon(
-                  Icons.play_arrow_rounded,
-                  size: 30,
-                )
+                const SizedBox(height: 3),
+                if (widget.chapter.isCompleted)
+                  Text('Completado',
+                      style:
+                          textStyle.labelMedium?.copyWith(color: color.outline)),
+                if (widget.chapter.isWatching)
+                  Text(
+                    'Restante ${formatDuration(res)}',
+                    style: textStyle.labelMedium?.copyWith(color: color.outline),
+                  ),
               ],
             ),
-          ),
-          const SizedBox(
-            width: 5,
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                  width: size.width * 0.45,
-                  child: Text(
-                    chapter.title,
-                    style: textStyle.titleSmall
-                        ?.copyWith(color: color.surfaceTint),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  )),
-              const SizedBox(height: 3),
-              Text(
-                chapter.chapter,
-                style: textStyle.labelMedium
-                    ?.copyWith(color: color.onBackground, fontSize: 14),
-              ),
-              const SizedBox(height: 3),
-              if (chapter.isCompleted)
-                Text('Completado',
-                    style:
-                        textStyle.labelMedium?.copyWith(color: color.outline)),
-              if (chapter.isWatching)
-                Text(
-                  'Restante ${formatDuration(res)}',
-                  style: textStyle.labelMedium?.copyWith(color: color.outline),
-                ),
-            ],
-          ),
-          const Spacer(),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                  onPressed: () {},
-                  icon: chapter.isCompleted
-                      ? Icon(
-                          Icons.remove_red_eye,
-                          color: color.primary,
-                        )
-                      : const Icon(Icons.remove_red_eye_outlined)),
-
-              PopupMenuButton(
-                position: PopupMenuPosition.under,
-                itemBuilder: (context) {
-                  return [
-                    PopupMenuItem(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.info,
+            const Spacer(),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                    onPressed: () {},
+                    icon: widget.chapter.isCompleted
+                        ? Icon(
+                            Icons.remove_red_eye,
                             color: color.primary,
-                          ),
-                          const SizedBox(
-                            width: 8,
-                          ),
-                          const Text('Informacion'),
-                        ],
-                      ),
-                      onTap: () async {
-                        final anime = chapterToAnime(chapter);
-
-                        ref
-                            .read(animeProvider.notifier)
-                            .update((state) => anime);
-
-                        await ref
-                            .read(isWatchingAnimeProvider.notifier)
-                            .loadLastWatchingChapter(chapter.title)
-                            .then((value) {
+                          )
+                        : const Icon(Icons.remove_red_eye_outlined)),
+      
+                PopupMenuButton(
+                  position: PopupMenuPosition.under,
+                  itemBuilder: (context) {
+                    return [
+                      PopupMenuItem(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.info,
+                              color: color.primary,
+                            ),
+                            const SizedBox(
+                              width: 8,
+                            ),
+                            const Text('Informacion'),
+                          ],
+                        ),
+                        onTap: () async {
+                          final anime = chapterToAnime(widget.chapter);
+      
                           ref
-                              .read(lastChapterWProvider.notifier)
-                              .update((state) => value);
-                          GoRouter.of(context).push('/anime-screen');
-                        });
-                      },
-                    ),
-                    PopupMenuItem(
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.delete_forever,
-                            color: Colors.red,
-                          ),
-                          SizedBox(
-                            width: 8,
-                          ),
-                          Text('Eliminar'),
-                        ],
+                              .read(animeProvider.notifier)
+                              .update((state) => anime);
+      
+                          await ref
+                              .read(isWatchingAnimeProvider.notifier)
+                              .loadLastWatchingChapter(widget.chapter.title)
+                              .then((value) {
+                            ref
+                                .read(lastChapterWProvider.notifier)
+                                .update((state) => value);
+                            GoRouter.of(context).push('/anime-screen');
+                          });
+                        },
                       ),
-                      onTap: () async {
-                        if (isCompleted != null) {
-                          await ref
-                              .read(isWatchingAnimeProvider.notifier)
-                              .removeChapter(chapter)
-                              .then((value) => ref
+                      PopupMenuItem(
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.delete_forever,
+                              color: Colors.red,
+                            ),
+                            SizedBox(
+                              width: 8,
+                            ),
+                            Text('Eliminar'),
+                          ],
+                        ),
+                        onTap: () async {
+                          if (widget.isCompleted != null) {
+                            await ref
+                                .read(isWatchingAnimeProvider.notifier)
+                                .removeChapter(widget.chapter)
+                                .then((value) => ref
+                                    .refresh(watchingHistoryProvider.notifier)
+                                    .loadNextPage(widget.isCompleted));
+                            setState(() {});
+                          } else {
+                            await ref
+                                .read(isWatchingAnimeProvider.notifier)
+                                .removeChapter(widget.chapter)
+                                .then((value) {
+                              ref
                                   .refresh(watchingHistoryProvider.notifier)
-                                  .loadNextPage(isCompleted));
-                        } else {
-                          await ref
-                              .read(isWatchingAnimeProvider.notifier)
-                              .removeChapter(chapter)
-                              .then((value) => ref
-                                  .refresh(watchingHistoryProvider.notifier)
-                                  .loadNextPage(null));
-                        }
-                      },
-                    ),
-                    // const PopupMenuItem(child: Text('Ver detalles')),
-                  ];
-                },
-              )
-              // IconButton(
-              //     onPressed: () {}, icon: const Icon(Icons.more_vert)),
-            ],
-          )
-        ],
+                                  .loadNextPage(null);
+                            });
+                          }
+                        },
+                      ),
+                      // const PopupMenuItem(child: Text('Ver detalles')),
+                    ];
+                  },
+                )
+                // IconButton(
+                //     onPressed: () {}, icon: const Icon(Icons.more_vert)),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

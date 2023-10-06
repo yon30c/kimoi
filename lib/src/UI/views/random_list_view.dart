@@ -24,16 +24,17 @@ class _RandomListViewState extends State<RandomListView>
     super.build(context);
     final size = MediaQuery.of(context).size;
     return SizedBox(
+      
       height: size.height * 0.22,
       child: Swiper(
-        viewportFraction: 0.99,
+        viewportFraction: 0.999,
         itemCount: widget.animes.length,
         scale: 0.9,
         autoplay: true,
         autoplayDelay: 7000,
         itemBuilder: (context, index) {
           final anime = widget.animes[index];
-
+    
           return RandomSlide(anime: anime);
         },
       ),
@@ -83,7 +84,6 @@ class RandomSlideState extends ConsumerState<RandomSlide> {
               decoration: BoxDecoration(
                 image: DecorationImage(image: NetworkImage(
                 widget.anime.imageUrl,
-          
                 ),
                 fit: BoxFit.cover,
                 )
