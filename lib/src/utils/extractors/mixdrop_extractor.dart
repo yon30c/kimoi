@@ -32,6 +32,9 @@ class MixDropExtractor {
 
       final unpacked = JsUnpack(script).unpack();
 
+
+      if (unpacked == "") return [];
+
       final videoUrl =
           "https:${unpacked.substringAfter("Core.wurl=\"").substringBefore("\"")}";
 

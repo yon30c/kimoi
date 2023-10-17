@@ -37,6 +37,8 @@ library jsunpack;
 
 import 'dart:math';
 
+import 'package:flutter/material.dart';
+
 /// P.A.C.K.E.R code decoder
 class JsUnpack {
   final String source;
@@ -54,6 +56,7 @@ class JsUnpack {
   ///Unpacks P.A.C.K.E.R. packed js code
   String unpack() {
     var lst = _filterargs();
+    if (lst.isEmpty) return "";
     String payload = lst[0];
     List<String> symtab = lst[1];
     int radix = lst[2];
@@ -174,7 +177,8 @@ class JsUnpack {
       var symtab = all.group(4)!.split("|");
       return [payload, symtab, radix, count];
     } catch (_) {
-      throw ('Corrupted p.a.c.k.e.r. data.');
+      debugPrint('Corrupted p.a.c.k.e.r. data.');
+      return [];
     }
   }
 }

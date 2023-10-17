@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/items/filter_dialog.dart';
 import 'package:kimoi/src/UI/items/search_icon.dart';
 import 'package:kimoi/src/UI/providers/jikan/jikan_provider.dart';
@@ -15,34 +16,17 @@ import 'package:kimoi/src/infrastructure/models/jikan_upcoming.dart' as up;
 import '../../items/items.dart';
 import '../../providers/providers.dart';
 
-class HomeDirectory extends ConsumerStatefulWidget {
+class HomeDirectory extends HookWidget {
   const HomeDirectory({super.key});
 
   @override
-  HomeDirectoryState createState() => HomeDirectoryState();
-}
-
-class HomeDirectoryState extends ConsumerState<HomeDirectory>
-    with SingleTickerProviderStateMixin {
-  late final TabController tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    tabController = TabController(length: 3, vsync: this);
-    tabController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final tabController = useTabController(initialLength: 3);
+
     return Scaffold(
         appBar: AppBar(
           title: const Text('Explorar'),
-          actions: const [
-            SearchIcon()
-          ],
+          actions: const [SearchIcon()],
           bottom: TabBar(
             isScrollable: true,
             controller: tabController,
@@ -63,23 +47,16 @@ class HomeDirectoryState extends ConsumerState<HomeDirectory>
             controller: tabController,
             children: const [_AllAnimesPage(), _GenrePage(), _UpcomingPage()]));
   }
-
-  @override
-  void dispose() {
-    tabController.dispose();
-    super.dispose();
-  }
 }
 
-class _AllAnimesPage extends ConsumerStatefulWidget {
+class _AllAnimesPage extends StatefulHookConsumerWidget {
   const _AllAnimesPage();
 
   @override
   _AllAnimesPageState createState() => _AllAnimesPageState();
 }
 
-class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
-    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+class _AllAnimesPageState extends ConsumerState<_AllAnimesPage> {
   int? estreno;
   int? estado;
   String? tipo;
@@ -95,9 +72,6 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
   ValueNotifier label = ValueNotifier<String>('Año');
   ValueNotifier filterLabel = ValueNotifier<String>('');
 
-  late final ScrollController scrollController;
-  late final TabController tabController;
-
   void clearAllFilter() {
     ref.read(estadoProvider.notifier).update((state) => 0);
     ref.read(estrenoProvider.notifier).update((state) => 0);
@@ -111,30 +85,13 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
   @override
   void initState() {
     super.initState();
-    scrollController = ScrollController();
-    tabController = TabController(length: 2, vsync: this);
-    tabController.addListener(() {
-      setState(() {});
-    });
+
     ref.read(animeDirectoryProvider.notifier).getAnimes(
         estado: estado,
         estreno: estreno,
         tipo: tipo,
         genero: genero,
         idioma: idioma);
-
-    scrollController.addListener(() {
-      // if (widget.loadNextPage == null) return;
-
-      if ((scrollController.position.pixels + 500) >=
-              scrollController.position.maxScrollExtent &&
-          tabController.index == 0) {
-        // add5();
-        fetchData();
-      }
-
-      listen();
-    });
   }
 
   Future fetchData() async {
@@ -152,20 +109,11 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
         genero: ref.read(generoProvider),
         idioma: ref.read(idiomaProvider));
 
-    await Future.delayed(const Duration(seconds: 3), () {
+    await Future.delayed(const Duration(seconds: 2), () {
       isLoading = false;
       finalLength = ref.read(animeDirectoryProvider).length;
     });
     setState(() {});
-
-    // if (scrollController.position.pixels + 100 <=
-    //     scrollController.position.maxScrollExtent) return;
-    // if (scrollController.position.pixels + 200 <=
-    //     scrollController.position.maxScrollExtent) return;
-
-    // scrollController.animateTo(scrollController.position.pixels + 100,
-    //     duration: const Duration(milliseconds: 300),
-    //     curve: Curves.fastLinearToSlowEaseIn);
 
     if (initialLength == finalLength) {
       isLastPage = true;
@@ -174,7 +122,7 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
 
   bool isFabActive = false;
 
-  void listen() {
+  void listen(ScrollController scrollController) {
     final direction = scrollController.position.userScrollDirection;
     if (direction == ScrollDirection.forward) {
       show();
@@ -197,7 +145,6 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
 
   SliverPersistentHeader makeHeader(Widget child) {
     return SliverPersistentHeader(
-      // pinned: true,
       floating: true,
       delegate:
           SliverAppBarDelegate(minHeight: 40.0, maxHeight: 40.0, child: child),
@@ -206,7 +153,17 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    useAutomaticKeepAlive(wantKeepAlive: true);
+
+    final scrollController = useScrollController();
+
+    scrollController.addListener(() {
+      if ((scrollController.position.pixels + 500) >=
+          scrollController.position.maxScrollExtent) {
+        fetchData();
+      }
+      listen(scrollController);
+    });
 
     final animes = ref.watch(animeDirectoryProvider);
     filterLabel.value = ref.watch(labelProvider);
@@ -368,9 +325,6 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
 
 List<String> years = [
@@ -682,7 +636,7 @@ List<GenresTab> genresTab = [
       icon: null)
 ];
 
-class _UpcomingPage extends ConsumerStatefulWidget {
+class _UpcomingPage extends StatefulHookConsumerWidget {
   const _UpcomingPage();
 
   @override
@@ -690,19 +644,10 @@ class _UpcomingPage extends ConsumerStatefulWidget {
 }
 
 class _UpcomingPageState extends ConsumerState<_UpcomingPage> {
-  late ScrollController controller;
   @override
   void initState() {
     super.initState();
-    controller = ScrollController();
     ref.read(upcomingProvider.notifier).getAnimes();
-
-    controller.addListener(() {
-      if (controller.position.pixels + 200 >=
-          controller.position.maxScrollExtent) {
-        fetchMoreUp();
-      }
-    });
   }
 
   fetchMoreUp() async {
@@ -711,6 +656,15 @@ class _UpcomingPageState extends ConsumerState<_UpcomingPage> {
 
   @override
   Widget build(BuildContext context) {
+    useAutomaticKeepAlive();
+    final controller = ScrollController();
+
+    controller.addListener(() {
+      if (controller.position.pixels + 200 >=
+          controller.position.maxScrollExtent) {
+        fetchMoreUp();
+      }
+    });
     final animes = ref.watch(upcomingProvider);
 
     final size = MediaQuery.of(context).size;
@@ -757,8 +711,8 @@ class _UpcomingPageState extends ConsumerState<_UpcomingPage> {
                   height: size.height * 0.3,
                   decoration: BoxDecoration(
                       image: DecorationImage(
-                    image: NetworkImage(
-                        anime.images.entries.first.value.imageUrl),
+                    image:
+                        NetworkImage(anime.images.entries.first.value.imageUrl),
                     fit: BoxFit.cover,
                   )),
                 ),

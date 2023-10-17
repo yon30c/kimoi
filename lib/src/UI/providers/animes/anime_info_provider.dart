@@ -9,9 +9,6 @@ final animeProvider = StateProvider<Anime?>((ref) => null);
 final animeInfProvider = StateProvider<AnimeInfo?>((ref) => null);
 final extraDataProvider = StateProvider<XData?>((ref) => null);
 
-
-
-
 // Proveedor de informacion de la pantalla de detalles
 final getAnimeInfoProvider =
     StateNotifierProvider<AnimeInfoNotifier, List<AnimeInfo>>((ref) {
@@ -38,12 +35,14 @@ class AnimeInfoNotifier extends StateNotifier<List<AnimeInfo>> {
   }
 }
 
-final getPreviusVideoData = StateNotifierProvider<ChapterInfoNotifier, List<Chapter>>((ref) {
+final getPreviusVideoData =
+    StateNotifierProvider<ChapterInfoNotifier, List<Chapter>>((ref) {
   final getChapterInfo = ref.watch(animeRepositoryProvider).getChapterData;
   return ChapterInfoNotifier(getChapterInfo);
 });
 
-final getNextVideoData = StateNotifierProvider<ChapterInfoNotifier, List<Chapter>>((ref) {
+final getNextVideoData =
+    StateNotifierProvider<ChapterInfoNotifier, List<Chapter>>((ref) {
   final getChapterInfo = ref.watch(animeRepositoryProvider).getChapterData;
   return ChapterInfoNotifier(getChapterInfo);
 });
@@ -63,6 +62,7 @@ class ChapterInfoNotifier extends StateNotifier<List<Chapter>> {
   bool isLoading = false;
 
   Future<void> getVideos(String url) async {
+    print(url);
     if (isLoading) return;
     isLoading = true;
 
@@ -73,7 +73,6 @@ class ChapterInfoNotifier extends StateNotifier<List<Chapter>> {
     isLoading = false;
   }
 }
-
 
 final getExtraDataProvider =
     StateNotifierProvider<ExtraDataNotifier, List<XData>>((ref) {
@@ -100,9 +99,4 @@ class ExtraDataNotifier extends StateNotifier<List<XData>> {
   }
 }
 
-
-class Info extends ChangeNotifier{
-
-  
-
-}
+class Info extends ChangeNotifier {}

@@ -9,9 +9,8 @@ class OkruExtractor {
   final client = Client();
 
   final headers = {
-    "Accept": "application/json",
     "User-Agent":
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (Linux; Android 5.1.1; Android SDK built for x86 Build/LMY48X) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/39.0.0.0 Mobile Safari/537.36"
   };
 
   String fixQuality(String quality) {
@@ -37,6 +36,7 @@ class OkruExtractor {
     try {
       HeadlessInAppWebView(
         initialUrlRequest: URLRequest(url: Uri.parse(url), headers: headers),
+        
         onLoadStop: (controller, url) async {
           html = await controller.getHtml();
           isLoading = false;
@@ -55,6 +55,12 @@ class OkruExtractor {
           doc.querySelector('div[data-options]')?.attributes['data-options'];
 
       if (data == null) return [];
+
+      if (data.contains("ondemandHls")) {
+        print("ondemandHls");
+      } else if (data.contains("ondemandHls")) {
+        print("ondemandHls");
+      }
 
       final videos = videosFromJson(data);
       return videos;

@@ -1,14 +1,14 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/items/anime_card.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_filter_provider.dart';
 import 'package:kimoi/src/UI/screens/home/home.dart';
 
 import '../../domain/entities/anime.dart';
 
-class AnimesListview extends ConsumerStatefulWidget {
+class AnimesListview extends StatefulHookConsumerWidget {
   final String? subtitle;
   final String? title;
   final List<Anime> animes;

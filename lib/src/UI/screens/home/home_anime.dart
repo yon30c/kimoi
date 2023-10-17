@@ -3,9 +3,10 @@ import 'dart:math';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/items/search_icon.dart';
 import 'package:kimoi/src/UI/items/servers_dialog.dart';
 import 'package:kimoi/src/UI/screens/home/home.dart';
@@ -17,7 +18,7 @@ import '../../../domain/domain.dart';
 import '../../providers/providers.dart';
 import '../../views/views.dart';
 
-class HomeAnime extends ConsumerStatefulWidget {
+class HomeAnime extends StatefulHookConsumerWidget {
   static const String name = 'Home-screen';
 
   const HomeAnime({super.key});
@@ -33,35 +34,37 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
   bool listView2 = false;
   bool listView3 = false;
   bool lastCharge = false;
-  late ScrollController controller;
+  bool secondCharge = false;
   Map<String, Chapter> watching = {};
 
   int getRandomYear() {
-    final allowedYears = [2022, 2021, 2020, 2019, 2018, 2017];
+    final allowedYears = [2023, 2022, 2021, 2020, 2019, 2018, 2017];
     return allowedYears[Random().nextInt(allowedYears.length)];
   }
 
   int getRandomPage() {
-    final allowedPage = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    final allowedPage = [1, 2, 3, 4, 5, 6, 7, 8];
     return allowedPage[Random().nextInt(allowedPage.length)];
   }
 
-  Future fetchData() async {
-    setState(() {});
+  Future<void> fetchData() async {
     animes = await ref
         .read(animeRepositoryProvider)
         .getDirectory(estreno: getRandomYear(), p: getRandomPage());
     setState(() {});
   }
 
-  void listen() async {
-    final direction = controller.position.userScrollDirection;
-
-    if (direction == ScrollDirection.reverse) {
+  void listen(ScrollController controller) async {
+    if (controller.position.pixels == controller.position.maxScrollExtent && !lastCharge) {
       if (lastCharge) return;
       lastCharge = true;
+      await ref.read(lastAnimesAddedProvider.notifier).getAnimes();
       setState(() {});
-      ref.read(lastAnimesAddedProvider.notifier).getAnimes();
+    } else if (
+      controller.position.pixels == controller.position.maxScrollExtent &&
+      lastCharge) {
+      if (secondCharge) return;
+      secondCharge = true;
       latanimes = await ref
           .read(animeRepositoryProvider)
           .getDirectory(genero: "latino", p: getRandomPage());
@@ -72,10 +75,8 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
   @override
   void initState() {
     super.initState();
-    controller = ScrollController();
     ref.read(recentAnimesProvider.notifier).getAnimes();
     ref.read(nowWatchingProvider.notifier).loadWatching();
-    controller.addListener(listen);
     fetchData();
   }
 
@@ -84,6 +85,10 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
     final lastAnimes = ref.watch(lastAnimesAddedProvider);
     final lastEpisodes = ref.watch(recentAnimesProvider);
     nowWatching = ref.watch(nowWatchingProvider);
+
+    final controller = useScrollController();
+
+    controller.addListener(() => listen(controller));
 
     // final popularNews = ref.watch(popularNewsProvider);
 
@@ -108,13 +113,10 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
             },
             child: CustomScrollView(
               controller: controller,
-              physics: const BouncingScrollPhysics(),
               slivers: [
                 const SliverAppBar(
                   title: Text('Animes'),
-                  actions: [
-                    SearchIcon()
-                  ],
+                  actions: [SearchIcon()],
                 ),
                 SliverList(
                   delegate: SliverChildListDelegate(
@@ -133,30 +135,44 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                       if (nowWatching.isNotEmpty)
                         KeepWatching(nowWatching: nowWatching),
 
-                      AnimesListview(
-                        height: 180,
-                        width: 130,
-                        animes: lastAnimes,
-                        title: 'Últimos animes',
-                        subtitle: '2023',
-                      ),
-                      AnimesListview(
-                        height: 180,
-                        width: 130,
-                        animes: latanimes,
-                        title: 'En latino',
-                        subtitle: 'Ver más',
-                        genre: GenresTab(
-                            id: "latino",
-                            iconPath: null,
-                            name: "Latino",
-                            title: "Latino",
-                            imagePath: '',
-                            icon: FontAwesomeIcons.map),
-                      ), //         .getAnimes),
+                      if (lastCharge)
+                        AnimesListview(
+                          height: 180,
+                          width: 130,
+                          animes: lastAnimes,
+                          title: 'Últimos animes',
+                          subtitle: '2023',
+                        ),
+                      if (secondCharge)
+                        AnimesListview(
+                          height: 180,
+                          width: 130,
+                          animes: latanimes,
+                          title: 'En latino',
+                          subtitle: 'Ver más',
+                          genre: GenresTab(
+                              id: "latino",
+                              iconPath: null,
+                              name: "Latino",
+                              title: "Latino",
+                              imagePath: '',
+                              icon: FontAwesomeIcons.map),
+                        ), //         .getAnimes),
+
                       const SizedBox(
                         height: 15,
-                      )
+                      ),
+                      if (!lastCharge || !secondCharge)
+                        const Center(
+                          child: SizedBox(
+                            height: 40,
+                            width: 40,
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                      const SizedBox(
+                        height: 15,
+                      ),
                     ],
                   ),
                 )
@@ -344,8 +360,8 @@ class KeepWatching extends ConsumerWidget {
                                               isWatchingAnimeProvider.notifier)
                                           .removeChapter(chapt)
                                           .then((value) => ref
-                                              .refresh(nowWatchingProvider
-                                                  .notifier)
+                                              .refresh(
+                                                  nowWatchingProvider.notifier)
                                               .loadWatching());
                                     },
                                   ),

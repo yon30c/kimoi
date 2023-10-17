@@ -39,7 +39,7 @@ final nextChapterProvider =
     });
 
     List<FixedServer> fixedServers = [];
-     int youruploadIndex =
+    int youruploadIndex =
         servers.indexWhere((element) => element.contains('yourupload'));
     int mp4uploadIndex =
         servers.indexWhere((element) => element.contains('mp4upload'));
@@ -340,4 +340,4 @@ final previousChapterProvider =
   }
 });
 
-final chapterProvider = StateProvider<Chapter?>((ref) => null);
+// final chapterProvider = StateProvider<Chapter?>((ref) => null);

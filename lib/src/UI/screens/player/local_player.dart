@@ -4,9 +4,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:better_player_v3/better_player.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:kimoi/src/UI/items/items.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
@@ -34,6 +34,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   late BetterPlayerController _betterPlayerController;
 
   List<v.Video> videoList = [];
+  List<v.Video> optional = [];
 
   bool flag = false;
   bool isClose = false;
@@ -45,6 +46,10 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   bool isCompleted = false;
   bool isInitialize = false;
   bool isFullScreen = false;
+  bool isVideoCompleted = false;
+  bool automaticPlay = false;
+
+  int? res;
 
   String chapterInfo = '';
   String title = '';
@@ -55,6 +60,72 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
   final responsive = Responsive();
 
+  void getOptional() async {
+    final url = ref.read(fixedServerProvider)!.optional!;
+    optional = await extract([url]);
+  }
+
+  void listen(BetterPlayerEvent event) async {
+    Map<String, String> resolutions = {};
+    for (var element in optional) {
+      resolutions.addAll({element.quality: element.videoUrl!});
+    }
+    setState(() {
+      if (event.betterPlayerEventType == BetterPlayerEventType.exception) {
+        if (optional.isNotEmpty) {
+          serverName.value = optional.last.quality;
+
+          _betterPlayerController.setupDataSource(BetterPlayerDataSource(
+              BetterPlayerDataSourceType.network, optional.first.videoUrl!,
+              headers: optional.first.headers, resolutions: resolutions));
+        }
+      }
+      if (_betterPlayerController.videoPlayerController != null &&
+          _betterPlayerController.videoPlayerController!.value.isPlaying &&
+          _betterPlayerController
+                  .videoPlayerController!.value.position.inSeconds >=
+              _betterPlayerController
+                      .videoPlayerController!.value.duration!.inSeconds -
+                  10) {
+        if (!automaticPlay) automaticPlay = true;
+
+        if (_betterPlayerController
+                .videoPlayerController!.value.position.inSeconds <=
+            _betterPlayerController
+                    .videoPlayerController!.value.duration!.inSeconds -
+                10) {
+          if (automaticPlay) automaticPlay = false;
+        }
+        setState(() {});
+      }
+
+      if (isClose) return;
+      if (isInitialize && _betterPlayerController.isPlaying()!) {
+        addOnWatching(
+            _betterPlayerController
+                .videoPlayerController!.value.position.inSeconds,
+            _betterPlayerController
+                .videoPlayerController!.value.duration!.inSeconds);
+
+        //* Agregar duracion.
+        if (isInitialize && _betterPlayerController.isPlaying()!) {
+          if (flag) return;
+          flag = true;
+
+          isVisible.value = false;
+          final chapter = widget.videos;
+          chapter.date = DateTime.now();
+
+          chapter.duration = _betterPlayerController
+              .videoPlayerController!.value.duration!.inSeconds;
+          ref
+              .read(isWatchingAnimeProvider.notifier)
+              .addOnWatching(widget.videos);
+        }
+      }
+    });
+  }
+
   // ********************************************************** //
 
   // ********************************************************** //
@@ -64,8 +135,8 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   //* inicializar el reproductor del video *//
   void initPlayer(Chapter chapter) async {
     final videoList = await ref.read(videoServers);
-    final url = ref.read(fixedServerProvider)!.optional!;
-    final optional = await extract(url);
+
+    getOptional();
 
     isClose = false;
     BetterPlayerConfiguration betterPlayerConfiguration =
@@ -74,6 +145,18 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
             allowedScreenSleep: false,
             fit: BoxFit.fill,
             autoPlay: true,
+            eventListener: listen,
+
+            // TODO: Error builder
+            errorBuilder: (context, errorMessage) {
+              return Center(
+                child: TextButton(
+                    onPressed: () {
+                      context.pop();
+                    },
+                    child: const Text("try another server")),
+              );
+            },
             controlsConfiguration: BetterPlayerControlsConfiguration(
               playerTheme: BetterPlayerTheme.custom,
               customControlsBuilder: (controller, onPlayerVisibilityChanged) {
@@ -81,12 +164,22 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
               },
             ));
 
+    if (videoList.isEmpty) {
+      _betterPlayerController =
+          BetterPlayerController(betterPlayerConfiguration);
+      onWillPop();
+      await Future(() => context.pop());
+      return;
+    }
+
     Map<String, String> resolutions = {};
     for (var element in videoList) {
       resolutions.addAll({element.quality: element.videoUrl!});
     }
     serverName.value = videoList.first.quality;
     chapterName.value = widget.videos.chapter;
+
+    print(" initialize datasource: ${videoList.first.url}");
 
     BetterPlayerDataSource dataSource = BetterPlayerDataSource(
       BetterPlayerDataSourceType.network,
@@ -102,48 +195,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
 
     isInitialize = true;
     setState(() {});
-
-    _betterPlayerController.addEventsListener((BetterPlayerEvent event) {
-      setState(() {
-        if (event.betterPlayerEventType == BetterPlayerEventType.exception) {
-          serverName.value = optional.last.quality;
-
-          _betterPlayerController =
-              BetterPlayerController(betterPlayerConfiguration);
-
-          _betterPlayerController.setupDataSource(BetterPlayerDataSource(
-              BetterPlayerDataSourceType.network, optional.first.videoUrl!,
-              headers: optional.first.headers, resolutions: resolutions));
-
-          _betterPlayerController.addEventsListener((BetterPlayerEvent event) {
-            setState(() {});
-          });
-        }
-
-        if (isClose) return;
-        if (_betterPlayerController.isPlaying()!) {
-          addOnWatching(
-              _betterPlayerController
-                  .videoPlayerController!.value.position.inSeconds,
-              _betterPlayerController
-                  .videoPlayerController!.value.duration!.inSeconds);
-
-          //* Agregar duracion.
-          if (isInitialize && _betterPlayerController.isPlaying()!) {
-            if (flag) return;
-            flag = true;
-            isVisible.value = false;
-            final chapter = widget.videos;
-            chapter.date = DateTime.now();
-            chapter.duration = _betterPlayerController
-                .videoPlayerController!.value.duration!.inSeconds;
-            ref
-                .read(isWatchingAnimeProvider.notifier)
-                .addOnWatching(widget.videos);
-          }
-        }
-      });
-    });
 
     WakelockPlus.enable();
   }
@@ -263,7 +314,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
   //* Administrar el comportamiento al salir de la pantalla
   //* usando gestos o botones del hardware
   Future<bool> onWillPop() async {
-    ref.refresh(watchingHistoryProvider.notifier).loadNextPage(null);
+    ref.refresh(watchingHistoryProvider.notifier).loadNextPage();
     ref.refresh(nowWatchingProvider.notifier).loadWatching();
 
     setState(() {});
@@ -275,7 +326,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     WakelockPlus.disable();
     return true;
   }
-
 
   // ********************************************************** //
 
@@ -298,6 +348,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     );
 
     // Inicializar el reproductor de video
+    // getOptional();
     initPlayer(widget.videos);
   }
 
@@ -360,6 +411,42 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                               : null,
                         ),
                         _playAndPauseButtom(),
+                        // if (automaticPlay)
+                        //   Positioned(
+                        //       bottom: 80,
+                        //       right: 10,
+                        //       child: nextChapter.when(
+                        //         data: (data) {
+                        //           if (data == null) {
+                        //             return const SizedBox();
+                        //           }
+                        //           data.first.imageUrl = widget.videos.imageUrl;
+                        //           data.first.animeUrl = widget.videos.animeUrl;
+                        //           data.first.isWatching = true;
+
+                        //           return PlayNextDialog(
+                        //               _betterPlayerController
+                        //                       .videoPlayerController!
+                        //                       .value
+                        //                       .isPlaying
+                        //                   ? _betterPlayerController
+                        //                           .videoPlayerController!
+                        //                           .value
+                        //                           .duration!
+                        //                           .inSeconds -
+                        //                       _betterPlayerController
+                        //                           .videoPlayerController!
+                        //                           .value
+                        //                           .position
+                        //                           .inSeconds
+                        //                   : 0,
+                        //               _betterPlayerController,
+                        //               chapter: data.first,
+                        //               servers: data.last);
+                        //         },
+                        //         loading: () => const SizedBox(),
+                        //         error: (error, stackTrace) => const SizedBox(),
+                        //       )),
                         VideoCoreForwardAndRewind(
                           onRightTap: () => onForward(_betterPlayerController),
                           onLeftTap: () => onRewind(_betterPlayerController),
@@ -392,7 +479,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                                         ],
                                       ),
                               ),
-                            ))
+                            )),
                       ],
                     ),
             ),
@@ -498,13 +585,11 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                   data.first.imageUrl = widget.videos.imageUrl;
                   data.first.animeUrl = widget.videos.animeUrl;
                   data.first.isWatching = true;
+
                   ref
                       .read(fixedServerProvider.notifier)
                       .update((state) => data.last.first);
-                  ref
-                      .read(chapterProvider.notifier)
-                      .update((state) => data.first);
-                  // ref.read(videoProvider.notifier).getVideos();
+
                   context.pushReplacement('/local-player', extra: data.first);
                 };
               },
@@ -546,10 +631,8 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
                   ref
                       .read(fixedServerProvider.notifier)
                       .update((state) => data.last.first);
-                  ref
-                      .read(chapterProvider.notifier)
-                      .update((state) => data.first);
-                  // ref.read(videoProvider.notifier).getVideos();
+
+                  context.pushReplacement('/local-player', extra: data.first);
                   context.pushReplacement('/local-player', extra: data.first);
                 };
               },
@@ -580,45 +663,45 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
               '+85',
               style: TextStyle(color: Colors.white, fontSize: 18),
             )),
-        PopupMenuButton(
-          onSelected: (value) {
-            speedValue.value = value;
-            _betterPlayerController.setSpeed(value);
-          },
-          // initialValue: speedValue.value,
-          itemBuilder: (context) => [
-            CheckedPopupMenuItem(
-              checked: speedValue.value == 0.5 ? true : false,
-              value: 0.5,
-              child: const Text('0.5 x'),
-            ),
-            CheckedPopupMenuItem(
-              checked: speedValue.value == 0.75 ? true : false,
-              value: 0.75,
-              child: const Text('0.75 x'),
-            ),
-            CheckedPopupMenuItem(
-              checked: speedValue.value == 1.0 ? true : false,
-              value: 1.0,
-              child: const Text('1.0 x'),
-            ),
-            CheckedPopupMenuItem(
-              checked: speedValue.value == 1.25 ? true : false,
-              value: 1.25,
-              child: const Text('1.25 x'),
-            ),
-            CheckedPopupMenuItem(
-              checked: speedValue.value == 1.5 ? true : false,
-              value: 1.5,
-              child: const Text('1.5 x'),
-            ),
-          ],
-          icon: const Icon(
-            Icons.speed,
-            color: Colors.white,
-          ),
-          // child: Text(speedLabel.value)
-        )
+        // PopupMenuButton(
+        //   onSelected: (value) {
+        //     speedValue.value = value;
+        //     _betterPlayerController.setSpeed(value);
+        //   },
+        //   // initialValue: speedValue.value,
+        //   itemBuilder: (context) => [
+        //     CheckedPopupMenuItem(
+        //       checked: speedValue.value == 0.5 ? true : false,
+        //       value: 0.5,
+        //       child: const Text('0.5 x'),
+        //     ),
+        //     CheckedPopupMenuItem(
+        //       checked: speedValue.value == 0.75 ? true : false,
+        //       value: 0.75,
+        //       child: const Text('0.75 x'),
+        //     ),
+        //     CheckedPopupMenuItem(
+        //       checked: speedValue.value == 1.0 ? true : false,
+        //       value: 1.0,
+        //       child: const Text('1.0 x'),
+        //     ),
+        //     CheckedPopupMenuItem(
+        //       checked: speedValue.value == 1.25 ? true : false,
+        //       value: 1.25,
+        //       child: const Text('1.25 x'),
+        //     ),
+        //     CheckedPopupMenuItem(
+        //       checked: speedValue.value == 1.5 ? true : false,
+        //       value: 1.5,
+        //       child: const Text('1.5 x'),
+        //     ),
+        //   ],
+        //   icon: const Icon(
+        //     Icons.speed,
+        //     color: Colors.white,
+        //   ),
+        // child: Text(speedLabel.value)
+        // )
       ],
     );
   }
@@ -643,7 +726,7 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
             ),
             leading: IconButton(
                 onPressed: () {
-                  ref.refresh(watchingHistoryProvider.notifier).loadNextPage(null);
+                  ref.refresh(watchingHistoryProvider.notifier).loadNextPage();
                   ref.refresh(nowWatchingProvider.notifier).loadWatching();
                   setState(() {});
                   SystemChrome.setPreferredOrientations([
@@ -952,3 +1035,196 @@ class BetterPlayerMaterialClickableWidget extends StatelessWidget {
     );
   }
 }
+
+class PlayNextDialog extends ConsumerStatefulWidget {
+  const PlayNextDialog(this.seconds, this.controller,
+      {required this.chapter, required this.servers, super.key});
+
+  final Chapter chapter;
+  final List<FixedServer> servers;
+  final BetterPlayerController controller;
+  final int seconds;
+
+  @override
+  PlayNextDialogState createState() => PlayNextDialogState();
+}
+
+class PlayNextDialogState extends ConsumerState<PlayNextDialog> {
+  bool initCharge = false;
+
+  late PlayerController playerController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    playerController = PlayerController(widget.controller);
+
+    ref
+        .read(fixedServerProvider.notifier)
+        .update((state) => widget.servers.first);
+
+    init();
+  }
+
+  init() {
+    Future.delayed(const Duration(seconds: 10)).then((value) {
+      widget.controller.dispose();
+      context.pushReplacement('/local-player', extra: widget.chapter);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint(playerController.position.toString());
+    final color = Theme.of(context).colorScheme;
+    return FilledButton(
+      style:
+          ButtonStyle(backgroundColor: MaterialStatePropertyAll(color.primary)),
+      onPressed: () {},
+      child: Text(
+        "Siguiente ep, en ${widget.seconds}",
+      ),
+    );
+  }
+}
+
+class PlayerController with ChangeNotifier {
+  final BetterPlayerController controller;
+
+  int _position = 0;
+  int _duration = 0;
+
+  PlayerController(this.controller);
+
+  int? get position =>
+      controller.videoPlayerController?.value.position.inSeconds;
+  int? get duration =>
+      controller.videoPlayerController?.value.duration?.inSeconds;
+
+  bool callFunction() {
+    print(position);
+    print(duration);
+    if (position != null) {
+      _position = position!;
+    }
+    if (duration != null) {
+      _duration = duration!;
+    }
+    if (_duration == _position) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+}
+
+void updateServers(WidgetRef ref, FixedServer server, Chapter chapter) {}
+
+// List<FixedServer> getServers(List<String> servers) {
+//   List<FixedServer> fixedServers = [];
+
+//   int youruploadIndex =
+//       servers.indexWhere((element) => element.contains('yourupload'));
+//   int mp4uploadIndex =
+//       servers.indexWhere((element) => element.contains('mp4upload'));
+//   int okruIndex = servers.indexWhere((element) => element.contains('ok.ru'));
+//   int voeIndex = servers.indexWhere((element) => element.contains('voe'));
+//   int mixdroIndex = servers.indexWhere((element) => element.contains('mixdro'));
+//   int uqloadIndex = servers.indexWhere((element) => element.contains('uqload'));
+
+//   for (var url in servers) {
+//     if (url.contains('yourupload')) {
+//       fixedServers.add(FixedServer(
+//           name: 'YourUpload',
+//           url: url,
+//           optional: okruIndex != -1
+//               ? servers[okruIndex]
+//               : voeIndex != -1
+//                   ? servers[voeIndex]
+//                   : mixdroIndex != -1
+//                       ? servers[mixdroIndex]
+//                       : mp4uploadIndex != -1
+//                           ? servers[mp4uploadIndex]
+//                           : uqloadIndex != -1
+//                               ? servers[uqloadIndex]
+//                               : null));
+//     } else if (url.contains('mp4upload')) {
+//       fixedServers.add(FixedServer(
+//           name: 'Mp4Upload',
+//           url: url,
+//           optional: voeIndex != -1
+//               ? servers[voeIndex]
+//               : mixdroIndex != -1
+//                   ? servers[mixdroIndex]
+//                   : okruIndex != -1
+//                       ? servers[okruIndex]
+//                       : youruploadIndex != -1
+//                           ? servers[youruploadIndex]
+//                           : uqloadIndex != -1
+//                               ? servers[uqloadIndex]
+//                               : null));
+//     } else if (url.contains('ok.ru')) {
+//       fixedServers.add(FixedServer(
+//           name: 'Okru',
+//           url: url,
+//           optional: youruploadIndex != -1
+//               ? servers[youruploadIndex]
+//               : mixdroIndex != -1
+//                   ? servers[mixdroIndex]
+//                   : voeIndex != -1
+//                       ? servers[voeIndex]
+//                       : mp4uploadIndex != -1
+//                           ? servers[mp4uploadIndex]
+//                           : uqloadIndex != -1
+//                               ? servers[uqloadIndex]
+//                               : null));
+//     } else if (url.contains('mixdro')) {
+//       fixedServers.add(FixedServer(
+//           name: 'MixDrop',
+//           url: url,
+//           optional: okruIndex != -1
+//               ? servers[okruIndex]
+//               : voeIndex != -1
+//                   ? servers[voeIndex]
+//                   : youruploadIndex != -1
+//                       ? servers[youruploadIndex]
+//                       : mp4uploadIndex != -1
+//                           ? servers[mp4uploadIndex]
+//                           : uqloadIndex != -1
+//                               ? servers[uqloadIndex]
+//                               : null));
+//     } else if (url.contains('voe')) {
+//       fixedServers.add(FixedServer(
+//           name: 'VoeCDN',
+//           url: url,
+//           optional: okruIndex != -1
+//               ? servers[okruIndex]
+//               : youruploadIndex != -1
+//                   ? servers[youruploadIndex]
+//                   : mixdroIndex != -1
+//                       ? servers[voeIndex]
+//                       : mp4uploadIndex != -1
+//                           ? servers[mp4uploadIndex]
+//                           : uqloadIndex != -1
+//                               ? servers[uqloadIndex]
+//                               : null));
+//     } else if (url.contains("uqload")) {
+//       fixedServers.add(FixedServer(
+//           name: 'Uqload',
+//           url: url,
+//           optional: okruIndex != -1
+//               ? servers[okruIndex]
+//               : youruploadIndex != -1
+//                   ? servers[youruploadIndex]
+//                   : mixdroIndex != -1
+//                       ? servers[mixdroIndex]
+//                       : mp4uploadIndex != -1
+//                           ? servers[mp4uploadIndex]
+//                           : voeIndex != -1
+//                               ? servers[voeIndex]
+//                               : null));
+//     }
+//   }
+//   return fixedServers;
+// }

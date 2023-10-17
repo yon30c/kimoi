@@ -47,9 +47,17 @@ class Mp4UploadExtractor {
           .substringAfter('"')
           .substringBefore('"');
 
+
       final resolution = qualityRegex.firstMatch(script)?.group(1);
 
+      print(resolution);
+
       final quality = 'Mp4Upload - ${resolution}p';
+
+      print(resolution);
+
+      if (resolution == null || videoUrl.isEmpty) return [];
+
       return [
         Video(
             url: videoUrl,

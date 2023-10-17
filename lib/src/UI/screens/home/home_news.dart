@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/items/about_dialog.dart';
 import 'package:kimoi/src/UI/services/webview/webview.dart';
 
@@ -10,7 +11,7 @@ import '../../items/items.dart';
 import '../../providers/providers.dart';
 import '../screens.dart';
 
-class HomeNews extends ConsumerStatefulWidget {
+class HomeNews extends StatefulHookConsumerWidget {
   static const String name = 'Home-screen';
 
   const HomeNews({super.key});
@@ -20,12 +21,8 @@ class HomeNews extends ConsumerStatefulWidget {
 }
 
 class HomeNewsState extends ConsumerState<HomeNews>
-    with SingleTickerProviderStateMixin {
-  late TabController controller;
-
+    {
   List<ArticleInfo> articles = [];
-
-  late ScrollController scrollController;
 
   List<Tab> tabs = const [
     Tab(text: 'Recientes'),
@@ -45,19 +42,15 @@ class HomeNewsState extends ConsumerState<HomeNews>
     ref.read(initialNewsLoadingProvider);
 
     kudasaiNotifier = ref.read(recentNewsProvider.notifier);
-    scrollController = ScrollController();
-    controller = TabController(length: tabs.length, vsync: this);
     ref.read(popularNewsProvider.notifier).getNews();
     ref.read(recentNewsProvider.notifier).getNews();
-
-    scrollController.addListener(listen);
   }
 
-  void listen() {
+  void listen(ScrollController scrollController) {
     if ((scrollController.position.pixels + 300) >=
         scrollController.position.maxScrollExtent) {
       // add5();
-      fetchData();
+      fetchData(scrollController);
     }
 
     final direction = scrollController.position.userScrollDirection;
@@ -82,7 +75,7 @@ class HomeNewsState extends ConsumerState<HomeNews>
     if (activeFloatingButtom) setState(() => activeFloatingButtom = false);
   }
 
-  Future fetchData() async {
+  Future fetchData(ScrollController scrollController) async {
     if (isLoading) return;
 
     isLoading = true;
@@ -113,6 +106,13 @@ class HomeNewsState extends ConsumerState<HomeNews>
 
   @override
   Widget build(BuildContext context) {
+    final scrollController = useScrollController();
+    
+    final controller = useTabController(initialLength: tabs.length);
+
+
+    scrollController.addListener(() => listen(scrollController));
+
     void onTap(int value) async {
       switch (value) {
         case 0:
@@ -213,12 +213,12 @@ class HomeNewsState extends ConsumerState<HomeNews>
             title: const Text('Noticias'),
             actions: [
               IconButton(
-                        onPressed: () => showGeneralDialog(
-                              context: context,
-                              pageBuilder: (context, __, ___) =>
-                                  const CsAboutDialog(),
-                            ),
-                        icon: const Icon(Icons.info)),
+                  onPressed: () => showGeneralDialog(
+                        context: context,
+                        pageBuilder: (context, __, ___) =>
+                            const CsAboutDialog(),
+                      ),
+                  icon: const Icon(Icons.info)),
             ],
             // pinned: true,
           ),
@@ -286,19 +286,19 @@ class HomeNewsState extends ConsumerState<HomeNews>
                     children: [
                       Container(
                         decoration: BoxDecoration(
-
-                          image: DecorationImage(image: 
-                          NetworkImage(articleInfo.imageUrl),fit: BoxFit.cover
-                          // placeholder: const AssetImage("assets/loading4.gif"),
-                          ) 
-                        ),
+                            image: DecorationImage(
+                                image: NetworkImage(articleInfo.imageUrl),
+                                fit: BoxFit.cover
+                                // placeholder: const AssetImage("assets/loading4.gif"),
+                                )),
                         height: 105,
                         // width: (size.width * 2) - 10 ,
                         // placeholderFit: BoxFit.cover,
                       ),
                       Container(
                         decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.all(Radius.circular(5)),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(5)),
                           color: color.primary,
                         ),
                         padding: const EdgeInsets.all(3.0),
@@ -325,12 +325,5 @@ class HomeNewsState extends ConsumerState<HomeNews>
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    scrollController.dispose();
-    super.dispose();
   }
 }

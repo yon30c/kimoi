@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
-class ScrollToHideWidget extends StatefulWidget {
+class ScrollToHideWidget extends StatefulHookWidget {
   const ScrollToHideWidget(
       {super.key,
       required this.controller,

@@ -16,12 +16,17 @@ class Video {
   Map<String, String>? headers;
   final List<Track> subtitleTracks;
   final List<Track> audioTracks;
+  String? optionalVideoUrl;
+  String? optionalQuality;
+
 
   Video({
     this.url = "",
     this.quality = "",
     this.videoUrl,
     this.headers,
+    this.optionalVideoUrl,
+    this.optionalQuality,
     this.subtitleTracks = const [],
     this.audioTracks = const [],
   });

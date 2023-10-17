@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/items/items.dart';
 import 'package:kimoi/src/UI/items/search_icon.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_filter_provider.dart';
@@ -10,7 +11,7 @@ import 'package:kimoi/src/UI/screens/home/home.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/domain/domain.dart';
 
-class GenreScreen extends ConsumerStatefulWidget {
+class GenreScreen extends StatefulHookConsumerWidget {
   const GenreScreen({
     super.key,
     required this.genero,
@@ -28,7 +29,6 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
   int page = 1;
 
   List<Anime> animes = [];
-  late ScrollController scrollController;
 
   late GenresTab genre;
 
@@ -44,7 +44,7 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
     setState(() {});
   }
 
-  Future fetchMoreData() async {
+  Future fetchMoreData(ScrollController scrollController) async {
     if (isFechingMoreData) return;
     isFechingMoreData = true;
     setState(() {});
@@ -67,17 +67,9 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
   void initState() {
     super.initState();
 
-    scrollController = ScrollController();
     genre = ref.read(genreProvider)!;
 
     fetchData();
-
-    scrollController.addListener(() {
-      if ((scrollController.position.pixels + 400) >=
-          scrollController.position.maxScrollExtent) {
-        fetchMoreData();
-      }
-    });
   }
 
   SliverPersistentHeader makeHeader(Widget child) {
@@ -91,6 +83,15 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scrollController = useScrollController();
+
+    scrollController.addListener(() {
+      if ((scrollController.position.pixels + 400) >=
+          scrollController.position.maxScrollExtent) {
+        fetchMoreData(scrollController);
+      }
+    });
+
     final size = MediaQuery.of(context).size;
     final textStyle = Theme.of(context).textTheme;
     final color = Theme.of(context).colorScheme;
@@ -106,9 +107,7 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
                       floating: true,
                       pinned: true,
                       title: const Text('Géneros'),
-                      actions: const [
-                        SearchIcon()
-                      ],
+                      actions: const [SearchIcon()],
                       bottom: PreferredSize(
                         preferredSize: Size(size.width, 50),
                         child: Padding(
@@ -128,16 +127,19 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
                                           height: 25,
                                           color: color.primary,
                                         )
-                                      : SvgPicture.asset(genre.iconPath!,
+                                      : SvgPicture.asset(
+                                          genre.iconPath!,
                                           height: 25,
                                           colorFilter: ColorFilter.mode(
-                                            color.primary, BlendMode.srcIn),),
+                                              color.primary, BlendMode.srcIn),
+                                        ),
                               const SizedBox(
                                 width: 10,
                               ),
                               Text(
                                 genre.name,
-                                style: textStyle.titleMedium?.copyWith(color: color.primary),
+                                style: textStyle.titleMedium
+                                    ?.copyWith(color: color.primary),
                               ),
                             ],
                           ),
@@ -182,12 +184,5 @@ class GenreScreenState extends ConsumerState<GenreScreen> {
               ],
             ),
     );
-  }
-
-  @override
-  void dispose() {
-    scrollController.removeListener(() {});
-    scrollController.dispose();
-    super.dispose();
   }
 }

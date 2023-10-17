@@ -1,4 +1,5 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../../domain/domain.dart';
 import 'local_storage_provider.dart';
@@ -50,22 +51,23 @@ class HistoryNotifier extends StateNotifier<List<Chapter>> {
 }
 
 final watchingHistoryProvider =
-    StateNotifierProvider<WatchingNotifier, Map<String, Chapter>>((ref) {
-  final localStorageRepository = ref.watch(localStorageRepositoryProvider);
-  return WatchingNotifier(localStorageRepository: localStorageRepository);
+    NotifierProvider<WatchingNotifier, Map<String, Chapter>>(() {
+  final watchingNotifier =
+      WatchingNotifier(localStorageRepository: localStorageRepository);
+  return watchingNotifier;
 });
 
-class WatchingNotifier extends StateNotifier<Map<String, Chapter>> {
+class WatchingNotifier extends Notifier<Map<String, Chapter>> {
   int page = 0;
   final LocalStorageRepository localStorageRepository;
 
-  WatchingNotifier({required this.localStorageRepository}) : super({});
+  WatchingNotifier({required this.localStorageRepository}) {
+    loadNextPage();
+  }
 
-  Future<List<Chapter>> loadNextPage(bool? isCompleted) async {
-    final animes = await localStorageRepository.loadWatchedHistory(
-        offset: page * 10, limit: 20, isCompleted: isCompleted);
-    page++;
+  Future<List<Chapter>> loadNextPage() async {
     final tempAnimesMap = <String, Chapter>{};
+    final animes = await localStorageRepository.loadWatchedHistory();
     for (final anime in animes) {
       tempAnimesMap[anime.id] = anime;
     }
@@ -76,26 +78,45 @@ class WatchingNotifier extends StateNotifier<Map<String, Chapter>> {
   Future<void> clearHistory() async {
     await localStorageRepository.clearHistory();
   }
+
+  Future<void> removeChapter(Chapter chapter) async {
+    state.remove(chapter.id);
+    await localStorageRepository.removeWatchetChapter(chapter);
+  }
+
+  @override
+  Map<String, Chapter> build() {
+    return {};
+  }
 }
 
-final nowWatchingProvider = StateNotifierProvider<NowWatchingNotifier, List<Chapter>>((ref) {
-  final storageRepo = ref.watch(localStorageRepositoryProvider);
-  return NowWatchingNotifier(localStorageRepository: storageRepo);
+final nowWatchingProvider =
+    NotifierProvider<NowWatchingNotifier, List<Chapter>>(() {
+  return NowWatchingNotifier(localStorageRepository: localStorageRepository);
 });
 
-class NowWatchingNotifier extends StateNotifier<List<Chapter>> {
+class NowWatchingNotifier extends Notifier<List<Chapter>> {
   int page = 0;
   final LocalStorageRepository localStorageRepository;
 
-  NowWatchingNotifier({required this.localStorageRepository}) : super([]);
+  NowWatchingNotifier({required this.localStorageRepository});
 
   Future<List<Chapter>> loadWatching() async {
     final animes = await localStorageRepository.loadWatchedHistory(
         offset: page * 10, limit: 20, isCompleted: false);
-    page++;
 
-    state = [...state, ...animes, ];
+    final watching = animes.where((element) => !element.isCompleted).toList();
+
+    state = [
+      ...state,
+      ...watching,
+    ];
 
     return animes;
+  }
+
+  @override
+  List<Chapter> build() {
+    return [];
   }
 }

@@ -112,25 +112,12 @@ class IsarDatasource extends LocalStorageDatasource {
       {int limit = 10, offset = 0, bool? isCompleted}) async {
     final isar = await db;
 
-    if (isCompleted != null) {
-      final chapt = isar.chapters
-          .where()
-          .filter()
-          .isCompletedEqualTo(isCompleted)
-          .sortByDateDesc()
-          .offset(offset)
-          .limit(limit)
-          .findAll();
-      return chapt;
-    } else {
-      final chapt = isar.chapters
+    
+      final chapt = await isar.chapters
           .where()
           .sortByDateDesc()
-          .offset(offset)
-          .limit(limit)
           .findAll();
       return chapt;
-    }
     // isar.chapters.where(sort: Sort.desc).findAll();
   }
 

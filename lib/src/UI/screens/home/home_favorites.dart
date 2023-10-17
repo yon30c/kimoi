@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/items/items.dart';
 import 'package:kimoi/src/UI/items/search_icon.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
@@ -10,31 +11,38 @@ import 'package:kimoi/src/UI/screens/player/local_player.dart';
 import 'package:kimoi/src/domain/domain.dart';
 import 'package:kimoi/src/infrastructure/models/chapter_to_anime.dart';
 
-class HomeFavorites extends ConsumerStatefulWidget {
+enum FilterList { Todo, Viendo, Completado }
+
+final watchingListFilter = StateProvider((_) => FilterList.Todo);
+
+final filteredAnimes = Provider<List<Chapter>>((ref) {
+  final filter = ref.watch(watchingListFilter);
+  final todos = ref.watch(watchingHistoryProvider);
+
+  for (final value in todos.values) {
+    print(value.id);
+  }
+  switch (filter) {
+    case FilterList.Completado:
+      return todos.values.where((todo) => todo.isCompleted).toList();
+    case FilterList.Viendo:
+      return todos.values.where((todo) => !todo.isCompleted).toList();
+    case FilterList.Todo:
+      return todos.values.toList();
+  }
+});
+
+final favoriteAnimesProvider =
+    NotifierProvider<StorageAnimesNotifier, Map<int, Anime>>(() {
+  return StorageAnimesNotifier(localStorageRepository: localStorageRepository);
+});
+
+class HomeFavorites extends HookWidget {
   const HomeFavorites({super.key});
 
   @override
-  HomeFavoritesState createState() => HomeFavoritesState();
-}
-
-class HomeFavoritesState extends ConsumerState<HomeFavorites>
-    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
-  late TabController tabController;
-  int index = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    tabController = TabController(length: 2, vsync: this)
-      ..addListener(() {
-        setState(() => index = tabController.index);
-      });
-    ref.read(favoriteAnimesProvider.notifier).loadNextPage();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    super.build(context);
+    final tabController = useTabController(initialLength: 2);
 
     final size = MediaQuery.of(context).size;
 
@@ -52,9 +60,7 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
               ),
             ]),
           ),
-          actions: const [
-            SearchIcon()
-          ],
+          actions: const [SearchIcon()],
         ),
         body: TabBarView(
           controller: tabController,
@@ -64,9 +70,6 @@ class HomeFavoritesState extends ConsumerState<HomeFavorites>
           ],
         ));
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
 
 // ********************************************************** //
@@ -83,6 +86,13 @@ class _FavoritesView extends ConsumerStatefulWidget {
 class _FavoritesViewState extends ConsumerState<_FavoritesView> {
   bool isLastPage = false;
   bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    ref.read(favoriteAnimesProvider.notifier).loadNextPage();
+  }
 
   void loadNextPage() async {
     if (isLoading || isLastPage) return;
@@ -129,7 +139,7 @@ class _FavoritesViewState extends ConsumerState<_FavoritesView> {
 // * -----------------  HISTORY PAGE  --------------------- * //
 // ********************************************************** //
 
-class _HistoryPage extends ConsumerStatefulWidget {
+class _HistoryPage extends StatefulHookConsumerWidget {
   const _HistoryPage();
 
   @override
@@ -139,22 +149,16 @@ class _HistoryPage extends ConsumerStatefulWidget {
 class _HistoryPageState extends ConsumerState<_HistoryPage> {
   bool isWatchinLastPage = false;
   bool isWatchinLoading = false;
-  late final ScrollController controller;
-
-  List<Chapter> history = [];
 
   ValueNotifier label = ValueNotifier('Todo');
   ValueNotifier<bool?> isCompleted = ValueNotifier(null);
-
-  final estados = ["Todo", "Completado", "Viendo"];
 
   void loadWatchin() async {
     if (isWatchinLoading || isWatchinLastPage) return;
     isWatchinLoading = true;
     setState(() {});
-    final animes = await ref
-        .read(watchingHistoryProvider.notifier)
-        .loadNextPage(isCompleted.value);
+    final animes =
+        await ref.read(watchingHistoryProvider.notifier).loadNextPage();
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -169,12 +173,10 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   @override
   void initState() {
     super.initState();
-    controller = ScrollController();
-    filterChapters('');
-    controller.addListener(listen);
+    ref.read(watchingHistoryProvider.notifier).loadNextPage();
   }
 
-  void listen() {
+  void listen(ScrollController controller) {
     if (controller.position.pixels >
         (controller.position.maxScrollExtent - 200)) {
       loadWatchin();
@@ -190,36 +192,16 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     );
   }
 
-  Future<void> filterChapters(String e) async {
-    switch (e) {
-      case "Completado":
-        isCompleted.value = true;
-        history = await ref
-            .refresh(watchingHistoryProvider.notifier)
-            .loadNextPage(true);
-        setState(() {});
-        break;
-      case "Viendo":
-        isCompleted.value = false;
-        history = await ref
-            .refresh(watchingHistoryProvider.notifier)
-            .loadNextPage(false);
-        setState(() {});
-        break;
-      default:
-        isCompleted.value = null;
-        history = await ref
-            .refresh(watchingHistoryProvider.notifier)
-            .loadNextPage(null);
-        setState(() {});
-        break;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
     final textStyle = Theme.of(context).textTheme;
+
+    final ScrollController controller = useScrollController();
+
+    controller.addListener(() => listen(controller));
+
+    final chapters = ref.watch(filteredAnimes);
 
     return Scaffold(
       body: CustomScrollView(
@@ -239,23 +221,22 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          label.value,
-                          style: textStyle.labelLarge?.copyWith(color: color.primary),
+                          ref.watch(watchingListFilter).name,
+                          style: textStyle.labelLarge
+                              ?.copyWith(color: color.primary),
                         ),
                       ],
                     ),
-                    itemBuilder: (context) => estados
+                    itemBuilder: (context) => FilterList.values
                         .map((e) => PopupMenuItem(
                               child: Text(
-                                e,
+                                e.name,
                                 style: textStyle.titleSmall,
                               ),
                               onTap: () async {
-                                setState(() {
-                                  isWatchinLastPage = false;
-                                  label.value = e;
-                                });
-                                await filterChapters(e);
+                                ref
+                                    .read(watchingListFilter.notifier)
+                                    .update((state) => e);
                               },
                             ))
                         .toList()),
@@ -298,7 +279,7 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
               ],
             ),
           )),
-          if (history.isEmpty)
+          if (chapters.isEmpty)
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 500,
@@ -315,11 +296,11 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
                 ),
               ),
             ),
-          if (history.isNotEmpty)
+          if (chapters.isNotEmpty)
             SliverList.builder(
-              itemCount: history.length,
+              itemCount: chapters.length,
               itemBuilder: (BuildContext context, int index) {
-                final chapter = history[index];
+                final chapter = chapters[index];
 
                 final Anime anime = Anime(
                   animeUrl: chapter.animeUrl!,
@@ -344,12 +325,6 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
   }
 }
 
@@ -431,12 +406,13 @@ class _HistoryTileState extends ConsumerState<_HistoryTile> {
                 const SizedBox(height: 3),
                 if (widget.chapter.isCompleted)
                   Text('Completado',
-                      style:
-                          textStyle.labelMedium?.copyWith(color: color.outline)),
+                      style: textStyle.labelMedium
+                          ?.copyWith(color: color.outline)),
                 if (widget.chapter.isWatching)
                   Text(
                     'Restante ${formatDuration(res)}',
-                    style: textStyle.labelMedium?.copyWith(color: color.outline),
+                    style:
+                        textStyle.labelMedium?.copyWith(color: color.outline),
                   ),
               ],
             ),
@@ -452,7 +428,7 @@ class _HistoryTileState extends ConsumerState<_HistoryTile> {
                             color: color.primary,
                           )
                         : const Icon(Icons.remove_red_eye_outlined)),
-      
+
                 PopupMenuButton(
                   position: PopupMenuPosition.under,
                   itemBuilder: (context) {
@@ -473,11 +449,11 @@ class _HistoryTileState extends ConsumerState<_HistoryTile> {
                         ),
                         onTap: () async {
                           final anime = chapterToAnime(widget.chapter);
-      
+
                           ref
                               .read(animeProvider.notifier)
                               .update((state) => anime);
-      
+
                           await ref
                               .read(isWatchingAnimeProvider.notifier)
                               .loadLastWatchingChapter(widget.chapter.title)
@@ -504,24 +480,12 @@ class _HistoryTileState extends ConsumerState<_HistoryTile> {
                           ],
                         ),
                         onTap: () async {
-                          if (widget.isCompleted != null) {
-                            await ref
-                                .read(isWatchingAnimeProvider.notifier)
-                                .removeChapter(widget.chapter)
-                                .then((value) => ref
-                                    .refresh(watchingHistoryProvider.notifier)
-                                    .loadNextPage(widget.isCompleted));
-                            setState(() {});
-                          } else {
-                            await ref
-                                .read(isWatchingAnimeProvider.notifier)
-                                .removeChapter(widget.chapter)
-                                .then((value) {
-                              ref
+                          await ref
+                              .read(watchingHistoryProvider.notifier)
+                              .removeChapter(widget.chapter)
+                              .then((value) => ref
                                   .refresh(watchingHistoryProvider.notifier)
-                                  .loadNextPage(null);
-                            });
-                          }
+                                  .loadNextPage());
                         },
                       ),
                       // const PopupMenuItem(child: Text('Ver detalles')),

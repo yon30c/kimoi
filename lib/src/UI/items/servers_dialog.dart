@@ -1,6 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
 import 'package:kimoi/src/domain/domain.dart';
 import 'package:kimoi/src/infrastructure/infrastructure.dart';
@@ -188,6 +190,7 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
                       ref
                           .read(fixedServerProvider.notifier)
                           .update((state) => e);
+
                       context.pop();
                       context.push('/local-player', extra: chapt);
                     }))
@@ -197,6 +200,10 @@ class ServerDialogState extends ConsumerState<ServerDialog> {
   }
 }
 
+final updateFixedServerProvider = ProviderFamily((ref, FixedServer server) {
+  ref.watch(fixedServerProvider.notifier).update((state) => server);
+});
+
 final fixedServerProvider = StateProvider<FixedServer?>((ref) => null);
 
 final videoServers = StateProvider((ref) async {
@@ -204,50 +211,52 @@ final videoServers = StateProvider((ref) async {
   List<Video> videos = [];
   final url = servers!.url;
 
-  if (url.contains('yourupload')) {
-    final video = await YourUploadExtractor().videoFromUrl(url);
-    if (video != null) {
-      videos.add(video);
-    } else {
-      videos.addAll(await extract(servers.optional!));
-    }
-  } else if (url.contains('mp4upload')) {
-    final video = await Mp4UploadExtractor().videosFromUrl(url);
-    if (video.isNotEmpty) {
-      videos.addAll(video);
-    } else {
-      videos.addAll(await extract(servers.optional!));
-    }
-  } else if (url.contains('ok.ru')) {
-    final vid = await OkruExtractor().videosFromUrl(url);
-    if (vid.isEmpty) {
-      videos.addAll(await extract(servers.optional!));
-    } else {
-      videos.addAll(vid);
-    }
-  } else if (url.contains('mixdro')) {
-    final video = await MixDropExtractor().videoFromUrl(url);
-    if (video.isNotEmpty) {
-      videos.addAll(video);
-    } else {
-      videos.addAll(await extract(servers.optional!));
-    }
-  } else if (url.contains('voe')) {
-    final video = await VoeExtractor().videoFromUrl(url);
-    if (video.isNotEmpty) {
-      videos.addAll(video);
-    } else {
-      videos.addAll(await extract(servers.optional!));
-    }
-  } else if (url.contains("uqload")) {
-    final video = await UqloadExtractor().videoFromUrl(url);
-    if (video != null) {
-      videos.add(video);
-    } else {
-      videos.addAll(await extract(servers.optional!));
-    }
-  }
-  return videos;
+  return extract([url]);
+
+  // if (url.contains('yourupload')) {
+  //   final video = await YourUploadExtractor().videoFromUrl(url);
+  //   if (video != null) {
+  //     videos.add(video);
+  //   } else {
+  //     print("optional: ${servers.optional}");
+  //     videos.addAll(await extract(servers.optional!));
+  //   }
+  // } else if (url.contains('mp4upload')) {
+  //   final video = await Mp4UploadExtractor().videosFromUrl(url);
+  //   if (video.isNotEmpty) {
+  //     videos.addAll(video);
+  //   } else {
+  //     videos.addAll(await extract(servers.optional!));
+  //   }
+  // } else if (url.contains('ok.ru')) {
+  //   final vid = await OkruExtractor().videosFromUrl(url);
+  //   if (vid.isEmpty) {
+  //     videos.addAll(await extract(servers.optional!));
+  //   } else {
+  //     videos.addAll(vid);
+  //   }
+  // } else if (url.contains('mixdro')) {
+  //   final video = await MixDropExtractor().videoFromUrl(url);
+  //   if (video.isNotEmpty) {
+  //     videos.addAll(video);
+  //   } else {
+  //     videos.addAll(await extract(servers.optional!));
+  //   }
+  // } else if (url.contains('voe')) {
+  //   final video = await VoeExtractor().videoFromUrl(url);
+  //   if (video.isNotEmpty) {
+  //     videos.addAll(video);
+  //   } else {
+  //     videos.addAll(await extract(servers.optional!));
+  //   }
+  // } else if (url.contains("uqload")) {
+  //   final video = await UqloadExtractor().videoFromUrl(url);
+  //   if (video != null) {
+  //     videos.add(video);
+  //   } else {
+  //     videos.addAll(await extract(servers.optional!));
+  //   }
+  // }
 });
 
 class FixedServer {
@@ -258,29 +267,37 @@ class FixedServer {
   FixedServer({required this.name, required this.url, this.optional});
 }
 
-Future<List<Video>> extract(String url) async {
+Future<List<Video>> extract(List<String> servers) async {
   List<Video> videos = [];
-  if (url.contains('yourupload')) {
-    final video = await YourUploadExtractor().videoFromUrl(url);
-    if (video != null) videos.add(video);
-  } else if (url.contains('mp4upload')) {
-    final video = await Mp4UploadExtractor().videosFromUrl(url);
-    if (video.isNotEmpty) videos.addAll(video);
-  } else if (url.contains('ok.ru')) {
-    videos.addAll(await OkruExtractor().videosFromUrl(url));
-  } /* else if (url.contains('solid')) {
+  for (var url in servers) {
+    if (url.contains('yourupload')) {
+      final video = await YourUploadExtractor().videoFromUrl(url);
+      if (video != null) videos.add(video);
+      if (videos.isNotEmpty) return videos;
+    } else if (url.contains('mp4upload')) {
+      final video = await Mp4UploadExtractor().videosFromUrl(url);
+      if (video.isNotEmpty) videos.addAll(video);
+      if (videos.isNotEmpty) return videos;
+    } else if (url.contains('ok.ru')) {
+      videos.addAll(await OkruExtractor().videosFromUrl(url));
+      if (videos.isNotEmpty) return videos;
+    } /* else if (url.contains('solid')) {
     final videos = await SolidFilesExtractor().videoFromUrl(url);
     if (videos.isNotEmpty) videos.addAll(videos);
   } */
-  else if (url.contains('mixdro')) {
-    final video = await MixDropExtractor().videoFromUrl(url);
-    if (video.isNotEmpty) videos.addAll(video);
-  } else if (url.contains('voe')) {
-    final video = await MixDropExtractor().videoFromUrl(url);
-    if (video.isNotEmpty) videos.addAll(video);
-  } else if (url.contains("uqload")) {
-    final video = await UqloadExtractor().videoFromUrl(url);
-    if (video != null) videos.add(video);
+    else if (url.contains('mixdro')) {
+      final video = await MixDropExtractor().videoFromUrl(url);
+      if (video.isNotEmpty) videos.addAll(video);
+      if (videos.isNotEmpty) return videos;
+    } else if (url.contains('voe')) {
+      final video = await VoeExtractor().videoFromUrl(url);
+      if (video.isNotEmpty) videos.addAll(video);
+      if (videos.isNotEmpty) return videos;
+    } else if (url.contains("uqload")) {
+      final video = await UqloadExtractor().videoFromUrl(url);
+      if (video != null) videos.add(video);
+      if (videos.isNotEmpty) return videos;
+    }
   }
 
   return videos;

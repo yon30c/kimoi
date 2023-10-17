@@ -18,6 +18,7 @@ class UqloadExtractor extends HeadlessInAppWebView {
     String? html;
 
     bool isLoading = true;
+    bool lastStep = false;
 
     try {
       HeadlessInAppWebView(
@@ -43,13 +44,11 @@ class UqloadExtractor extends HeadlessInAppWebView {
           .substringAfter('sources: ["')
           .substringBefore('"],');
 
-        return Video(
+      return Video(
           url: basicUrl,
           quality: 'Uqload',
           videoUrl: basicUrl,
           headers: headers);
-
-      
     } on Exception catch (e) {
       debugPrint('$e');
       return null;

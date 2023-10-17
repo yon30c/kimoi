@@ -1,15 +1,15 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/main.dart';
 import 'package:kimoi/src/infrastructure/datasources/monoschinos_datasource.dart';
 import 'package:kimoi/src/utils/extensions/extension.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
-import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/local_storage_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
@@ -18,6 +18,7 @@ import 'package:kimoi/src/infrastructure/models/extra_data.dart';
 
 import '../../../domain/domain.dart';
 import '../../items/items.dart';
+import '../home/home.dart';
 
 final isFavoriteProvider =
     FutureProvider.family.autoDispose((ref, String animeTitle) {
@@ -37,7 +38,7 @@ final lastChapterProvider2 =
   return localStorageRepository.loadLastWatchingChapter(animeTitle);
 });
 
-class DetailsScreen extends ConsumerStatefulWidget {
+class DetailsScreen extends StatefulHookConsumerWidget {
   static const String name = 'anime-screen';
 
   const DetailsScreen({super.key});
@@ -46,8 +47,7 @@ class DetailsScreen extends ConsumerStatefulWidget {
   DetailsScreenState createState() => DetailsScreenState();
 }
 
-class DetailsScreenState extends ConsumerState<DetailsScreen>
-    with SingleTickerProviderStateMixin {
+class DetailsScreenState extends ConsumerState<DetailsScreen> {
   int index = 0;
   XData? _xData;
   bool isSorted = true;
@@ -55,10 +55,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
   bool isLoading = true;
   List<List<Chapter>> subList = [];
   List<Chapter> sortedEpisodes = [];
-  late TabController tabController;
   bool isPermission = false;
-  late ScrollController scrollController;
-  final tabs = [const Tab(text: 'Episodios'), const Tab(text: 'Relacionados')];
 
   String get sortLabel {
     if (isSorted) return "Ascendente";
@@ -71,11 +68,10 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
       final animeInfo = ref.watch(getAnimeInfoProvider).first;
       getXData(
           anime, animeInfo.title == '' ? anime.animeTitle : animeInfo.title);
-    } else if(anime.animeTitle.contains("86 2nd")) {
+    } else if (anime.animeTitle.contains("86 2nd")) {
       getXData(anime, "86 2");
       await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
-    }
-     else {
+    } else {
       getXData(anime, anime.animeTitle);
       await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
     }
@@ -87,8 +83,6 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
   void initState() {
     super.initState();
     final anime = ref.read(animeProvider);
-    scrollController = ScrollController();
-    tabController = TabController(length: 2, vsync: this);
     getAniInfo(anime!.animeUrl, anime);
     // scrollController.addListener(listen);
   }
@@ -134,7 +128,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
       actions: [
         if (xData.trailer != null)
           FilledButton.icon(
-              style:  ButtonStyle(
+              style: ButtonStyle(
                   visualDensity: VisualDensity.compact,
                   backgroundColor: MaterialStatePropertyAll(color.background)),
               onPressed: () {
@@ -144,7 +138,10 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
                         ));
                 Navigator.of(context).push(route);
               },
-              label: Text("Ver trailer", style: TextStyle(color: color.onBackground),),
+              label: Text(
+                "Ver trailer",
+                style: TextStyle(color: color.onBackground),
+              ),
               icon: const FaIcon(
                 FontAwesomeIcons.youtube,
                 color: Colors.red,
@@ -196,6 +193,8 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
     final anime = ref.watch(animeProvider);
     final animeInfoL = ref.watch(getAnimeInfoProvider);
 
+    final scrollController = useScrollController();
+
     if (_xData == null || animeInfoL.isEmpty) {
       return const Scaffold(body: FullScreenLoader());
     }
@@ -241,64 +240,66 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
             )
           ])),
           SliverToBoxAdapter(
-            child: 
-            anime.type == "Pelicula" && animeInfo.episodes.first.length == 1 ? const SizedBox() :
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.all(Radius.circular(5)),
-                color: color.secondaryContainer,
-              ),
-              margin: const EdgeInsets.all(8),
-              alignment: Alignment.center,
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Text(
-                "Episodios",
-                style: textStyle.titleMedium
-                    ?.copyWith(color: color.onPrimaryContainer),
-              ),
-            ),
+            child: anime.type == "Pelicula" &&
+                    animeInfo.episodes.first.length == 1
+                ? const SizedBox()
+                : Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.all(Radius.circular(5)),
+                      color: color.secondaryContainer,
+                    ),
+                    margin: const EdgeInsets.all(8),
+                    alignment: Alignment.center,
+                    width: double.infinity,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    child: Text(
+                      "Episodios",
+                      style: textStyle.titleMedium
+                          ?.copyWith(color: color.onPrimaryContainer),
+                    ),
+                  ),
           ),
-
-          
           SliverToBoxAdapter(
-            child: anime.type == "Pelicula" && animeInfo.episodes.first.length == 1 ? const SizedBox(height: 10): 
-             Row(
-              children: [
-                TextButton.icon(
-                    label: Text(sortLabel),
-                    onPressed: () {
-                      isSorted = !isSorted;
-                      sortedEpisodes = sortedEpisodes.reversed.toList();
-                      setState(() {});
-                    },
-                    icon: const Icon(Icons.sort)),
-                const Spacer(),
-                if (subList.length > 1)
-                  DropdownMenu(
-                      hintText:
-                          '${subList.first.first.chapterNumber} - ${subList.first.last.chapterNumber}',
-                      inputDecorationTheme: const InputDecorationTheme(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.only(left: 15),
-                      ),
-                      initialSelection: <List<Chapter>>[subList.first],
-                      dropdownMenuEntries: subList
-                          .map((e) => DropdownMenuEntry(
-                              value: e,
-                              label:
-                                  '${e.first.chapterNumber} - ${e.last.chapterNumber}'))
-                          .toList(),
-                      onSelected: (value) {
-                        setState(() {
-                          final val = value as List<Chapter>;
-                          isSorted
-                              ? sortedEpisodes = val
-                              : sortedEpisodes = val.reversed.toList();
-                        });
-                      }),
-              ],
-            ),
+            child: anime.type == "Pelicula" &&
+                    animeInfo.episodes.first.length == 1
+                ? const SizedBox(height: 10)
+                : Row(
+                    children: [
+                      TextButton.icon(
+                          label: Text(sortLabel),
+                          onPressed: () {
+                            isSorted = !isSorted;
+                            sortedEpisodes = sortedEpisodes.reversed.toList();
+                            setState(() {});
+                          },
+                          icon: const Icon(Icons.sort)),
+                      const Spacer(),
+                      if (subList.length > 1)
+                        DropdownMenu(
+                            hintText:
+                                '${subList.first.first.chapterNumber} - ${subList.first.last.chapterNumber}',
+                            inputDecorationTheme: const InputDecorationTheme(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.only(left: 15),
+                            ),
+                            initialSelection: <List<Chapter>>[subList.first],
+                            dropdownMenuEntries: subList
+                                .map((e) => DropdownMenuEntry(
+                                    value: e,
+                                    label:
+                                        '${e.first.chapterNumber} - ${e.last.chapterNumber}'))
+                                .toList(),
+                            onSelected: (value) {
+                              setState(() {
+                                final val = value as List<Chapter>;
+                                isSorted
+                                    ? sortedEpisodes = val
+                                    : sortedEpisodes = val.reversed.toList();
+                              });
+                            }),
+                    ],
+                  ),
           ),
           SliverList.builder(
             itemCount: sortedEpisodes.length,
@@ -326,13 +327,6 @@ class DetailsScreenState extends ConsumerState<DetailsScreen>
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    tabController.dispose();
-    scrollController.dispose();
-    super.dispose();
   }
 }
 

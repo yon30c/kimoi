@@ -1,29 +1,16 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kimoi/src/infrastructure/infrastructure.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../../domain/domain.dart';
-import 'local_storage_provider.dart';
+
+final localStorageRepository = LocalStorageRepositoryImpl(IsarDatasource());
 
 
-final favoriteAnimesProvider =
-    StateNotifierProvider<StorageAnimesNotifier, Map<int, Anime>>((ref) {
-  final localStorageRepository = ref.watch(localStorageRepositoryProvider);
-  return StorageAnimesNotifier(localStorageRepository: localStorageRepository);
-});
-
-/*
-  {
-    1234: Movie,
-    1645: Movie,
-    6523: Movie,
-  }
-
-*/
-
-class StorageAnimesNotifier extends StateNotifier<Map<int, Anime>> {
+class StorageAnimesNotifier extends Notifier<Map<int, Anime>> {
   int page = 0;
   final LocalStorageRepository localStorageRepository;
 
-  StorageAnimesNotifier({required this.localStorageRepository}) : super({});
+  StorageAnimesNotifier({required this.localStorageRepository});
 
   Future<List<Anime>> loadNextPage() async {
     final animes =
@@ -47,5 +34,10 @@ class StorageAnimesNotifier extends StateNotifier<Map<int, Anime>> {
     } else {
       state = {...state, anime.id: anime};
     }
+  }
+
+  @override
+  Map<int, Anime> build() {
+    return {};
   }
 }

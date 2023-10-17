@@ -1,50 +1,39 @@
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 
 import '../../domain/domain.dart';
 
-class AnimeMasonry extends ConsumerStatefulWidget {
+// class AnimeMasonry extends StatefulHookConsumerWidget {
+
+//   @override
+//   AnimeMasonryState createState() => AnimeMasonryState();
+// }
+
+class AnimeMasonry extends HookConsumerWidget {
   final List<Anime> animes;
   final VoidCallback? loadNextPage;
 
   const AnimeMasonry({super.key, required this.animes, this.loadNextPage});
 
   @override
-  AnimeMasonryState createState() => AnimeMasonryState();
-}
+  Widget build(BuildContext context, ref) {
+    useAutomaticKeepAlive();
 
-class AnimeMasonryState extends ConsumerState<AnimeMasonry>
-    with AutomaticKeepAliveClientMixin {
-  final scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
+    final scrollController = useScrollController();
 
     scrollController.addListener(() {
-      if (widget.loadNextPage == null) return;
+      if (loadNextPage == null) return;
 
       if ((scrollController.position.pixels + 100) >=
           scrollController.position.maxScrollExtent) {
-        widget.loadNextPage!();
+        loadNextPage!();
       }
     });
-  }
 
-  @override
-  void dispose() {
-    scrollController.removeListener(() {});
-    scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
       child: GridView.builder(
@@ -56,16 +45,19 @@ class AnimeMasonryState extends ConsumerState<AnimeMasonry>
           mainAxisExtent: 240,
           crossAxisSpacing: 2,
         ),
-        itemCount: widget.animes.length,
+        itemCount: animes.length,
         itemBuilder: (context, index) {
-          return animePosterLink(anime: widget.animes[index]);
+          return animePosterLink(
+              anime: animes[index], context: context, ref: ref);
         },
       ),
     );
   }
 
-  Widget animePosterLink({required Anime anime}) {
-
+  Widget animePosterLink(
+      {required Anime anime,
+      required BuildContext context,
+      required WidgetRef ref}) {
     final textStyle = Theme.of(context).textTheme;
 
     return GestureDetector(
@@ -82,19 +74,15 @@ class AnimeMasonryState extends ConsumerState<AnimeMasonry>
       },
       child: Card(
         shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(2)),
-        
         child: Column(
           children: [
             Container(
               height: 180,
               decoration: BoxDecoration(
-              image: DecorationImage(
-                image: 
-               NetworkImage(anime.imageUrl),
-              fit: BoxFit.cover,
-              )
-                
-              ),
+                  image: DecorationImage(
+                image: NetworkImage(anime.imageUrl),
+                fit: BoxFit.cover,
+              )),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -111,7 +99,4 @@ class AnimeMasonryState extends ConsumerState<AnimeMasonry>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
