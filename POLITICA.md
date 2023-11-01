@@ -1,4 +1,4 @@
-Última actualización: 04-10-2023
+Última actualización: 01-11-2023
 
 Agradecemos tu interés en nuestra aplicación de animes. Queremos asegurarte que respetamos y
 protegemos tu privacidad mientras utilizas nuestra aplicación. Esta política de privacidad tiene como
@@ -32,7 +32,7 @@ de privacidad para estar informado sobre cómo protegemos tu privacidad.
 
 Contacto:
 Si tienes alguna pregunta, inquietud o solicitud relacionada con nuestra política de privacidad o el uso
-de nuestra aplicación de tareas, no dudes en ponerte en contacto con nosotros a través de [yoncst30@gmail.com].
+de nuestra aplicación de animes, no dudes en ponerte en contacto con nosotros a través de [yoncst30@gmail.com].
 
 Ten en cuenta que esta política de privacidad se aplica únicamente a nuestra aplicación de animes y no
 nos hacemos responsables de las prácticas de privacidad de otras aplicaciones o sitios web a los que
