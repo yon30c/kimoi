@@ -2,7 +2,7 @@
 
 Aplicacion para ver animes. 
 
-Prueba la app: [kimo-v1.4.1.apk](https://github.com/yon30c/kimoi/releases/download/v1.4.1-beta/kimo-V1.4.1.apk)
+Prueba la app: [kimo-v1.4.3.apk](https://github.com/yon30c/kimoi/releases/download/v1.4.3-beta/kimo-1.4.3.apk)
 
 
 
