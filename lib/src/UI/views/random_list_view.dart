@@ -3,9 +3,9 @@ import 'dart:ui';
 import 'package:animate_do/animate_do.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/items/servers_dialog.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:kimoi/src/UI/components/servers_dialog.dart';
 import 'package:kimoi/src/domain/domain.dart';
 
 import '../providers/providers.dart';
@@ -78,7 +78,6 @@ class RandomSlideState extends ConsumerState<RandomSlide> {
         ]);
 
     final textStyle = Theme.of(context).textTheme;
-    final color = Theme.of(context).colorScheme;
 
     return DecoratedBox(
       decoration: decoration,

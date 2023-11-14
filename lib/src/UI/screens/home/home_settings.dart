@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/main.dart';
 import 'package:kimoi/src/config/theme/theme.dart';
 import 'package:kimoi/src/utils/updater/updater.dart';
@@ -21,16 +22,16 @@ Routes getIniL() {
   };
 }
 
-class HomeSettings extends StatefulWidget {
+class HomeSettings extends StatefulHookConsumerWidget {
   static const String name = 'settings-screen';
 
   const HomeSettings({super.key});
 
   @override
-  State<HomeSettings> createState() => _HomeSettingsState();
+  HomeSettingsState createState() => HomeSettingsState();
 }
 
-class _HomeSettingsState extends State<HomeSettings> {
+class HomeSettingsState extends ConsumerState<HomeSettings> {
   late UpdaterController controller;
   late Updater updater;
 
@@ -132,6 +133,7 @@ class _HomeSettingsState extends State<HomeSettings> {
       ThemeMode.light => "Desactivado"
     };
 
+
     final textStyle = Theme.of(context).textTheme;
     final color = Theme.of(context).colorScheme;
     return Scaffold(
@@ -182,6 +184,7 @@ class _HomeSettingsState extends State<HomeSettings> {
                 child: Text('Ajustes',
                     style:
                         textStyle.titleMedium?.copyWith(color: color.primary))),
+           
             ListTile(
               visualDensity: VisualDensity.compact,
               title: const Text('Pantalla inicial'),
@@ -207,28 +210,45 @@ class _HomeSettingsState extends State<HomeSettings> {
               title: const Text('Color de tema'),
               subtitle: Row(
                 children: [
-                  Container(width: 30, height: 10 , decoration: BoxDecoration(
-                  color: themeController.selectedColor,
-                  borderRadius: BorderRadius.circular(2,))),
-                  const SizedBox(width: 8,),
-                  Text(switch (themeController.selectedColor) {
-                        Colors.blue => "Azul",
-                        Colors.redAccent => "Rojo",
-                        const Color.fromRGBO(46, 125, 50, 1) => "Verde",
-                        Colors.deepPurple => "Purpura",
-                        Color() => "", 
-                  }, style: textStyle.labelMedium?.copyWith(color: themeController.selectedColor),),
-                  const SizedBox(width: 8,),
-                  Container(width: 30, height: 10 , 
-                   decoration: BoxDecoration(
-                  color: themeController.selectedColor,
-                  borderRadius: BorderRadius.circular(2)
-
-                  ),),
+                  Container(
+                      width: 30,
+                      height: 10,
+                      decoration: BoxDecoration(
+                          color: themeController.selectedColor,
+                          borderRadius: BorderRadius.circular(
+                            2,
+                          ))),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                  Text(
+                    switch (themeController.selectedColor) {
+                      Colors.blue => "Azul",
+                      Colors.redAccent => "Rojo",
+                      const Color.fromRGBO(46, 125, 50, 1) => "Verde",
+                      Colors.deepPurple => "Purpura",
+                      Color() => "",
+                    },
+                    style: textStyle.labelMedium
+                        ?.copyWith(color: themeController.selectedColor),
+                  ),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                  Container(
+                    width: 30,
+                    height: 10,
+                    decoration: BoxDecoration(
+                        color: themeController.selectedColor,
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
                 ],
               ),
               onTap: () {
-                showDialog(context: context, builder: (context) => const ColorThemeDialog(),);
+                showDialog(
+                  context: context,
+                  builder: (context) => const ColorThemeDialog(),
+                );
               },
             ),
             Container(
@@ -401,8 +421,6 @@ class _ThemeModeDialogState extends State<ThemeModeDialog> {
   }
 }
 
-
-
 class ColorThemeDialog extends StatefulWidget {
   const ColorThemeDialog({
     super.key,
@@ -425,40 +443,39 @@ class _ColorThemeDialogState extends State<ColorThemeDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       contentPadding: const EdgeInsets.only(left: 15, top: 5),
       title: const Text("Color de tema"),
-      content: Column(mainAxisSize: MainAxisSize.min, children: 
-      colors
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: colors
             .map((e) => RadioListTile<Color>(
                 visualDensity: VisualDensity.compact,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 0),
                 activeColor: e,
-                title:  Row(
-                children: [
-                  Text(switch (e) {
-                        Colors.blue => "Azul",
-                        Colors.redAccent => "Rojo",
-                        Colors.deepPurple => "Purpura",
-                        const Color.fromRGBO(46, 125, 50, 1) => "Verde",
-                        Color() => "", 
-                  }),
-                  const Spacer(),
-                  Icon( Icons.circle, color: e),
-
-                  const SizedBox(width: 20,)
-                  
-                ],
-              ),
+                title: Row(
+                  children: [
+                    Text(switch (e) {
+                      Colors.blue => "Azul",
+                      Colors.redAccent => "Rojo",
+                      Colors.deepPurple => "Purpura",
+                      const Color.fromRGBO(46, 125, 50, 1) => "Verde",
+                      Color() => "",
+                    }),
+                    const Spacer(),
+                    Icon(Icons.circle, color: e),
+                    const SizedBox(
+                      width: 20,
+                    )
+                  ],
+                ),
                 groupValue: themeMode,
                 value: e,
                 onChanged: (value) async {
-                  await themeController.updateSelectedColor(e)
-                      .then((value) {
+                  await themeController.updateSelectedColor(e).then((value) {
                     themeMode = e;
                     setState(() {});
                     context.pop();
                   });
                 }))
             .toList(),
-      
       ),
       actions: [
         TextButton(

@@ -8,7 +8,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:better_player_v3/better_player.dart';
 
-import 'package:kimoi/src/UI/items/items.dart';
+import 'package:kimoi/src/UI/components/items.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
 import 'package:kimoi/src/utils/helpers/responsive.dart';
 import 'package:kimoi/src/utils/extensions/extension.dart';
@@ -147,7 +147,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
             autoPlay: true,
             eventListener: listen,
 
-            // TODO: Error builder
             errorBuilder: (context, errorMessage) {
               return Center(
                 child: TextButton(
@@ -179,7 +178,6 @@ class LocalPlayerState extends ConsumerState<LocalPlayer> {
     serverName.value = videoList.first.quality;
     chapterName.value = widget.videos.chapter;
 
-    print(" initialize datasource: ${videoList.first.url}");
 
     BetterPlayerDataSource dataSource = BetterPlayerDataSource(
       BetterPlayerDataSourceType.network,
@@ -1103,8 +1101,6 @@ class PlayerController with ChangeNotifier {
       controller.videoPlayerController?.value.duration?.inSeconds;
 
   bool callFunction() {
-    print(position);
-    print(duration);
     if (position != null) {
       _position = position!;
     }

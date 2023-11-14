@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/screens/home/home.dart';
 
 final estadoProvider = StateProvider((ref) => 0);

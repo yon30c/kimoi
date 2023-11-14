@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:kimoi/src/UI/items/rewind_and_forward_layout.dart';
-import 'package:kimoi/src/UI/items/ripple_side.dart';
-import 'package:kimoi/src/UI/items/transitions.dart';
+import 'package:kimoi/src/UI/components/rewind_and_forward_layout.dart';
+import 'package:kimoi/src/UI/components/ripple_side.dart';
+import 'package:kimoi/src/UI/components/transitions.dart';
 
 import '../../utils/helpers/responsive.dart';
 

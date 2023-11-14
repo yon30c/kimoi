@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/infrastructure/models/extra_data.dart';
 
 import '../../../domain/domain.dart';
@@ -62,7 +62,6 @@ class ChapterInfoNotifier extends StateNotifier<List<Chapter>> {
   bool isLoading = false;
 
   Future<void> getVideos(String url) async {
-    print(url);
     if (isLoading) return;
     isLoading = true;
 

@@ -18,7 +18,6 @@ class UqloadExtractor extends HeadlessInAppWebView {
     String? html;
 
     bool isLoading = true;
-    bool lastStep = false;
 
     try {
       HeadlessInAppWebView(

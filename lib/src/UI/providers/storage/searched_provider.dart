@@ -1,5 +1,5 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kimoi/src/domain/entities/searched_anime.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../../domain/domain.dart';
 import 'local_storage_provider.dart';

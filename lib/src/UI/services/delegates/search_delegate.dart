@@ -46,7 +46,7 @@ class SearchAnimeDelegate extends SearchDelegate<Anime?> {
 
   Widget buildResultsAndSuggestions() {
     return StreamBuilder(
-      initialData: initialAnimes, // TODO,
+      initialData: initialAnimes,
       stream: debouncedMovies.stream,
       builder: (context, snapshot) {
         final movies = snapshot.data ?? [];

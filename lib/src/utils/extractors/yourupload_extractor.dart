@@ -27,8 +27,6 @@ class YourUploadExtractor extends HeadlessInAppWebView {
 
       final basicUrl = baseData.substringAfter("file: '").substringBefore("',");
 
-      print("basicUrl: $basicUrl");
-
       if (basicUrl.endsWith("novideo.mp4")) return null;
 
       return Video(

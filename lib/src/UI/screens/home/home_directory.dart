@@ -5,15 +5,16 @@ import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:kimoi/src/UI/items/filter_dialog.dart';
-import 'package:kimoi/src/UI/items/search_icon.dart';
+import 'package:kimoi/src/UI/components/filter_dialog.dart';
+import 'package:kimoi/src/UI/components/search_icon.dart';
 import 'package:kimoi/src/UI/providers/jikan/jikan_provider.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/screens/player/youtube_player.dart';
+import 'package:kimoi/src/UI/views/views.dart';
 // import 'package:kimoi/src/UI/providers/jikan/jikan_provider.dart';
 import 'package:kimoi/src/infrastructure/models/jikan_upcoming.dart' as up;
 
-import '../../items/items.dart';
+import '../../components/items.dart';
 import '../../providers/providers.dart';
 
 class HomeDirectory extends HookWidget {
@@ -281,14 +282,18 @@ class _AllAnimesPageState extends ConsumerState<_AllAnimesPage> {
                 ),
               )),
               if (animes.isEmpty)
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                      height: size.height * 0.5,
-                      width: size.width,
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      )),
-                ),
+               SliverGrid.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, mainAxisExtent: size.height * 0.38),
+                itemCount: 10,
+                itemBuilder: (BuildContext context, int index) {
+                  final size = MediaQuery.of(context).size;
+                  return AnimePlaceholder(
+                    height: size.height * 0.27,
+                    width: (size.width / 2) - 5,
+                  );
+                },
+              ),
               SliverGrid.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2, mainAxisExtent: size.height * 0.38),

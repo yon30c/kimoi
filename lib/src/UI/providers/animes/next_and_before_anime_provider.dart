@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart';
-import 'package:kimoi/src/UI/items/servers_dialog.dart';
+import 'package:kimoi/src/UI/components/servers_dialog.dart';
 import 'package:kimoi/src/domain/domain.dart';
 import 'package:kimoi/src/utils/extensions/extension.dart';
 

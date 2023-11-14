@@ -1,5 +1,5 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kimoi/src/UI/providers/news/news_repository_provider.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../../infrastructure/models/article_info.dart';
 

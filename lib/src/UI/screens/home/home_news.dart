@@ -3,11 +3,11 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:kimoi/src/UI/items/about_dialog.dart';
+import 'package:kimoi/src/UI/components/about_dialog.dart';
 import 'package:kimoi/src/UI/services/webview/webview.dart';
 
 import '../../../infrastructure/infrastructure.dart';
-import '../../items/items.dart';
+import '../../components/items.dart';
 import '../../providers/providers.dart';
 import '../screens.dart';
 

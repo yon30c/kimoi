@@ -1,10 +1,12 @@
+// ignore_for_file: constant_identifier_names
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:kimoi/src/UI/items/items.dart';
-import 'package:kimoi/src/UI/items/search_icon.dart';
+import 'package:kimoi/src/UI/components/items.dart';
+import 'package:kimoi/src/UI/components/search_icon.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
 import 'package:kimoi/src/UI/providers/storage/favorites_animes_provider.dart';
 import 'package:kimoi/src/UI/screens/player/local_player.dart';
@@ -19,9 +21,6 @@ final filteredAnimes = Provider<List<Chapter>>((ref) {
   final filter = ref.watch(watchingListFilter);
   final todos = ref.watch(watchingHistoryProvider);
 
-  for (final value in todos.values) {
-    print(value.id);
-  }
   switch (filter) {
     case FilterList.Completado:
       return todos.values.where((todo) => todo.isCompleted).toList();
@@ -33,7 +32,7 @@ final filteredAnimes = Provider<List<Chapter>>((ref) {
 });
 
 final favoriteAnimesProvider =
-    NotifierProvider<StorageAnimesNotifier, Map<int, Anime>>(() {
+    NotifierProvider<StorageAnimesNotifier, Map<String, Anime>>(() {
   return StorageAnimesNotifier(localStorageRepository: localStorageRepository);
 });
 
@@ -94,22 +93,9 @@ class _FavoritesViewState extends ConsumerState<_FavoritesView> {
     ref.read(favoriteAnimesProvider.notifier).loadNextPage();
   }
 
-  void loadNextPage() async {
-    if (isLoading || isLastPage) return;
-    isLoading = true;
-
-    final movies =
-        await ref.read(favoriteAnimesProvider.notifier).loadNextPage();
-    isLoading = false;
-
-    if (movies.isEmpty) {
-      isLastPage = true;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final favoriteMovies = ref.watch(favoriteAnimesProvider).values.toList();
+    final favoriteMovies = ref.watch(favoriteAnimesProvider);
     final colors = Theme.of(context).colorScheme;
 
     if (favoriteMovies.isEmpty) {
@@ -131,7 +117,11 @@ class _FavoritesViewState extends ConsumerState<_FavoritesView> {
       );
     }
 
-    return AnimeMasonry(loadNextPage: loadNextPage, animes: favoriteMovies);
+    final favoritesAnimes = favoriteMovies.values.toList();
+
+    return AnimeMasonry(
+        animes: favoritesAnimes,
+        loadNextPage: ref.read(favoriteAnimesProvider.notifier).loadNext);
   }
 }
 

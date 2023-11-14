@@ -2,13 +2,12 @@ import 'dart:math';
 
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:kimoi/src/UI/items/search_icon.dart';
-import 'package:kimoi/src/UI/items/servers_dialog.dart';
+import 'package:kimoi/src/UI/components/search_icon.dart';
+import 'package:kimoi/src/UI/components/servers_dialog.dart';
 import 'package:kimoi/src/UI/screens/home/home.dart';
 import 'package:kimoi/src/UI/screens/loading/full_loading_screen.dart';
 import 'package:kimoi/src/UI/screens/player/local_player.dart';
@@ -55,13 +54,13 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
   }
 
   void listen(ScrollController controller) async {
-    if (controller.position.pixels == controller.position.maxScrollExtent && !lastCharge) {
+    if (controller.position.pixels >= 200  && !lastCharge) {
       if (lastCharge) return;
       lastCharge = true;
       await ref.read(lastAnimesAddedProvider.notifier).getAnimes();
       setState(() {});
     } else if (
-      controller.position.pixels == controller.position.maxScrollExtent &&
+      controller.position.pixels >= 250 &&
       lastCharge) {
       if (secondCharge) return;
       secondCharge = true;
@@ -85,6 +84,7 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
     final lastAnimes = ref.watch(lastAnimesAddedProvider);
     final lastEpisodes = ref.watch(recentAnimesProvider);
     nowWatching = ref.watch(nowWatchingProvider);
+
 
     final controller = useScrollController();
 
@@ -135,7 +135,6 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                       if (nowWatching.isNotEmpty)
                         KeepWatching(nowWatching: nowWatching),
 
-                      if (lastCharge)
                         AnimesListview(
                           height: 180,
                           width: 130,
@@ -143,7 +142,6 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                           title: 'Últimos animes',
                           subtitle: '2023',
                         ),
-                      if (secondCharge)
                         AnimesListview(
                           height: 180,
                           width: 130,
@@ -162,17 +160,7 @@ class HomeAnimeState extends ConsumerState<HomeAnime> {
                       const SizedBox(
                         height: 15,
                       ),
-                      if (!lastCharge || !secondCharge)
-                        const Center(
-                          child: SizedBox(
-                            height: 40,
-                            width: 40,
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                      const SizedBox(
-                        height: 15,
-                      ),
+                     
                     ],
                   ),
                 )

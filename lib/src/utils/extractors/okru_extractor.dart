@@ -56,11 +56,11 @@ class OkruExtractor {
 
       if (data == null) return [];
 
-      if (data.contains("ondemandHls")) {
-        print("ondemandHls");
-      } else if (data.contains("ondemandHls")) {
-        print("ondemandHls");
-      }
+      // if (data.contains("ondemandHls")) {
+      //   print("ondemandHls");
+      // } else if (data.contains("ondemandHls")) {
+      //   print("ondemandHls");
+      // }
 
       final videos = videosFromJson(data);
       return videos;

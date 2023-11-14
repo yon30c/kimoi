@@ -1,6 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:kimoi/main.dart';
+import 'package:riverpod/riverpod.dart';
 
 import '../../../infrastructure/infrastructure.dart';
 
 final animeRepositoryProvider =
-    Provider((ref) => AnimeRepositoryImpl(MonoschinosDatasource()));
+    Provider((ref) => AnimeRepositoryImpl(sourceController.initialDatasource));

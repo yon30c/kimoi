@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/providers/providers.dart';
 import 'package:kimoi/src/UI/providers/storage/searched_provider.dart';
 import 'package:kimoi/src/UI/services/delegates/search_delegate.dart';

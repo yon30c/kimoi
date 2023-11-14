@@ -17,7 +17,7 @@ import 'package:kimoi/src/UI/screens/player/youtube_player.dart';
 import 'package:kimoi/src/infrastructure/models/extra_data.dart';
 
 import '../../../domain/domain.dart';
-import '../../items/items.dart';
+import '../../components/items.dart';
 import '../home/home.dart';
 
 final isFavoriteProvider =
@@ -71,7 +71,14 @@ class DetailsScreenState extends ConsumerState<DetailsScreen> {
     } else if (anime.animeTitle.contains("86 2nd")) {
       getXData(anime, "86 2");
       await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
-    } else {
+    } else if (
+      anime.animeTitle.contains("Akuma-kun (2023)") || 
+      anime.animeTitle.contains("Blue Eye Samurai") || anime.animeTitle.contains("Latino")) {
+      await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
+
+    } 
+    
+    else {
       getXData(anime, anime.animeTitle);
       await ref.read(getAnimeInfoProvider.notifier).getAnimeInf(url);
     }
@@ -111,12 +118,14 @@ class DetailsScreenState extends ConsumerState<DetailsScreen> {
   SliverAppBar _customAppbar(
       Anime anime,
       AnimeInfo animeInfo,
-      XData xData,
+      XData? xData,
       AsyncValue<bool> isFavoriteFuture,
       Size size,
       ColorScheme color,
       BuildContext context) {
-    return SliverAppBar(
+
+      if (xData != null) {
+        return SliverAppBar(
       // systemOverlayStyle: SystemUiOverlayStyle.light,
       pinned: true,
       leading: IconButton(
@@ -186,6 +195,55 @@ class DetailsScreenState extends ConsumerState<DetailsScreen> {
         ),
       ),
     );
+      } else {
+         return SliverAppBar(
+      // systemOverlayStyle: SystemUiOverlayStyle.light,
+      pinned: true,
+      leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: Icon(
+            Icons.arrow_back,
+            color: color.onBackground,
+          )),
+     
+      expandedHeight: size.height * 0.6,
+      flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.none,
+        background: Stack(
+          children: [
+            SizedBox.expand(
+                child: Image.network(
+              anime.imageUrl,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress != null) {
+                  return const DecoratedBox(
+                    decoration: BoxDecoration(color: Colors.black12),
+                  );
+                }
+                return FadeIn(child: child);
+              },
+            )),
+            SizedBox.expand(
+                child: DecoratedBox(
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            stops: const [
+                  0.0,
+                  0.25
+                ],
+                            colors: [
+                  shadow(context),
+                  Colors.transparent,
+                ])))),
+          ],
+        ),
+      ),
+    );
+      }
   }
 
   @override
@@ -195,7 +253,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen> {
 
     final scrollController = useScrollController();
 
-    if (_xData == null || animeInfoL.isEmpty) {
+    if (animeInfoL.isEmpty) {
       return const Scaffold(body: FullScreenLoader());
     }
 
@@ -217,14 +275,16 @@ class DetailsScreenState extends ConsumerState<DetailsScreen> {
         controller: scrollController,
         slivers: [
           _customAppbar(
-              anime, animeInfo, xData!, isFavoriteFuture, size, color, context),
+              anime, animeInfo, xData, isFavoriteFuture, size, color, context),
           SliverList(
               delegate: SliverChildListDelegate([
             const SizedBox(
               height: 8,
             ),
             _CustomTitleBar(anime: anime, animeInfo: animeInfo),
+            if (xData != null)
             _RatingBar(xData: xData),
+            
             _ExtraDataBar(
               animeInfo: animeInfo,
               xData: xData,
@@ -236,7 +296,7 @@ class DetailsScreenState extends ConsumerState<DetailsScreen> {
             ExpandableText(
               maxLines: 50,
               minLines: 3,
-              text: animeInfo.description ?? xData.synopsis ?? '',
+              text: animeInfo.description ?? '',
             )
           ])),
           SliverToBoxAdapter(
@@ -287,8 +347,8 @@ class DetailsScreenState extends ConsumerState<DetailsScreen> {
                             dropdownMenuEntries: subList
                                 .map((e) => DropdownMenuEntry(
                                     value: e,
-                                    label:
-                                        '${e.first.chapterNumber} - ${e.last.chapterNumber}'))
+                                    label: e.isNotEmpty ?
+                                        '${e.first.chapterNumber} - ${e.last.chapterNumber}': "") )
                                 .toList(),
                             onSelected: (value) {
                               setState(() {
@@ -338,17 +398,15 @@ class _ExtraDataBar extends StatelessWidget {
   });
 
   final AnimeInfo animeInfo;
-  final XData xData;
+  final XData? xData;
   final Anime anime;
+
+
 
   String get year {
     if (anime.release != null && anime.release != '') {
       return anime.release!;
     }
-    if (xData.year != null) {
-      return '${xData.year}';
-    }
-
     return animeInfo.estreno.substringAfterLast(' ');
   }
 
@@ -359,13 +417,13 @@ class _ExtraDataBar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(children: [
-        Text(
-          '$tipo • ${xData.season} $year',
+        Text( xData != null ?
+          '$tipo • ${xData!.season} $year' : '$tipo • $year' ,
           style: textStyle.labelMedium,
         ),
         const Spacer(),
-        if (xData.studios != '' && animeInfo.title.contains(xData.title))
-          Text('Estudio: ${xData.studios}', style: textStyle.labelMedium),
+        if (xData != null && xData!.studios != '' && animeInfo.title.contains(xData!.title))
+          Text('Estudio: ${xData!.studios}', style: textStyle.labelMedium),
       ]),
     );
   }
@@ -417,7 +475,7 @@ class _EpisodesTile extends ConsumerStatefulWidget {
 
   final Anime anime;
   final Chapter eps;
-  final XData xData;
+  final XData? xData;
 
   @override
   _EpisodesTileState createState() => _EpisodesTileState();
@@ -455,8 +513,8 @@ class _EpisodesTileState extends ConsumerState<_EpisodesTile> {
                   decoration: BoxDecoration(
                       image: DecorationImage(
                     image: NetworkImage(
-                      widget.anime.animeTitle.contains(widget.xData.title)
-                          ? widget.xData.largeImageUrl
+                      widget.xData != null &&  widget.anime.animeTitle.contains(widget.xData!.title)
+                          ? widget.xData!.largeImageUrl
                           : widget.anime.imageUrl,
                     ),
                   )),
@@ -640,6 +698,9 @@ class _BottomAppBarState extends ConsumerState<_BottomAppBar> {
                   .read(favoriteAnimesProvider.notifier)
                   .toggleFavorite(ani);
               ref.invalidate(isFavoriteProvider(widget.anime.animeTitle));
+
+              await ref.read(favoriteAnimesProvider.notifier).loadNextPage();
+
               setState(() {});
             },
             icon: isFavoriteFuture.when(

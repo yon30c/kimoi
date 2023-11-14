@@ -1,8 +1,8 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' as rv;
+import 'package:hooks_riverpod/hooks_riverpod.dart' as rv;
 import 'package:go_router/go_router.dart';
-import 'package:kimoi/src/UI/items/servers_dialog.dart';
+import 'package:kimoi/src/UI/components/servers_dialog.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_info_provider.dart';
 import 'package:kimoi/src/UI/providers/storage/watching_provider.dart';
 import 'package:kimoi/src/domain/domain.dart';
@@ -230,7 +230,7 @@ class _SwiperView extends rv.ConsumerWidget {
                               color: color.primaryContainer,
                             ),
                             padding: const EdgeInsets.all(3),
-                            child: Text(anime.type!,
+                            child: Text(anime.type ?? "",
                                 style: textStyles.labelMedium?.copyWith(
                                     color: color.onPrimaryContainer)))),
                   ],

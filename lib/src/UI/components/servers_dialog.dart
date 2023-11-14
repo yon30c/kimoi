@@ -208,55 +208,10 @@ final fixedServerProvider = StateProvider<FixedServer?>((ref) => null);
 
 final videoServers = StateProvider((ref) async {
   final servers = ref.watch(fixedServerProvider);
-  List<Video> videos = [];
   final url = servers!.url;
 
   return extract([url]);
 
-  // if (url.contains('yourupload')) {
-  //   final video = await YourUploadExtractor().videoFromUrl(url);
-  //   if (video != null) {
-  //     videos.add(video);
-  //   } else {
-  //     print("optional: ${servers.optional}");
-  //     videos.addAll(await extract(servers.optional!));
-  //   }
-  // } else if (url.contains('mp4upload')) {
-  //   final video = await Mp4UploadExtractor().videosFromUrl(url);
-  //   if (video.isNotEmpty) {
-  //     videos.addAll(video);
-  //   } else {
-  //     videos.addAll(await extract(servers.optional!));
-  //   }
-  // } else if (url.contains('ok.ru')) {
-  //   final vid = await OkruExtractor().videosFromUrl(url);
-  //   if (vid.isEmpty) {
-  //     videos.addAll(await extract(servers.optional!));
-  //   } else {
-  //     videos.addAll(vid);
-  //   }
-  // } else if (url.contains('mixdro')) {
-  //   final video = await MixDropExtractor().videoFromUrl(url);
-  //   if (video.isNotEmpty) {
-  //     videos.addAll(video);
-  //   } else {
-  //     videos.addAll(await extract(servers.optional!));
-  //   }
-  // } else if (url.contains('voe')) {
-  //   final video = await VoeExtractor().videoFromUrl(url);
-  //   if (video.isNotEmpty) {
-  //     videos.addAll(video);
-  //   } else {
-  //     videos.addAll(await extract(servers.optional!));
-  //   }
-  // } else if (url.contains("uqload")) {
-  //   final video = await UqloadExtractor().videoFromUrl(url);
-  //   if (video != null) {
-  //     videos.add(video);
-  //   } else {
-  //     videos.addAll(await extract(servers.optional!));
-  //   }
-  // }
 });
 
 class FixedServer {
@@ -281,11 +236,7 @@ Future<List<Video>> extract(List<String> servers) async {
     } else if (url.contains('ok.ru')) {
       videos.addAll(await OkruExtractor().videosFromUrl(url));
       if (videos.isNotEmpty) return videos;
-    } /* else if (url.contains('solid')) {
-    final videos = await SolidFilesExtractor().videoFromUrl(url);
-    if (videos.isNotEmpty) videos.addAll(videos);
-  } */
-    else if (url.contains('mixdro')) {
+    } else if (url.contains('mixdro')) {
       final video = await MixDropExtractor().videoFromUrl(url);
       if (video.isNotEmpty) videos.addAll(video);
       if (videos.isNotEmpty) return videos;

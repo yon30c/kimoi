@@ -1,10 +1,11 @@
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:kimoi/src/UI/items/anime_card.dart';
+import 'package:kimoi/src/UI/components/anime_card.dart';
+import 'package:kimoi/src/UI/components/placeholders.dart';
 import 'package:kimoi/src/UI/providers/animes/anime_filter_provider.dart';
 import 'package:kimoi/src/UI/screens/home/home.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../domain/entities/anime.dart';
 
@@ -62,6 +63,7 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
     return SizedBox(
       height: 320,
       child: Column(
@@ -83,15 +85,7 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 itemBuilder: (BuildContext context, int index) {
-                  return FadeInRight(
-                    child: Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                      child: Container(
-                        height: 250,
-                        width: 130,
-                      ),
-                    ),
-                  );
+                  return AnimePlaceholder(width: widget.width, height: widget.height,);
                 },
               ),
             ),
@@ -104,12 +98,11 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 itemBuilder: (BuildContext context, int index) {
-                  return FadeInRight(
-                      child: AnimeCard(
+                  return AnimeCard(
                     anime: widget.animes[index],
                     width: widget.width,
                     height: widget.height,
-                  ));
+                  );
                 },
               ),
             ),
@@ -120,6 +113,50 @@ class AnimesListviewState extends ConsumerState<AnimesListview>
 
   @override
   bool get wantKeepAlive => true;
+}
+
+class AnimePlaceholder extends StatelessWidget {
+  const AnimePlaceholder({
+    super.key,
+    required this.width,
+    required this.height,
+  });
+
+  final double? width;
+  final double? height;
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey.shade900,
+        highlightColor: Colors.grey.shade400,
+        enabled: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            //* Esto es la imagen
+            BannerPlaceholder(width: width ?? 130, height: height ?? 180,),
+    
+            const SizedBox(
+              height: 5,
+            ),
+    
+            //* Este es el titulo
+    
+            TitlePlaceholder(width: width ?? 130),
+    
+            const SizedBox(
+              height: 5,
+            ),
+    
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _Title extends ConsumerWidget {

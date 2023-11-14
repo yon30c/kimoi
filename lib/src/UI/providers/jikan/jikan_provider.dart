@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:kimoi/src/UI/providers/jikan/jikan_repo_provider.dart';
 import 'package:kimoi/src/infrastructure/models/jikan_upcoming.dart' as jk;
 
